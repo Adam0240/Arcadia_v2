@@ -6,7 +6,7 @@ namespace Arcadia_v2.Saves
 {
     public sealed class GameSaveState
     {
-        public int Version { get; set; } = 1;
+        public int Version { get; set; } = 2;
         public PlayerSaveState Player { get; set; } = new();
         public List<RoomSaveState> Rooms { get; set; } = new();
         public List<TrainerSaveState> Trainers { get; set; } = new();
@@ -39,6 +39,17 @@ namespace Arcadia_v2.Saves
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
+        public int Level { get; set; }
         public int Health { get; set; }
+        public int BaseHealth { get; set; }
+        public int Speed { get; set; }
+        public List<MoveSaveState> Moves { get; set; } = new();
+    }
+
+    public sealed class MoveSaveState
+    {
+        public string Name { get; set; } = string.Empty;
+        public MoveType Type { get; set; }
+        public int Power { get; set; }
     }
 }

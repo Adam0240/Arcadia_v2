@@ -4,8 +4,7 @@ using System.Collections.Generic;
 
 namespace Arcadia_v2
 {
-    // Reference version of a Pokemon factory for the rebuilt project.
-    // This keeps hard-coded roster creation separate from the Pokemon model itself.
+    // Builds the hard-coded Pokemon roster separately from the Pokemon model.
     public static class PokeFactory
     {
         private static Pokemon CreatePokemonEntry(

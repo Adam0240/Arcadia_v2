@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Arcadia_v2
 {
-    // Legacy split files still request Pokemon data through the original GameData entry point.
+    // Provides fresh Pokemon roster data for game setup and save restoration.
     public static class GameData
     {
         public static List<Pokemon> CreatePokemon()

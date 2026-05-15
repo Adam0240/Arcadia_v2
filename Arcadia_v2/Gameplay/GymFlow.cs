@@ -1,22 +1,24 @@
 #nullable enable
 
-using System;
-
 namespace Arcadia_v2
 {
     // Handles gym leader and champion interactions from the menu flow.
     public static class GymFlow
     {
         public static void HandleGymInteraction(
-            Player mainPlayer,
-            CompPlayer gymLeader1,
-            CompPlayer gymLeader2,
-            CompPlayer gymLeader3,
-            CompPlayer gymLeader4,
-            CompPlayer arcadiaChampion)
+            IGameIO io,
+            GameState gameState)
         {
+            Player mainPlayer = gameState.MainPlayer;
+            CompPlayer gymLeader1 = gameState.GymLeader1;
+            CompPlayer gymLeader2 = gameState.GymLeader2;
+            CompPlayer gymLeader3 = gameState.GymLeader3;
+            CompPlayer gymLeader4 = gameState.GymLeader4;
+            CompPlayer arcadiaChampion = gameState.ArcadiaChampion;
+
             if (TryHandleTrainer(
-                mainPlayer,
+                io,
+                gameState,
                 gymLeader1,
                 requiredBadges: 0,
                 introLines: new[]
@@ -32,7 +34,8 @@ namespace Arcadia_v2
             }
 
             if (TryHandleTrainer(
-                mainPlayer,
+                io,
+                gameState,
                 gymLeader2,
                 requiredBadges: 0,
                 introLines: new[]
@@ -48,7 +51,8 @@ namespace Arcadia_v2
             }
 
             if (TryHandleTrainer(
-                mainPlayer,
+                io,
+                gameState,
                 gymLeader3,
                 requiredBadges: 2,
                 introLines: new[]
@@ -65,7 +69,8 @@ namespace Arcadia_v2
             }
 
             if (TryHandleTrainer(
-                mainPlayer,
+                io,
+                gameState,
                 gymLeader4,
                 requiredBadges: 0,
                 introLines: new[]
@@ -82,7 +87,8 @@ namespace Arcadia_v2
             }
 
             if (TryHandleTrainer(
-                mainPlayer,
+                io,
+                gameState,
                 arcadiaChampion,
                 requiredBadges: 4,
                 introLines: new[]
@@ -100,19 +106,22 @@ namespace Arcadia_v2
                 return;
             }
 
-            Console.WriteLine("No Pokemon Gym in area.");
+            io.WriteLine("No Pokemon Gym in area.");
         }
 
         // Handles the shared trainer interaction pattern:
         // check location, check defeated status, check badge requirement, ask for battle, then start battle.
         private static bool TryHandleTrainer(
-            Player mainPlayer,
+            IGameIO io,
+            GameState gameState,
             CompPlayer trainer,
             int requiredBadges,
             string[] introLines,
             string notEnoughBadgesMessage,
             string alreadyDefeatedMessage)
         {
+            Player mainPlayer = gameState.MainPlayer;
+
             if (mainPlayer.CurrentRoom != trainer.CurrentRoom)
             {
                 return false;
@@ -120,26 +129,26 @@ namespace Arcadia_v2
 
             if (trainer.Defeated)
             {
-                Console.WriteLine(alreadyDefeatedMessage);
+                io.WriteLine(alreadyDefeatedMessage);
                 return true;
             }
 
             if (mainPlayer.Badges.Count < requiredBadges)
             {
-                Console.WriteLine(notEnoughBadgesMessage);
+                io.WriteLine(notEnoughBadgesMessage);
                 return true;
             }
 
             foreach (string line in introLines)
             {
-                Console.WriteLine(line);
+                io.WriteLine(line);
             }
 
-            Console.WriteLine("Ready to battle?");
+            io.WriteLine("Ready to battle?");
 
-            if (BattleHelpers.IsYes(Program.ReadUpperTrimmedInput()))
+            if (BattleHelpers.IsYes(Program.ReadUpperTrimmedInput(io)))
             {
-                TrainerBattleFlow.Run(mainPlayer, trainer);
+                TrainerBattleFlow.Run(io, gameState, trainer);
             }
 
             return true;

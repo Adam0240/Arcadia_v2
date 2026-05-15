@@ -7,76 +7,108 @@ namespace Arcadia_v2
 {
     public static class StartupFlow
     {
-        public static GameState Run(GameSaveService saveService)
+        public static GameState Run(IGameIO io, GameSaveService saveService)
         {
             ArgumentNullException.ThrowIfNull(saveService);
+            ArgumentNullException.ThrowIfNull(io);
 
             while (true)
             {
                 bool hasSave = saveService.HasSave();
-                PrintStartupMenu(hasSave);
+                PrintStartupMenu(io, hasSave);
 
-                string choice = Program.ReadUpperTrimmedInput();
+                StartupCommandType startupCommand = ParseStartupCommand(Program.ReadUpperTrimmedInput(io), hasSave);
 
-                if (!hasSave && choice == "1")
+                if (!hasSave && startupCommand == StartupCommandType.NewGame)
                 {
-                    return GameSetup.Initialize();
+                    return GameSetup.Initialize(io);
                 }
 
-                if (choice == "2")
+                if (startupCommand == StartupCommandType.LoadGame)
                 {
                     GameState gameState = GameSetup.CreateForLoad();
                     SaveCommandResult loadResult = saveService.Load(gameState);
-                    Console.WriteLine(loadResult.Message);
+                    io.WriteLine(loadResult.Message);
 
                     if (loadResult.Succeeded)
                     {
-                        RoomDisplay.Print(gameState.MainPlayer.CurrentRoom);
+                        RoomDisplay.Print(io, gameState.MainPlayer.CurrentRoom);
                         return gameState;
                     }
 
                     continue;
                 }
 
-                if (choice == "3")
+                if (startupCommand == StartupCommandType.DeleteGame)
                 {
-                    HandleDelete(saveService);
+                    HandleDelete(io, saveService);
                     continue;
                 }
 
-                Console.WriteLine("Invalid input");
+                io.WriteLine("Invalid input");
             }
         }
 
-        private static void PrintStartupMenu(bool hasSave)
+        private static void PrintStartupMenu(IGameIO io, bool hasSave)
         {
-            if (!hasSave)
+            if (hasSave)
             {
-                Console.WriteLine("1. New Game");
+                io.WriteLine("1. Load Game");
+                io.WriteLine("2. Delete Game");
+                return;
             }
 
-            Console.WriteLine("2. Load Game");
-            Console.WriteLine("3. Delete Game");
+            io.WriteLine("1. New Game");
         }
 
-        private static void HandleDelete(GameSaveService saveService)
+        private static StartupCommandType ParseStartupCommand(string choice, bool hasSave)
         {
-            Console.WriteLine("Are you sure you want to delete?");
-            string answer = Program.ReadUpperTrimmedInput();
-
-            if (BattleHelpers.IsYes(answer))
+            if (hasSave)
             {
-                SaveCommandResult deleteResult = saveService.Delete();
-                Console.WriteLine(deleteResult.Message);
-                return;
+                return choice switch
+                {
+                    "1" => StartupCommandType.LoadGame,
+                    "2" => StartupCommandType.DeleteGame,
+                    _ => StartupCommandType.Invalid
+                };
             }
 
-            if (BattleHelpers.IsNo(answer))
+            return choice switch
             {
-                return;
-            }
+                "1" => StartupCommandType.NewGame,
+                _ => StartupCommandType.Invalid
+            };
+        }
 
-            Console.WriteLine("Invalid input");
+        private static void HandleDelete(IGameIO io, GameSaveService saveService)
+        {
+            while (true)
+            {
+                io.WriteLine("Are you sure you want to delete?");
+                string answer = Program.ReadUpperTrimmedInput(io);
+
+                if (BattleHelpers.IsYes(answer))
+                {
+                    SaveCommandResult deleteResult = saveService.Delete();
+                    io.WriteLine(deleteResult.Message);
+                    return;
+                }
+
+                if (BattleHelpers.IsNo(answer))
+                {
+                    return;
+                }
+
+                io.WriteLine("Invalid input");
+            }
+        }
+
+        private enum StartupCommandType
+        {
+            Invalid,
+            NewGame,
+            LoadGame,
+            DeleteGame
         }
     }
 }

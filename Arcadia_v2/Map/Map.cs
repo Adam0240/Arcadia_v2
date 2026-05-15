@@ -139,7 +139,7 @@ namespace Arcadia_v2.Map
             theEnd.South = championships;
         }
 
-        // Restores the legacy wild Pokemon room assignments while cloning each entry for isolated encounter state.
+        // Populates wild Pokemon room assignments while cloning each entry for isolated encounter state.
         private void PopulateWildPokemon()
         {
             IReadOnlyList<Arcadia_v2.Pokemon> mapPokemon = Arcadia_v2.GameData.CreatePokemon();

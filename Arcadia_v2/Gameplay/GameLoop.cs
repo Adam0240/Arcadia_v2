@@ -1,7 +1,6 @@
 #nullable enable
 
 using System;
-using System.Collections.Generic;
 using Arcadia_v2.Commands;
 using Arcadia_v2.Saves;
 using CommandReader = Arcadia_v2.Commands.Commands;
@@ -13,61 +12,68 @@ namespace Arcadia_v2
     {
         public static void Run()
         {
+            Run(new ConsoleGameIO());
+        }
+
+        public static void Run(IGameIO io)
+        {
+            ArgumentNullException.ThrowIfNull(io);
+
             GameSaveService saveService = new(new SqliteGameSaveRepository());
             saveService.Initialize();
-            GameState gameState = StartupFlow.Run(saveService);
+            GameState gameState = StartupFlow.Run(io, saveService);
 
             bool isRunning = true;
 
             while (isRunning)
             {
-                MainCommandInput mainCommandInput = CommandReader.ReadMainCommandInput();
+                MainCommandInput mainCommandInput = CommandReader.ReadMainCommandInput(io);
 
-                isRunning = HandleMainCommand(mainCommandInput, gameState, saveService);
+                isRunning = HandleMainCommand(io, mainCommandInput, gameState, saveService);
 
                 if (isRunning)
                 {
-                    isRunning = HandleEndRoom(gameState.MainPlayer);
+                    isRunning = HandleEndRoom(io, gameState.MainPlayer);
                 }
             }
 
-            PauseBeforeExit();
+            PauseBeforeExit(io);
         }
 
         // Routes the player's main command to the correct command handler.
         private static bool HandleMainCommand(
+            IGameIO io,
             MainCommandInput mainCommandInput,
             GameState gameState,
             GameSaveService saveService)
         {
             return mainCommandInput.MainCommand switch
             {
-                MainCommandType.Go => HandleGoCommand(gameState, mainCommandInput.Remainder),
-                MainCommandType.Action => HandleActionCommand(gameState, saveService, mainCommandInput.Remainder),
-                _ => HandleInvalidCommand()
+                MainCommandType.Go => HandleGoCommand(io, gameState, mainCommandInput.Remainder),
+                MainCommandType.Action => HandleActionCommand(io, gameState, saveService, mainCommandInput.Remainder),
+                _ => HandleInvalidCommand(io)
             };
         }
 
         // Handles movement commands and returns false if the player quits.
-        private static bool HandleGoCommand(GameState gameState, string directionInput)
+        private static bool HandleGoCommand(IGameIO io, GameState gameState, string directionInput)
         {
             DirectionCommandType directionCommand = string.IsNullOrEmpty(directionInput)
-                ? CommandReader.ReadDirectionCommand()
+                ? CommandReader.ReadDirectionCommand(io)
                 : Parser.ParseDirectionCommand(directionInput);
 
             if (directionCommand == DirectionCommandType.Quit)
             {
-                Console.WriteLine("Goodbye");
+                io.WriteLine("Goodbye");
                 return false;
             }
 
             string direction = Parser.ToUpperCase(directionCommand.ToString());
-            int choice = CommandReader.GetDirectionChoice(directionCommand);
 
             MovementFlow.HandleMovement(
-                gameState.MainPlayer,
-                gameState.ArcadiaChampion,
-                choice,
+                io,
+                gameState,
+                directionCommand,
                 direction);
 
             return true;
@@ -75,43 +81,37 @@ namespace Arcadia_v2
 
         // Handles action commands such as wild battle, Pokemon list, and menu.
         private static bool HandleActionCommand(
+            IGameIO io,
             GameState gameState,
             GameSaveService saveService,
             string actionInput)
         {
             ActionCommandType actionCommand = string.IsNullOrEmpty(actionInput)
-                ? CommandReader.ReadActionCommand()
+                ? CommandReader.ReadActionCommand(io)
                 : Parser.ParseActionCommand(actionInput);
-            int actionChoice = CommandReader.GetActionChoice(actionCommand);
 
-            switch (actionChoice)
+            switch (actionCommand)
             {
-                case 1:
+                case ActionCommandType.Battle:
                     WildBattleFlow.HandleWildBattle(
-                        gameState.MainPlayer,
-                        gameState.MainPokemon);
+                        io,
+                        gameState);
                     break;
 
-                case 2:
-                    Console.WriteLine(gameState.MainPlayer.GetPokemonInventoryDisplay());
+                case ActionCommandType.PokeInventory:
+                    io.WriteLine(gameState.MainPlayer.GetPokemonInventoryDisplay());
                     break;
 
-                case 3:
+                case ActionCommandType.Menu:
                     MenuFlow.HandleMenu(
+                        io,
                         gameState,
-                        saveService,
-                        gameState.MainPlayer,
-                        gameState.MainPokemon,
-                        gameState.GymLeader1,
-                        gameState.GymLeader2,
-                        gameState.GymLeader3,
-                        gameState.GymLeader4,
-                        gameState.ArcadiaChampion);
+                        saveService);
                     break;
 
-                default:
+                case ActionCommandType.Invalid:
                     string actionName = Parser.ToUpperCase(actionCommand.ToString());
-                    Console.WriteLine($"\nSorry, {actionName} is invalid.");
+                    io.WriteLine($"\nSorry, {actionName} is invalid.");
                     break;
             }
 
@@ -119,69 +119,69 @@ namespace Arcadia_v2
         }
 
         // Handles the special behavior that occurs in the final room.
-        private static bool HandleEndRoom(Player mainPlayer)
+        private static bool HandleEndRoom(IGameIO io, Player mainPlayer)
         {
             if (!mainPlayer.CurrentRoom.IsFinalRoom)
             {
                 return true;
             }
 
-            RoomDisplay.Print(mainPlayer.CurrentRoom);
+            RoomDisplay.Print(io, mainPlayer.CurrentRoom);
 
             if (mainPlayer.CurrentRoom.HasEncounterPokemon())
             {
-                PrintArceusChallenge();
+                PrintArceusChallenge(io);
                 return true;
             }
 
-            return AskPlayerToStay();
+            return AskPlayerToStay(io);
         }
 
         // Prints the final challenge text before the Arceus encounter.
-        private static void PrintArceusChallenge()
+        private static void PrintArceusChallenge(IGameIO io)
         {
-            Console.WriteLine("\n\nArceus Voice: I knew you would eventually find your way here.");
-            Console.WriteLine("Your potential was clear to me the first time you were in my presence.");
-            Console.WriteLine("You have proven you're the best Pokemon Trainer in Arcadia. But are you stronger than the god of this region?");
-            Console.WriteLine("Face me to find out if you truly are the best.\n");
+            io.WriteLine("\n\nArceus Voice: I knew you would eventually find your way here.");
+            io.WriteLine("Your potential was clear to me the first time you were in my presence.");
+            io.WriteLine("You have proven you're the best Pokemon Trainer in Arcadia. But are you stronger than the god of this region?");
+            io.WriteLine("Face me to find out if you truly are the best.\n");
         }
 
         // Asks whether the player wants to remain in the Pokemon world after clearing the final encounter.
-        private static bool AskPlayerToStay()
+        private static bool AskPlayerToStay(IGameIO io)
         {
-            Console.WriteLine("\nYou have defeated all the strongest trainers in this region.\n");
-            Console.WriteLine("Do you wish to stay in this world?");
+            io.WriteLine("\nYou have defeated all the strongest trainers in this region.\n");
+            io.WriteLine("Do you wish to stay in this world?");
 
-            string answer = Program.ReadUpperTrimmedInput();
+            string answer = Program.ReadUpperTrimmedInput(io);
 
             if (BattleHelpers.IsNo(answer))
             {
-                Console.WriteLine("Goodbye, may you find as much joy back home.");
+                io.WriteLine("Goodbye, may you find as much joy back home.");
                 return false;
             }
 
             if (BattleHelpers.IsYes(answer))
             {
-                Console.WriteLine("You're welcome to stay. Type 'quit' to leave.");
+                io.WriteLine("You're welcome to stay. Type 'quit' to leave.");
                 return true;
             }
 
-            Console.WriteLine("Invalid input");
+            io.WriteLine("Invalid input");
             return true;
         }
 
         // Handles invalid main commands.
-        private static bool HandleInvalidCommand()
+        private static bool HandleInvalidCommand(IGameIO io)
         {
-            Console.WriteLine("Invalid input.");
+            io.WriteLine("Invalid input.");
             return true;
         }
 
         // Keeps the console window open before the program exits.
-        private static void PauseBeforeExit()
+        private static void PauseBeforeExit(IGameIO io)
         {
-            Console.WriteLine("Press Enter to continue...");
-            Console.ReadLine();
+            io.WriteLine("Press Enter to continue...");
+            io.ReadLine();
         }
     }
 }

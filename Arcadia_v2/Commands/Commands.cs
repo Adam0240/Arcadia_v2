@@ -2,50 +2,35 @@ namespace Arcadia_v2.Commands
 {
     public static class Commands
     {
-        public static MainCommandInput ReadMainCommandInput()
+        public static MainCommandInput ReadMainCommandInput(IGameIO io)
         {
-            Console.WriteLine("\nMove or action? (GO || G || Action || A)");
-            return Parser.ParseMainCommandInput(Console.ReadLine());
+            io.WriteLine("\nMove or action? (GO || G || Action || A)");
+            return Parser.ParseMainCommandInput(io.ReadLine());
         }
 
-        public static DirectionCommandType ReadDirectionCommand()
+        public static DirectionCommandType ReadDirectionCommand(IGameIO io)
         {
-            Console.WriteLine("\nWhat direction would you like to move? (North || East || South || West || Quit)");
-            return Parser.ParseDirectionCommand(Console.ReadLine());
+            io.WriteLine("\nWhat direction would you like to move? (North || East || South || West || Quit)");
+            return Parser.ParseDirectionCommand(io.ReadLine());
         }
 
-        public static ActionCommandType ReadActionCommand()
+        public static ActionCommandType ReadActionCommand(IGameIO io)
         {
-            Console.WriteLine("\nWhat would you like to do?");
-            Console.WriteLine("(Battle (battle/b) || PokeInventory (pokeinventory/pi) || Menu (menu/m)\n");
-            return Parser.ParseActionCommand(Console.ReadLine());
+            io.WriteLine("\nWhat would you like to do?");
+            io.WriteLine("(Battle (battle/b) || PokeInventory (pokeinventory/pi) || Menu (menu/m)\n");
+            return Parser.ParseActionCommand(io.ReadLine());
         }
 
-        public static MenuCommandType ReadMenuCommand()
+        public static MenuCommandType ReadMenuCommand(IGameIO io)
         {
-            Console.WriteLine("\nMenu");
-            Console.WriteLine("Heal Pokemon (heal/h)");
-            Console.WriteLine("Check Bag (bag/b)");
-            Console.WriteLine("Swap Pokemon (swap/b)");
-            Console.WriteLine("Check Gyms (gym/g)");
-            Console.WriteLine("Save Game (save)");
-            Console.WriteLine("\nWhat would you like to do?");
-            return Parser.ParseMenuCommand(Console.ReadLine());
-        }
-
-        public static int GetDirectionChoice(DirectionCommandType directionCommand)
-        {
-            return (int)directionCommand;
-        }
-
-        public static int GetActionChoice(ActionCommandType actionCommand)
-        {
-            return (int)actionCommand;
-        }
-
-        public static int GetMenuChoice(MenuCommandType menuCommand)
-        {
-            return (int)menuCommand;
+            io.WriteLine("\nMenu");
+            io.WriteLine("Heal Pokemon (heal/h)");
+            io.WriteLine("Check Bag (bag/b)");
+            io.WriteLine("Swap Pokemon (swap/b)");
+            io.WriteLine("Check Gyms (gym/g)");
+            io.WriteLine("Save Game (save)");
+            io.WriteLine("\nWhat would you like to do?");
+            return Parser.ParseMenuCommand(io.ReadLine());
         }
     }
 }

@@ -5,8 +5,8 @@ using System.Collections.Generic;
 
 namespace Arcadia_v2
 {
-    // Reference version of a cleaner player design for the rebuilt project.
-    // Players no longer inherit from the map; they store only their own state and receive a starting room.
+    // Base player state shared by human and computer-controlled players.
+    // Players store their own state and receive a starting room from the map.
     public abstract class GenericPlayer
     {
         private readonly List<string> mBadges = new();
@@ -103,7 +103,7 @@ namespace Arcadia_v2
             mPokemonInventory[secondIndex] = temp;
         }
 
-        // Clears the current Pokemon inventory so it can be rebuilt from a fresh source.
+        // Clears the current Pokemon inventory before replacing it.
         protected void ClearPokemonInventory()
         {
             mPokemonInventory.Clear();

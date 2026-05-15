@@ -1,6 +1,5 @@
 using Arcadia_v2;
 using Arcadia_v2.Saves;
-using System.Text;
 
 namespace UnitTest
 {
@@ -82,7 +81,19 @@ namespace UnitTest
                     Badges = new List<string> { "Grass Badge" },
                     PokemonInventory = new List<PokemonSaveState>
                     {
-                        new() { Id = 1, Name = "BULBASAUR", Health = 30 }
+                        new()
+                        {
+                            Id = 1,
+                            Name = "BULBASAUR",
+                            Level = 5,
+                            Health = 30,
+                            BaseHealth = 40,
+                            Speed = 7,
+                            Moves = new List<MoveSaveState>
+                            {
+                                new() { Name = "TACKLE", Type = MoveType.Normal, Power = 5 }
+                            }
+                        }
                     }
                 },
                 Rooms = new List<RoomSaveState>
@@ -120,6 +131,10 @@ namespace UnitTest
             Assert.Single(restored.Player.Badges);
             Assert.Single(restored.Rooms);
             Assert.True(restored.Trainers[0].Defeated);
+            Assert.Equal(5, restored.Player.PokemonInventory[0].Level);
+            Assert.Equal(40, restored.Player.PokemonInventory[0].BaseHealth);
+            Assert.Equal(7, restored.Player.PokemonInventory[0].Speed);
+            Assert.Equal("TACKLE", restored.Player.PokemonInventory[0].Moves[0].Name);
         }
 
         [Fact]
@@ -155,21 +170,128 @@ namespace UnitTest
         }
 
         [Fact]
+        public void Mapper_CaptureAndApply_RestoresPokemonRuntimeStatsAndMoves()
+        {
+            GameState gameState = CreateGameState("Red");
+            Pokemon changedPokemon = new(
+                1,
+                "UMBREON",
+                PokemonType.Dark,
+                21,
+                101,
+                88,
+                7,
+                new[]
+                {
+                    new Move("CUSTOMBITE", MoveType.Dark, 13),
+                    new Move("CUSTOMSPARK", MoveType.Electric, 11)
+                });
+            gameState.MainPlayer.RestorePokemonInventory(new[] { changedPokemon });
+
+            GameSaveState captured = GameStateMapper.Capture(gameState);
+
+            gameState.MainPlayer.RestorePokemonInventory(new[] { GameData.CreatePokemon()[2] });
+            GameStateMapper.Apply(gameState, captured);
+
+            Pokemon restoredPokemon = gameState.MainPlayer.PokemonInventory[0];
+            Assert.Equal(2, captured.Version);
+            Assert.Equal(1, restoredPokemon.Id);
+            Assert.Equal("UMBREON", restoredPokemon.Name);
+            Assert.Equal(21, restoredPokemon.Speed);
+            Assert.Equal(101, restoredPokemon.BaseHealth);
+            Assert.Equal(88, restoredPokemon.Health);
+            Assert.Equal(7, restoredPokemon.Level);
+            Assert.Equal("CUSTOMBITE", restoredPokemon.Moves[0].Name);
+            Assert.Equal(MoveType.Dark, restoredPokemon.Moves[0].Type);
+            Assert.Equal(13, restoredPokemon.Moves[0].Power);
+            Assert.Equal("CUSTOMSPARK", restoredPokemon.Moves[1].Name);
+        }
+
+        [Fact]
+        public void Mapper_ApplyVersion1PokemonSave_FallsBackToFactoryDefaultsForMissingRuntimeFields()
+        {
+            GameState gameState = CreateGameState("Red");
+            GameSaveState oldSaveState = new()
+            {
+                Version = 1,
+                Player = new PlayerSaveState
+                {
+                    Name = "Blue",
+                    CurrentRoomName = gameState.GameMap.StartRoom.Name,
+                    PokemonInventory = new List<PokemonSaveState>
+                    {
+                        new() { Id = 1, Name = "UMBREON", Health = 12 }
+                    }
+                }
+            };
+
+            GameStateMapper.Apply(gameState, oldSaveState);
+
+            Pokemon template = GameData.CreatePokemon().Single(pokemon => pokemon.Id == 1);
+            Pokemon restoredPokemon = gameState.MainPlayer.PokemonInventory[0];
+            Assert.Equal("Blue", gameState.MainPlayer.Name);
+            Assert.Equal(12, restoredPokemon.Health);
+            Assert.Equal(template.Level, restoredPokemon.Level);
+            Assert.Equal(template.BaseHealth, restoredPokemon.BaseHealth);
+            Assert.Equal(template.Speed, restoredPokemon.Speed);
+            Assert.Equal(template.Moves.Select(move => move.Name), restoredPokemon.Moves.Select(move => move.Name));
+        }
+
+        [Theory]
+        [InlineData(-1)]
+        [InlineData(76)]
+        public void Mapper_ApplyPokemonSaveWithInvalidHealth_ThrowsInvalidOperationException(int savedHealth)
+        {
+            GameState gameState = CreateGameState("Red");
+            GameSaveState saveState = new()
+            {
+                Player = new PlayerSaveState
+                {
+                    Name = "Blue",
+                    CurrentRoomName = gameState.GameMap.StartRoom.Name,
+                    PokemonInventory = new List<PokemonSaveState>
+                    {
+                        new() { Id = 1, Name = "UMBREON", Health = savedHealth, BaseHealth = 75 }
+                    }
+                }
+            };
+
+            Assert.Throws<InvalidOperationException>(() => GameStateMapper.Apply(gameState, saveState));
+        }
+
+        [Fact]
+        public void Service_LoadPokemonSaveWithInvalidHealth_ReturnsFailure()
+        {
+            GameState gameState = CreateGameState("Red");
+            GameSaveState saveState = GameStateMapper.Capture(gameState);
+            saveState.Player.PokemonInventory[0].Health = saveState.Player.PokemonInventory[0].BaseHealth + 1;
+            string saveJson = GameSaveSerializer.Serialize(saveState);
+            GameSaveService saveService = new(new FakeGameSaveRepository(saveJson));
+
+            SaveCommandResult result = saveService.Load(gameState);
+
+            Assert.False(result.Succeeded);
+            Assert.Equal("Save data could not be loaded.", result.Message);
+        }
+
+        [Fact]
         public void StartupFlow_WithSave_LoadsSavedGameWithoutShowingNewGameOption()
         {
             GameState savedGameState = CreateGameState("Red");
             savedGameState.MainPlayer.MoveTo(savedGameState.GameMap.GetRoom("Route 2"));
             string saveJson = GameSaveSerializer.Serialize(GameStateMapper.Capture(savedGameState));
             GameSaveService saveService = new(new FakeGameSaveRepository(saveJson));
+            FakeGameIO io = new("1");
 
-            GameState loadedGameState = RunWithConsoleIo("2", () => StartupFlow.Run(saveService), out string output);
+            GameState loadedGameState = StartupFlow.Run(io, saveService);
 
             Assert.Equal("Red", loadedGameState.MainPlayer.Name);
             Assert.Equal("Route 2", loadedGameState.MainPlayer.CurrentRoom.Name);
-            Assert.DoesNotContain("1. New Game", output);
-            Assert.Contains("2. Load Game", output);
-            Assert.Contains("3. Delete Game", output);
-            Assert.Contains("Game loaded.", output);
+            Assert.DoesNotContain("1. New Game", io.OutputText);
+            Assert.Contains("1. Load Game", io.OutputText);
+            Assert.Contains("2. Delete Game", io.OutputText);
+            Assert.DoesNotContain("3. Delete Game", io.OutputText);
+            Assert.Contains("Game loaded.", io.OutputText);
         }
 
         [Fact]
@@ -179,31 +301,53 @@ namespace UnitTest
             string saveJson = GameSaveSerializer.Serialize(GameStateMapper.Capture(savedGameState));
             FakeGameSaveRepository repository = new(saveJson);
             GameSaveService saveService = new(repository);
+            FakeGameIO io = new("2", "yes", "1", "Blue");
 
-            GameState newGameState = RunWithConsoleIo(
-                "3" + Environment.NewLine + "yes" + Environment.NewLine + "1" + Environment.NewLine + "Blue",
-                () => StartupFlow.Run(saveService),
-                out string output);
+            GameState newGameState = StartupFlow.Run(io, saveService);
 
             Assert.Equal("Blue", newGameState.MainPlayer.Name);
             Assert.False(repository.HasSave);
-            Assert.Contains("Are you sure you want to delete?", output);
-            Assert.Contains("Save data deleted.", output);
-            Assert.Contains("1. New Game", output);
+            Assert.Contains("Are you sure you want to delete?", io.OutputText);
+            Assert.Contains("Save data deleted.", io.OutputText);
+            Assert.Contains("1. New Game", io.OutputText);
+            Assert.DoesNotContain("2. Load Game", io.OutputText);
+            Assert.DoesNotContain("3. Delete Game", io.OutputText);
         }
 
         [Fact]
-        public void StartupFlow_LoadWithoutSave_PrintsNoSaveDataFoundAndReturnsToPrompt()
+        public void StartupFlow_DeleteInvalidConfirmation_ReDisplaysConfirmationPrompt()
+        {
+            GameState savedGameState = CreateGameState("Red");
+            string saveJson = GameSaveSerializer.Serialize(GameStateMapper.Capture(savedGameState));
+            FakeGameSaveRepository repository = new(saveJson);
+            GameSaveService saveService = new(repository);
+            FakeGameIO io = new("2", "maybe", "no", "1");
+
+            GameState loadedGameState = StartupFlow.Run(io, saveService);
+
+            int confirmationPromptCount = io.OutputText.Split("Are you sure you want to delete?").Length - 1;
+
+            Assert.Equal("Red", loadedGameState.MainPlayer.Name);
+            Assert.True(repository.HasSave);
+            Assert.Equal(2, confirmationPromptCount);
+            Assert.Contains("Invalid input", io.OutputText);
+            Assert.Contains("Game loaded.", io.OutputText);
+        }
+
+        [Fact]
+        public void StartupFlow_InvalidChoiceWithoutSave_ReDisplaysOnlyNewGameOption()
         {
             GameSaveService saveService = new(new FakeGameSaveRepository(null));
+            FakeGameIO io = new("2", "1", "Blue");
 
-            GameState newGameState = RunWithConsoleIo(
-                "2" + Environment.NewLine + "1" + Environment.NewLine + "Blue",
-                () => StartupFlow.Run(saveService),
-                out string output);
+            GameState newGameState = StartupFlow.Run(io, saveService);
 
             Assert.Equal("Blue", newGameState.MainPlayer.Name);
-            Assert.Contains("No save data found.", output);
+            Assert.Contains("Invalid input", io.OutputText);
+            Assert.DoesNotContain("No save data found.", io.OutputText);
+            Assert.Contains("1. New Game", io.OutputText);
+            Assert.DoesNotContain("2. Load Game", io.OutputText);
+            Assert.DoesNotContain("3. Delete Game", io.OutputText);
         }
 
         private static GameState CreateGameState(string playerName)
@@ -261,63 +405,6 @@ namespace UnitTest
             if (directory != null && Directory.Exists(directory))
             {
                 Directory.Delete(directory, recursive: true);
-            }
-        }
-
-        private static T RunWithConsoleIo<T>(string input, Func<T> action, out string output)
-        {
-            TextReader originalIn = Console.In;
-            TextWriter originalOut = Console.Out;
-            StringReader reader = new(input + Environment.NewLine);
-            StringWriter writer = new(new StringBuilder());
-
-            try
-            {
-                Console.SetIn(reader);
-                Console.SetOut(writer);
-                T result = action();
-                output = writer.ToString();
-                return result;
-            }
-            finally
-            {
-                Console.SetIn(originalIn);
-                Console.SetOut(originalOut);
-                reader.Dispose();
-                writer.Dispose();
-            }
-        }
-
-        private sealed class FakeGameSaveRepository : IGameSaveRepository
-        {
-            private string? mSaveJson;
-
-            public FakeGameSaveRepository(string? saveJson)
-            {
-                mSaveJson = saveJson;
-            }
-
-            public bool HasSave => mSaveJson != null;
-
-            public void Initialize()
-            {
-            }
-
-            public void SaveJson(string saveJson)
-            {
-                mSaveJson = saveJson;
-            }
-
-            public string? LoadJson()
-            {
-                return mSaveJson;
-            }
-
-            public bool DeleteSave()
-            {
-                bool hadSave = mSaveJson != null;
-                mSaveJson = null;
-                return hadSave;
             }
         }
     }

@@ -5,7 +5,7 @@ using Arcadia_v2.Map;
 
 namespace Arcadia_v2
 {
-    // Holds the shared runtime objects that the gameplay loop currently passes across its legacy branches.
+    // Holds the shared runtime objects used across gameplay flows.
     public sealed class GameState
     {
         public GameState(

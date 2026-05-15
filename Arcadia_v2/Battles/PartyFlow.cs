@@ -1,103 +1,66 @@
 #nullable enable
 
-using System;
-
 namespace Arcadia_v2
 {
     // Handles party-order interactions such as swapping active Pokemon positions.
     public static class PartyFlow
     {
-        public static void SwapPokemon(Player main)
+        public static void SwapPokemon(Player main, IGameIO io)
         {
-            string pokeSwap = "";
-            string swap1 = "";
-            string pokeSwap2 = "";
-            string swap2 = "";
-            int a = 0;
-            int b = 0;
-            int pokeIntSize = main.PokemonInventory.Count;
-            bool validPokemon = false;
-            bool validPokemon2 = false;
+            int firstIndex = PromptForPokemonIndex(
+                main,
+                io,
+                "Heres your Pokemon. Who would you like to trade positions with?",
+                showInventory: true);
+            string firstPokemonName = main.PokemonInventory[firstIndex].Name;
 
-            while (swap1 == "")
+            int secondIndex = PromptForPokemonIndex(
+                main,
+                io,
+                $"\nWho would you like to swap {firstPokemonName} with?\n",
+                showInventory: false);
+            string secondPokemonName = main.PokemonInventory[secondIndex].Name;
+
+            io.WriteLine($"You are swapping: {firstPokemonName} and {secondPokemonName} .\n");
+            main.SwapPokemonPositions(firstIndex, secondIndex);
+        }
+
+        private static int PromptForPokemonIndex(Player main, IGameIO io, string prompt, bool showInventory)
+        {
+            while (true)
             {
-                Console.WriteLine("Heres your Pokemon. Who would you like to trade positions with?");
-                Console.WriteLine(main.GetPokemonInventoryDisplay());
-                Console.WriteLine();
+                io.WriteLine(prompt);
 
-                pokeSwap = Program.ReadUpperTrimmedInput();
-
-                for (int i = 0; i <= main.PokemonInventory.Count - 1; ++i)
+                if (showInventory)
                 {
-                    if (main.PokemonInventory[i].Name == pokeSwap)
-                    {
-                        validPokemon = true;
-                        a = i;
-                        break;
-                    }
-                    else if (i >= 3 && pokeIntSize >= i)
-                    {
-                        if (main.PokemonInventory[i - 1].Name == pokeSwap)
-                        {
-                            validPokemon = true;
-                            a = i - 1;
-                            break;
-                        }
-                    }
+                    io.WriteLine(main.GetPokemonInventoryDisplay());
+                    io.WriteLine();
                 }
 
-                if (validPokemon)
+                string pokemonName = Program.ReadUpperTrimmedInput(io);
+                int pokemonIndex = FindPokemonIndexByName(main, pokemonName);
+
+                if (pokemonIndex >= 0)
                 {
-                    swap1 = pokeSwap;
-                    Console.WriteLine("its working.");
+                    return pokemonIndex;
                 }
-                else
+
+                io.WriteLine($"Invalid Pokemon name {pokemonName} .");
+                io.WriteLine("Must type in exact name of pokemon!");
+            }
+        }
+
+        private static int FindPokemonIndexByName(Player main, string pokemonName)
+        {
+            for (int i = 0; i < main.PokemonInventory.Count; ++i)
+            {
+                if (main.PokemonInventory[i].Name == pokemonName)
                 {
-                    Console.WriteLine($"Invalid Pokemon name {pokeSwap} .");
-                    Console.WriteLine("Must type in exact name of pokemon!");
+                    return i;
                 }
             }
 
-            if (validPokemon)
-            {
-                while (swap2 == "")
-                {
-                    Console.WriteLine($"\nWho would you like to swap {swap1} with?\n");
-                    pokeSwap2 = Program.ReadUpperTrimmedInput();
-
-                    for (int i = 0; i <= main.PokemonInventory.Count - 1; ++i)
-                    {
-                        if (main.PokemonInventory[i].Name == pokeSwap2)
-                        {
-                            validPokemon2 = true;
-                            swap2 = pokeSwap2;
-                            b = i;
-                            break;
-                        }
-                        else if (i >= 3 && pokeIntSize >= i)
-                        {
-                            if (main.PokemonInventory[i - 1].Name == pokeSwap2)
-                            {
-                                validPokemon2 = true;
-                                b = i - 1;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!validPokemon2)
-                    {
-                        Console.WriteLine($"Invalid Pokemon name {pokeSwap2} .");
-                        Console.WriteLine("Must type in exact name of pokemon!");
-                    }
-                }
-            }
-
-            if (validPokemon && validPokemon2)
-            {
-                Console.WriteLine($"You are swapping: {swap1} and {swap2} .\n");
-                main.SwapPokemonPositions(a, b);
-            }
+            return -1;
         }
     }
 }

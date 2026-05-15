@@ -17,14 +17,14 @@ namespace Arcadia_v2
         Electric
     }
 
-    // Reference version of a standalone move model for the rebuilt project.
+    // Represents one battle move and its immutable combat values.
     public class Move
     {
         public string Name { get; }
         public MoveType Type { get; }
         public int Power { get; }
 
-        // Legacy split files still reference the original move member names.
+        // Compatibility aliases for callers that use move-specific member names.
         public string MoveName => Name;
         public int MovePower => Power;
 
@@ -46,7 +46,7 @@ namespace Arcadia_v2
         }
     }
 
-    // Reference version of shared predefined moves for the rebuilt project.
+    // Shared predefined moves used by Pokemon factory data and tests.
     public static class MoveData
     {
         // Normal Moves

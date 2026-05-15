@@ -19,7 +19,7 @@ namespace Arcadia_v2
         Dragon
     }
 
-    // Reference version of a cleaner Pokemon model for the rebuilt project.
+    // Represents a Pokemon's current battle-relevant state.
     public class Pokemon
     {
         public int Id { get; }
@@ -64,7 +64,7 @@ namespace Arcadia_v2
             return new Pokemon(Id, Name, Type, Speed, BaseHealth, Health, Level, Moves);
         }
 
-        // Legacy split files still ask each Pokemon to choose a random move slot.
+        // Returns a random one-based move slot for callers that need slot-style selection.
         public int RanNum()
         {
             return Random.Shared.Next(1, Moves.Count + 1);

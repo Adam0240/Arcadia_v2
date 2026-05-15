@@ -1,34 +1,25 @@
 #nullable enable
 
-using System;
-using System.Collections.Generic;
 using Arcadia_v2.Commands;
 using Arcadia_v2.Saves;
 using CommandReader = Arcadia_v2.Commands.Commands;
 
 namespace Arcadia_v2
 {
-    // Handles the legacy menu branch, including healing, badge display, swapping, and gym interaction.
+    // Handles menu actions, including healing, badge display, swapping, and gym interaction.
     public static class MenuFlow
     {
         public static void HandleMenu(
+            IGameIO io,
             GameState gameState,
-            GameSaveService saveService,
-            Player mainPlayer,
-            List<Pokemon> mainPokemon,
-            CompPlayer gymLeader1,
-            CompPlayer gymLeader2,
-            CompPlayer gymLeader3,
-            CompPlayer gymLeader4,
-            CompPlayer arcadiaChampion)
+            GameSaveService saveService)
         {
-            MenuCommandType menuCommand = CommandReader.ReadMenuCommand();
-            int menuOption = CommandReader.GetMenuChoice(menuCommand);
-            string menuChoice = Parser.ToUpperCase(menuCommand.ToString());
+            MenuCommandType menuCommand = CommandReader.ReadMenuCommand(io);
+            Player mainPlayer = gameState.MainPlayer;
 
-            switch (menuOption)
+            switch (menuCommand)
             {
-                case 1:
+                case MenuCommandType.Heal:
                     if (mainPlayer.CurrentRoom.IsTown)
                     {
                         foreach (Pokemon partyPokemon in mainPlayer.PokemonInventory)
@@ -36,47 +27,43 @@ namespace Arcadia_v2
                             partyPokemon.Health = partyPokemon.BaseHealth;
                         }
 
-                        Console.WriteLine("\nAll your Pokemon have been fully restored!\n");
+                        io.WriteLine("\nAll your Pokemon have been fully restored!\n");
                     }
                     else
                     {
-                        Console.WriteLine("Can only heal if your in a town!.");
+                        io.WriteLine("Can only heal if your in a town!.");
                     }
 
                     break;
 
-                case 2:
-                    Console.WriteLine(mainPlayer.GetBadgeDisplay());
+                case MenuCommandType.Bag:
+                    io.WriteLine(mainPlayer.GetBadgeDisplay());
                     break;
 
-                case 3:
-                    PartyFlow.SwapPokemon(mainPlayer);
+                case MenuCommandType.Swap:
+                    PartyFlow.SwapPokemon(mainPlayer, io);
                     break;
 
-                case 4:
+                case MenuCommandType.Gym:
                     GymFlow.HandleGymInteraction(
-                        mainPlayer,
-                        gymLeader1,
-                        gymLeader2,
-                        gymLeader3,
-                        gymLeader4,
-                        arcadiaChampion);
+                        io,
+                        gameState);
 
                     break;
 
-                case 5:
-                    PrintSaveCommandResult(saveService.Save(gameState));
+                case MenuCommandType.Save:
+                    PrintSaveCommandResult(io, saveService.Save(gameState));
                     break;
 
-                case 0:
-                    Console.WriteLine("Invalid menu option.");
+                case MenuCommandType.Invalid:
+                    io.WriteLine("Invalid menu option.");
                     break;
             }
         }
 
-        private static void PrintSaveCommandResult(SaveCommandResult result)
+        private static void PrintSaveCommandResult(IGameIO io, SaveCommandResult result)
         {
-            Console.WriteLine(result.Message);
+            io.WriteLine(result.Message);
         }
     }
 }

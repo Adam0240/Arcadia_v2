@@ -1,10 +1,8 @@
 #nullable enable
 
-using System;
-
 namespace Arcadia_v2
 {
-    // Shared battle helper methods used by the legacy combat flow.
+    // Shared battle helper methods used by combat flows.
     public static partial class Program
     {
         // Damage is clamped at zero here so battle HP never underflows into negative values.
@@ -15,7 +13,7 @@ namespace Arcadia_v2
                 throw new ArgumentOutOfRangeException(nameof(damage), "Damage cannot be negative.");
             }
 
-            target.Health = Math.Max(0, target.Health - damage);
+            BattleEngine.ApplyDamage(target, damage);
         }
     }
 }
