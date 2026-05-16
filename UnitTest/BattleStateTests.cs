@@ -94,7 +94,7 @@ public class BattleStateTests
     [Fact]
     public void HandlePlayerFaintedPokemon_InvalidThenNo_RePromptsWithoutSwapping()
     {
-        Player player = CreateTwoPokemonPlayer();
+        Player player = CreateThreePokemonPlayer();
         player.PokemonInventory[0].Health = 0;
         FakeGameIO io = new("maybe", "no");
 
@@ -110,7 +110,7 @@ public class BattleStateTests
     [Fact]
     public void HandlePlayerFaintedPokemon_InvalidThenYes_RePromptsAndSwapsPokemon()
     {
-        Player player = CreateTwoPokemonPlayer();
+        Player player = CreateThreePokemonPlayer();
         player.PokemonInventory[0].Health = 0;
         FakeGameIO io = new("maybe", "yes", "umbreon", "espeon");
 
@@ -121,6 +121,37 @@ public class BattleStateTests
         Assert.Contains("Invalid input.", io.OutputText);
         Assert.Equal("ESPEON", player.PokemonInventory[0].Name);
         Assert.Equal("UMBREON", player.PokemonInventory[1].Name);
+    }
+
+    [Fact]
+    public void HandlePlayerFaintedPokemon_WithTwoPokemon_AutoSwitchesToHealthyPokemonWithoutPrompting()
+    {
+        Player player = CreateTwoPokemonPlayer();
+        player.PokemonInventory[0].Health = 0;
+        FakeGameIO io = new();
+
+        bool switched = BattleHelpers.HandlePlayerFaintedPokemon(io, player, "Would you like to switch Pokemon?");
+
+        Assert.True(switched);
+        Assert.Equal("ESPEON", player.PokemonInventory[0].Name);
+        Assert.Equal("UMBREON", player.PokemonInventory[1].Name);
+        Assert.DoesNotContain("Would you like to switch Pokemon?", io.OutputText);
+    }
+
+    [Fact]
+    public void HandlePlayerFaintedPokemon_WithTwoFaintedPokemon_DoesNotAutoSwitch()
+    {
+        Player player = CreateTwoPokemonPlayer();
+        player.PokemonInventory[0].Health = 0;
+        player.PokemonInventory[1].Health = 0;
+        FakeGameIO io = new();
+
+        bool switched = BattleHelpers.HandlePlayerFaintedPokemon(io, player, "Would you like to switch Pokemon?");
+
+        Assert.False(switched);
+        Assert.Equal("UMBREON", player.PokemonInventory[0].Name);
+        Assert.Equal("ESPEON", player.PokemonInventory[1].Name);
+        Assert.DoesNotContain("Would you like to switch Pokemon?", io.OutputText);
     }
 
     [Theory]
@@ -158,6 +189,93 @@ public class BattleStateTests
     }
 
     [Fact]
+    public void BattleEngine_CanAutoSwapTwoPokemonParty_ReturnsTrueOnlyForTwoPokemonParty()
+    {
+        Assert.True(BattleEngine.CanAutoSwapTwoPokemonParty(CreateTwoPokemonPlayer()));
+        Assert.False(BattleEngine.CanAutoSwapTwoPokemonParty(CreateThreePokemonPlayer()));
+    }
+
+    [Fact]
+    public void BattleEngine_GetOnlyOtherPokemonIndex_ReturnsOtherIndexForTwoPokemonParty()
+    {
+        Player player = CreateTwoPokemonPlayer();
+
+        Assert.Equal(1, BattleEngine.GetOnlyOtherPokemonIndex(player, player.PokemonInventory[0]));
+        Assert.Equal(0, BattleEngine.GetOnlyOtherPokemonIndex(player, player.PokemonInventory[1]));
+    }
+
+    [Fact]
+    public void BattleEngine_TryAutoSwitchTwoPokemonParty_ReturnsFalseWhenReplacementIsFainted()
+    {
+        Player player = CreateTwoPokemonPlayer();
+        player.PokemonInventory[0].Health = 0;
+        player.PokemonInventory[1].Health = 0;
+
+        bool switched = BattleEngine.TryAutoSwitchTwoPokemonParty(player, player.PokemonInventory[0]);
+
+        Assert.False(switched);
+        Assert.Equal("UMBREON", player.PokemonInventory[0].Name);
+        Assert.Equal("ESPEON", player.PokemonInventory[1].Name);
+    }
+
+    [Fact]
+    public void BattleEngine_TryCatchWildPokemon_AddsPokemonToPartyAndRemovesEncounter()
+    {
+        Player player = CreateTwoPokemonPlayer();
+        Pokemon wildPokemon = new Pokemon(3, "PIDGEY", PokemonType.Flying, 7, 10, 0, 1, new[] { MoveData.Peck });
+        player.CurrentRoom.AddEncounterPokemon(wildPokemon);
+
+        bool caught = BattleEngine.TryCatchWildPokemon(player, wildPokemon);
+
+        Assert.True(caught);
+        Assert.Contains(wildPokemon, player.PokemonInventory);
+        Assert.DoesNotContain(wildPokemon, player.CurrentRoom.EncounterPokemon);
+    }
+
+    [Fact]
+    public void BattleEngine_TryCatchWildPokemon_ReturnsFalseWhenPartyIsFull()
+    {
+        Player player = CreateFullPartyPlayer();
+        Pokemon wildPokemon = new Pokemon(7, "PIDGEY", PokemonType.Flying, 7, 10, 0, 1, new[] { MoveData.Peck });
+        player.CurrentRoom.AddEncounterPokemon(wildPokemon);
+
+        bool caught = BattleEngine.TryCatchWildPokemon(player, wildPokemon);
+
+        Assert.False(caught);
+        Assert.DoesNotContain(wildPokemon, player.PokemonInventory);
+        Assert.Contains(wildPokemon, player.CurrentRoom.EncounterPokemon);
+    }
+
+    [Fact]
+    public void BattleEngine_ReleasePokemonAndCatchWildPokemon_SwapsPartyAndEncounterPokemon()
+    {
+        Player player = CreateFullPartyPlayer();
+        Pokemon pokemonToRelease = player.PokemonInventory[0];
+        Pokemon wildPokemon = new Pokemon(7, "PIDGEY", PokemonType.Flying, 7, 10, 0, 1, new[] { MoveData.Peck });
+        player.CurrentRoom.AddEncounterPokemon(wildPokemon);
+
+        BattleEngine.ReleasePokemonAndCatchWildPokemon(player, pokemonToRelease, wildPokemon);
+
+        Assert.DoesNotContain(pokemonToRelease, player.PokemonInventory);
+        Assert.Contains(wildPokemon, player.PokemonInventory);
+        Assert.Contains(pokemonToRelease, player.CurrentRoom.EncounterPokemon);
+        Assert.DoesNotContain(wildPokemon, player.CurrentRoom.EncounterPokemon);
+        Assert.Equal(20, pokemonToRelease.Health);
+    }
+
+    [Fact]
+    public void BattleEngine_LetWildPokemonRunAway_RemovesEncounterPokemon()
+    {
+        Player player = CreateTwoPokemonPlayer();
+        Pokemon wildPokemon = new Pokemon(3, "PIDGEY", PokemonType.Flying, 7, 10, 0, 1, new[] { MoveData.Peck });
+        player.CurrentRoom.AddEncounterPokemon(wildPokemon);
+
+        BattleEngine.LetWildPokemonRunAway(player, wildPokemon);
+
+        Assert.DoesNotContain(wildPokemon, player.CurrentRoom.EncounterPokemon);
+    }
+
+    [Fact]
     public void BattleState_CreateWildBattle_UsesCurrentPlayerLeadAndWildPokemon()
     {
         Player player = CreateTwoPokemonPlayer();
@@ -167,6 +285,22 @@ public class BattleStateTests
 
         Assert.Equal("UMBREON", battleState.PlayerPokemon.Name);
         Assert.Equal("PIDGEY", battleState.OpponentPokemon.Name);
+        Assert.False(battleState.IsOver);
+    }
+
+    [Fact]
+    public void BattleState_CreateWildBattle_SkipsFaintedPlayerLeadPokemon()
+    {
+        Player player = CreateTwoPokemonPlayer();
+        player.AddPokemon(new Pokemon(3, "FLAREON", PokemonType.Fire, 7, 10, 10, 1, new[] { MoveData.Ember }));
+        player.PokemonInventory[0].Health = 0;
+        player.PokemonInventory[1].Health = 0;
+        Pokemon wildPokemon = new Pokemon(4, "PIDGEY", PokemonType.Flying, 7, 10, 10, 1, new[] { MoveData.Peck });
+
+        BattleState battleState = BattleState.CreateWildBattle(player, wildPokemon);
+
+        Assert.Equal(2, battleState.PlayerActiveIndex);
+        Assert.Equal("FLAREON", battleState.PlayerPokemon.Name);
         Assert.False(battleState.IsOver);
     }
 
@@ -251,6 +385,22 @@ public class BattleStateTests
         Player player = new Player("Trainer", new Map().StartRoom);
         player.AddPokemon(new Pokemon(1, "UMBREON", PokemonType.Dark, 7, 10, 10, 1, new[] { MoveData.Bite }));
         player.AddPokemon(new Pokemon(2, "ESPEON", PokemonType.Psychic, 7, 10, 10, 1, new[] { MoveData.Psychic }));
+        return player;
+    }
+
+    private static Player CreateThreePokemonPlayer()
+    {
+        Player player = CreateTwoPokemonPlayer();
+        player.AddPokemon(new Pokemon(3, "FLAREON", PokemonType.Fire, 7, 10, 10, 1, new[] { MoveData.Ember }));
+        return player;
+    }
+
+    private static Player CreateFullPartyPlayer()
+    {
+        Player player = CreateThreePokemonPlayer();
+        player.AddPokemon(new Pokemon(4, "VAPOREON", PokemonType.Water, 7, 10, 10, 1, new[] { MoveData.WaterGun }));
+        player.AddPokemon(new Pokemon(5, "LEAFEON", PokemonType.Grass, 7, 10, 10, 1, new[] { MoveData.VineWhip }));
+        player.AddPokemon(new Pokemon(6, "JOLTEON", PokemonType.Electric, 7, 10, 10, 1, new[] { MoveData.Spark }));
         return player;
     }
 

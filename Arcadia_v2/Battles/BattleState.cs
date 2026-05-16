@@ -39,18 +39,36 @@ namespace Arcadia_v2
         public static BattleState CreateTrainerBattle(Player player, GenericPlayer opponent)
         {
             ArgumentNullException.ThrowIfNull(opponent);
-            return new BattleState(player, opponent, wildPokemon: null);
+            BattleState battleState = new BattleState(player, opponent, wildPokemon: null);
+            battleState.UseFirstHealthyPlayerPokemon();
+            return battleState;
         }
 
         public static BattleState CreateWildBattle(Player player, Pokemon wildPokemon)
         {
             ArgumentNullException.ThrowIfNull(wildPokemon);
-            return new BattleState(player, opponent: null, wildPokemon);
+            BattleState battleState = new BattleState(player, opponent: null, wildPokemon);
+            battleState.UseFirstHealthyPlayerPokemon();
+            return battleState;
         }
 
         public void UseFirstPlayerPokemon()
         {
             PlayerActiveIndex = 0;
+        }
+
+        public bool UseFirstHealthyPlayerPokemon()
+        {
+            int nextPokemonIndex = BattleEngine.GetNextHealthyPokemonIndex(mPlayer);
+
+            if (nextPokemonIndex == -1)
+            {
+                PlayerActiveIndex = 0;
+                return false;
+            }
+
+            PlayerActiveIndex = nextPokemonIndex;
+            return true;
         }
 
         public bool TrySwitchOpponentToNextHealthyPokemon(int startIndex)

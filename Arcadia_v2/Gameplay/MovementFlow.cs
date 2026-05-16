@@ -32,7 +32,7 @@ namespace Arcadia_v2
                 return;
             }
 
-            if (!CanEnterRoom(io, mainPlayer, arcadiaChampion, destination))
+            if (!CanEnterRoom(io, mainPlayer, arcadiaChampion, mainPlayer.CurrentRoom, destination))
             {
                 return;
             }
@@ -54,9 +54,9 @@ namespace Arcadia_v2
         }
 
         // Checks whether the player is allowed to enter the destination room.
-        private static bool CanEnterRoom(IGameIO io, Player mainPlayer, CompPlayer arcadiaChampion, Room destination)
+        private static bool CanEnterRoom(IGameIO io, Player mainPlayer, CompPlayer arcadiaChampion, Room currentRoom, Room destination)
         {
-            if (IsBadgeLocked(io, mainPlayer, destination))
+            if (IsBadgeLocked(io, mainPlayer, currentRoom, destination))
             {
                 return false;
             }
@@ -71,22 +71,34 @@ namespace Arcadia_v2
         }
 
         // Checks whether a destination room is locked behind a badge requirement.
-        private static bool IsBadgeLocked(IGameIO io, Player mainPlayer, Room destination)
+        private static bool IsBadgeLocked(IGameIO io, Player mainPlayer, Room currentRoom, Room destination)
         {
-            if (destination.RequiredBadgesToEnter <= 0)
+            int requiredBadges = GetRequiredBadgesForMovement(currentRoom, destination);
+
+            if (requiredBadges <= 0)
             {
                 return false;
             }
 
-            if (mainPlayer.Badges.Count >= destination.RequiredBadgesToEnter)
+            if (mainPlayer.Badges.Count >= requiredBadges)
             {
                 return false;
             }
 
-            io.WriteLine($"You need to obtain {destination.RequiredBadgesToEnter} badge(s) before this way unlocks!");
+            io.WriteLine($"You need to obtain {requiredBadges} badge(s) before this way unlocks!");
             io.WriteLine($"You currently have {mainPlayer.Badges.Count} total badges.");
 
             return true;
+        }
+
+        private static int GetRequiredBadgesForMovement(Room currentRoom, Room destination)
+        {
+            if (currentRoom.Name == "Route 4" && destination.Name == "New Nucleon")
+            {
+                return 1;
+            }
+
+            return destination.RequiredBadgesToEnter;
         }
 
         // Moves the player and displays the new room.

@@ -27,20 +27,21 @@ public class ProgramFlowTests
         Assert.Contains("Enter your name", io.OutputText);
     }
 
-    // Verifies that swapping two valid Pokemon names updates the active party order.
+    // Verifies that a two-Pokemon party swaps immediately without asking for Pokemon names.
     [Fact]
-    public void SwapPokemon_WithTwoValidNames_SwapsPartyPositions()
+    public void SwapPokemon_WithTwoPokemon_AutoSwapsPartyPositions()
     {
         Player player = new Player("Trainer", new Map().StartRoom);
         player.AddPokemon(new Pokemon(1, "UMBREON", PokemonType.Dark, 7, 10, 10, 1, new[] { MoveData.Bite }));
         player.AddPokemon(new Pokemon(2, "ESPEON", PokemonType.Psychic, 7, 10, 10, 1, new[] { MoveData.Psychic }));
-        FakeGameIO io = new("umbreon", "espeon");
+        FakeGameIO io = new();
 
         PartyFlow.SwapPokemon(player, io);
 
         Assert.Equal("ESPEON", player.PokemonInventory[0].Name);
         Assert.Equal("UMBREON", player.PokemonInventory[1].Name);
-        Assert.DoesNotContain("its working.", io.OutputText);
+        Assert.Contains("You are swapping: UMBREON and ESPEON .", io.OutputText);
+        Assert.DoesNotContain("Who would you like to trade positions with?", io.OutputText);
     }
 
     [Fact]

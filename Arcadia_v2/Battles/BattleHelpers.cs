@@ -85,16 +85,24 @@ namespace Arcadia_v2
             PrintMoveResult(io, string.Empty, opponentPokemon, defenderLabel, playerPokemon, result);
         }
 
-        public static void HandlePlayerFaintedPokemon(IGameIO io, Player mainPlayer, string prompt)
+        public static bool HandlePlayerFaintedPokemon(IGameIO io, Player mainPlayer, string prompt)
         {
-            Pokemon playerPokemon = mainPlayer.PokemonInventory[0];
+            return HandlePlayerFaintedPokemon(io, mainPlayer, mainPlayer.PokemonInventory[0], prompt);
+        }
 
+        public static bool HandlePlayerFaintedPokemon(IGameIO io, Player mainPlayer, Pokemon playerPokemon, string prompt)
+        {
             if (!BattleEngine.IsFainted(playerPokemon))
             {
-                return;
+                return false;
             }
 
             io.WriteLine($"{playerPokemon.Name} fainted.");
+
+            if (BattleEngine.CanAutoSwapTwoPokemonParty(mainPlayer))
+            {
+                return BattleEngine.TryAutoSwitchTwoPokemonParty(mainPlayer, playerPokemon);
+            }
 
             while (true)
             {
@@ -104,12 +112,12 @@ namespace Arcadia_v2
                 if (IsYes(answer))
                 {
                     PartyFlow.SwapPokemon(mainPlayer, io);
-                    return;
+                    return true;
                 }
 
                 if (IsNo(answer))
                 {
-                    return;
+                    return false;
                 }
 
                 io.WriteLine("Invalid input.");

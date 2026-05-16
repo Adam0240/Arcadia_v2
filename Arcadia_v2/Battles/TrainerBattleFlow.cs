@@ -19,6 +19,12 @@ namespace Arcadia_v2
 
         public static void Run(IGameIO io, Player main, CompPlayer opponent)
         {
+            if (!BattleEngine.HasUsablePokemon(main))
+            {
+                io.WriteLine("All pokemon in your party are fainted.");
+                return;
+            }
+
             // Gym leaders rebuild a fresh runtime team here so earlier attempts cannot carry over damaged state.
             opponent.PrepareForBattle();
             BattleState battleState = BattleState.CreateTrainerBattle(main, opponent);
@@ -67,8 +73,11 @@ namespace Arcadia_v2
             Pokemon opponentPokemon = battleState.OpponentPokemon;
 
             BattleHelpers.HandleOpponentTurn(io, opponentPokemon, battleState.PlayerPokemon, $"{opponentPokemon.Name} Move", string.Empty);
-            BattleHelpers.HandlePlayerFaintedPokemon(io, main, "Would you like to switch Pokemon?");
-            battleState.UseFirstPlayerPokemon();
+
+            if (BattleHelpers.HandlePlayerFaintedPokemon(io, main, battleState.PlayerPokemon, "Would you like to switch Pokemon?"))
+            {
+                battleState.UseFirstHealthyPlayerPokemon();
+            }
         }
 
         // Handles the opponent sending out another Pokemon after the active one faints.

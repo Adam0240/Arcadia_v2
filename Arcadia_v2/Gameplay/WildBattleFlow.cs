@@ -10,6 +10,12 @@ namespace Arcadia_v2
         {
             Player mainPlayer = gameState.MainPlayer;
 
+            if (!BattleEngine.HasUsablePokemon(mainPlayer))
+            {
+                io.WriteLine("All pokemon in your party are fainted.");
+                return;
+            }
+
             if (!mainPlayer.CurrentRoom.HasEncounterPokemon())
             {
                 io.WriteLine("No pokemon nearby");
@@ -60,8 +66,11 @@ namespace Arcadia_v2
             Pokemon wildPokemon = battleState.OpponentPokemon;
 
             BattleHelpers.HandleOpponentTurn(io, wildPokemon, battleState.PlayerPokemon, $"{wildPokemon.Name} Move", string.Empty);
-            BattleHelpers.HandlePlayerFaintedPokemon(io, mainPlayer, "Would you like to switch Pokemon? (YES/NO)");
-            battleState.UseFirstPlayerPokemon();
+
+            if (BattleHelpers.HandlePlayerFaintedPokemon(io, mainPlayer, battleState.PlayerPokemon, "Would you like to switch Pokemon? (YES/NO)"))
+            {
+                battleState.UseFirstHealthyPlayerPokemon();
+            }
         }
 
         // Finishes the wild battle after either the player's Pokemon or the wild Pokemon faints.
@@ -146,12 +155,9 @@ namespace Arcadia_v2
 
             io.WriteLine($"You are releasing: {pokemonToRelease.Name}");
 
-            pokemonToRelease.Health = 20;
+            BattleEngine.ReleasePokemonAndCatchWildPokemon(mainPlayer, pokemonToRelease, wildPokemon);
 
-            mainPlayer.CurrentRoom.AddEncounterPokemon(pokemonToRelease);
-            mainPlayer.RemovePokemon(pokemonToRelease);
-
-            AddCaughtPokemon(io, mainPlayer, wildPokemon);
+            io.WriteLine($"You caught {wildPokemon.Name}!");
         }
 
         // Keeps asking until the player enters the name of a Pokemon currently in their party.
@@ -190,8 +196,7 @@ namespace Arcadia_v2
         // Adds the wild Pokemon to the player's party and removes it from the room.
         private static void AddCaughtPokemon(IGameIO io, Player mainPlayer, Pokemon wildPokemon)
         {
-            mainPlayer.AddPokemon(wildPokemon);
-            mainPlayer.CurrentRoom.RemoveEncounterPokemon(wildPokemon);
+            BattleEngine.TryCatchWildPokemon(mainPlayer, wildPokemon);
 
             io.WriteLine($"You caught {wildPokemon.Name}!");
         }
@@ -199,8 +204,8 @@ namespace Arcadia_v2
         // Removes the wild Pokemon from the room after the player chooses not to catch it.
         private static void LetWildPokemonRunAway(IGameIO io, Player mainPlayer, Pokemon wildPokemon)
         {
+            BattleEngine.LetWildPokemonRunAway(mainPlayer, wildPokemon);
             io.WriteLine($"{wildPokemon.Name} ran away!");
-            mainPlayer.CurrentRoom.RemoveEncounterPokemon(wildPokemon);
         }
 
     }

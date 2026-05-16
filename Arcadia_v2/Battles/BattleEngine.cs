@@ -108,6 +108,89 @@ namespace Arcadia_v2
             return -1;
         }
 
+        public static bool CanAutoSwapTwoPokemonParty(GenericPlayer player)
+        {
+            ArgumentNullException.ThrowIfNull(player);
+            return player.PokemonInventory.Count == 2;
+        }
+
+        public static int GetOnlyOtherPokemonIndex(GenericPlayer player, Pokemon activePokemon)
+        {
+            ArgumentNullException.ThrowIfNull(player);
+            ArgumentNullException.ThrowIfNull(activePokemon);
+
+            if (!CanAutoSwapTwoPokemonParty(player))
+            {
+                return -1;
+            }
+
+            if (ReferenceEquals(player.PokemonInventory[0], activePokemon))
+            {
+                return 1;
+            }
+
+            if (ReferenceEquals(player.PokemonInventory[1], activePokemon))
+            {
+                return 0;
+            }
+
+            return -1;
+        }
+
+        public static bool TryAutoSwitchTwoPokemonParty(Player player, Pokemon activePokemon)
+        {
+            ArgumentNullException.ThrowIfNull(player);
+            ArgumentNullException.ThrowIfNull(activePokemon);
+
+            int otherPokemonIndex = GetOnlyOtherPokemonIndex(player, activePokemon);
+
+            if (otherPokemonIndex == -1 || IsFainted(player.PokemonInventory[otherPokemonIndex]))
+            {
+                return false;
+            }
+
+            int activePokemonIndex = otherPokemonIndex == 0 ? 1 : 0;
+            player.SwapPokemonPositions(activePokemonIndex, otherPokemonIndex);
+            return true;
+        }
+
+        public static bool TryCatchWildPokemon(Player player, Pokemon wildPokemon)
+        {
+            ArgumentNullException.ThrowIfNull(player);
+            ArgumentNullException.ThrowIfNull(wildPokemon);
+
+            if (player.PokemonInventory.Count >= 6)
+            {
+                return false;
+            }
+
+            player.AddPokemon(wildPokemon);
+            player.CurrentRoom.RemoveEncounterPokemon(wildPokemon);
+            return true;
+        }
+
+        public static void ReleasePokemonAndCatchWildPokemon(Player player, Pokemon pokemonToRelease, Pokemon wildPokemon)
+        {
+            ArgumentNullException.ThrowIfNull(player);
+            ArgumentNullException.ThrowIfNull(pokemonToRelease);
+            ArgumentNullException.ThrowIfNull(wildPokemon);
+
+            pokemonToRelease.Health = 20;
+            player.CurrentRoom.AddEncounterPokemon(pokemonToRelease);
+            player.RemovePokemon(pokemonToRelease);
+
+            player.AddPokemon(wildPokemon);
+            player.CurrentRoom.RemoveEncounterPokemon(wildPokemon);
+        }
+
+        public static void LetWildPokemonRunAway(Player player, Pokemon wildPokemon)
+        {
+            ArgumentNullException.ThrowIfNull(player);
+            ArgumentNullException.ThrowIfNull(wildPokemon);
+
+            player.CurrentRoom.RemoveEncounterPokemon(wildPokemon);
+        }
+
         private static BattleMoveResult RestoreHealth(Pokemon pokemon, Move move)
         {
             BattleMoveResult result = RestoreHealth(pokemon, move.Power);

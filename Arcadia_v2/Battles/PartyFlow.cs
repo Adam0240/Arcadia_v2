@@ -7,20 +7,31 @@ namespace Arcadia_v2
     {
         public static void SwapPokemon(Player main, IGameIO io)
         {
+            if (BattleEngine.CanAutoSwapTwoPokemonParty(main))
+            {
+                SwapPokemonByIndex(main, io, firstIndex: 0, secondIndex: 1);
+                return;
+            }
+
             int firstIndex = PromptForPokemonIndex(
                 main,
                 io,
                 "Heres your Pokemon. Who would you like to trade positions with?",
                 showInventory: true);
-            string firstPokemonName = main.PokemonInventory[firstIndex].Name;
 
             int secondIndex = PromptForPokemonIndex(
                 main,
                 io,
-                $"\nWho would you like to swap {firstPokemonName} with?\n",
+                $"\nWho would you like to swap {main.PokemonInventory[firstIndex].Name} with?\n",
                 showInventory: false);
-            string secondPokemonName = main.PokemonInventory[secondIndex].Name;
 
+            SwapPokemonByIndex(main, io, firstIndex, secondIndex);
+        }
+
+        private static void SwapPokemonByIndex(Player main, IGameIO io, int firstIndex, int secondIndex)
+        {
+            string firstPokemonName = main.PokemonInventory[firstIndex].Name;
+            string secondPokemonName = main.PokemonInventory[secondIndex].Name;
             io.WriteLine($"You are swapping: {firstPokemonName} and {secondPokemonName} .\n");
             main.SwapPokemonPositions(firstIndex, secondIndex);
         }
