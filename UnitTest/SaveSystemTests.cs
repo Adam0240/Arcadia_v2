@@ -100,7 +100,7 @@ namespace UnitTest
                 {
                     new()
                     {
-                        Name = "Route 1",
+                        Name = "Road 1",
                         EncounterPokemon = new List<PokemonSaveState>
                         {
                             new() { Id = 3, Name = "PIDGEY", Health = 12 }
@@ -144,10 +144,10 @@ namespace UnitTest
             Pokemon playerPokemon = gameState.MainPlayer.PokemonInventory[0];
             playerPokemon.Health = 7;
 
-            gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Route 2"));
+            gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Road 2"));
             gameState.MainPlayer.AddBadge("Grass Badge");
             gameState.GymLeader1.Defeated = true;
-            gameState.GameMap.GetRoom("Route 1").RestoreEncounterPokemon(new[] { GameData.CreatePokemon()[4] });
+            gameState.GameMap.GetRoom("Road 1").RestoreEncounterPokemon(new[] { GameData.CreatePokemon()[4] });
 
             GameSaveState captured = GameStateMapper.Capture(gameState);
 
@@ -155,17 +155,17 @@ namespace UnitTest
             gameState.MainPlayer.MoveTo(gameState.GameMap.StartRoom);
             gameState.MainPlayer.RestoreBadges(Array.Empty<string>());
             gameState.MainPlayer.RestorePokemonInventory(new[] { GameData.CreatePokemon()[5] });
-            gameState.GameMap.GetRoom("Route 1").RestoreEncounterPokemon(Array.Empty<Pokemon>());
+            gameState.GameMap.GetRoom("Road 1").RestoreEncounterPokemon(Array.Empty<Pokemon>());
             gameState.GymLeader1.Defeated = false;
 
             GameStateMapper.Apply(gameState, captured);
 
             Assert.Equal("Red", gameState.MainPlayer.Name);
-            Assert.Equal("Route 2", gameState.MainPlayer.CurrentRoom.Name);
+            Assert.Equal("Road 2", gameState.MainPlayer.CurrentRoom.Name);
             Assert.Equal("Grass Badge", gameState.MainPlayer.Badges[0]);
             Assert.Equal(playerPokemon.Id, gameState.MainPlayer.PokemonInventory[0].Id);
             Assert.Equal(7, gameState.MainPlayer.PokemonInventory[0].Health);
-            Assert.Single(gameState.GameMap.GetRoom("Route 1").EncounterPokemon);
+            Assert.Single(gameState.GameMap.GetRoom("Road 1").EncounterPokemon);
             Assert.True(gameState.GymLeader1.Defeated);
         }
 
@@ -278,7 +278,7 @@ namespace UnitTest
         public void StartupFlow_WithSave_LoadsSavedGameWithoutShowingNewGameOption()
         {
             GameState savedGameState = CreateGameState("Red");
-            savedGameState.MainPlayer.MoveTo(savedGameState.GameMap.GetRoom("Route 2"));
+            savedGameState.MainPlayer.MoveTo(savedGameState.GameMap.GetRoom("Road 2"));
             string saveJson = GameSaveSerializer.Serialize(GameStateMapper.Capture(savedGameState));
             GameSaveService saveService = new(new FakeGameSaveRepository(saveJson));
             FakeGameIO io = new("1");
@@ -286,7 +286,7 @@ namespace UnitTest
             GameState loadedGameState = StartupFlow.Run(io, saveService);
 
             Assert.Equal("Red", loadedGameState.MainPlayer.Name);
-            Assert.Equal("Route 2", loadedGameState.MainPlayer.CurrentRoom.Name);
+            Assert.Equal("Road 2", loadedGameState.MainPlayer.CurrentRoom.Name);
             Assert.DoesNotContain("1. New Game", io.OutputText);
             Assert.Contains("1. Load Game", io.OutputText);
             Assert.Contains("2. Delete Game", io.OutputText);

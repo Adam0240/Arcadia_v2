@@ -7,7 +7,7 @@ public class WildBattleFlowTests
     [Fact]
     public void HandleWildBattle_CatchPokemon_AddsPokemonToPartyAndRemovesEncounter()
     {
-        GameState gameState = CreateRouteOneWildBattle();
+        GameState gameState = CreateRoadOneWildBattle();
         Pokemon wildPokemon = gameState.MainPlayer.CurrentRoom.EncounterPokemon[0];
         wildPokemon.Health = 1;
         FakeGameIO io = new("tackle", "yes");
@@ -22,7 +22,7 @@ public class WildBattleFlowTests
     [Fact]
     public void HandleWildBattle_FullPartyInvalidReleaseAnswer_RePromptsAndLetsWildPokemonRunAway()
     {
-        GameState gameState = CreateRouteOneWildBattle();
+        GameState gameState = CreateRoadOneWildBattle();
         AddPokemonUntilPartyIsFull(gameState.MainPlayer);
 
         Pokemon wildPokemon = gameState.MainPlayer.CurrentRoom.EncounterPokemon[0];
@@ -42,7 +42,7 @@ public class WildBattleFlowTests
     [Fact]
     public void HandleWildBattle_FullPartyReleasePokemon_CatchesWildPokemonAndReturnsReleasedPokemonToRoom()
     {
-        GameState gameState = CreateRouteOneWildBattle();
+        GameState gameState = CreateRoadOneWildBattle();
         AddPokemonUntilPartyIsFull(gameState.MainPlayer);
         Pokemon releasedPokemon = gameState.MainPlayer.PokemonInventory[0];
         Pokemon wildPokemon = gameState.MainPlayer.CurrentRoom.EncounterPokemon[0];
@@ -62,7 +62,7 @@ public class WildBattleFlowTests
     [Fact]
     public void HandleWildBattle_NoCatch_RemovesEncounterPokemon()
     {
-        GameState gameState = CreateRouteOneWildBattle();
+        GameState gameState = CreateRoadOneWildBattle();
         Pokemon wildPokemon = gameState.MainPlayer.CurrentRoom.EncounterPokemon[0];
         wildPokemon.Health = 1;
         FakeGameIO io = new("tackle", "no");
@@ -77,7 +77,7 @@ public class WildBattleFlowTests
     [Fact]
     public void HandleWildBattle_WhenAllPlayerPokemonAreFainted_PrintsPartyFaintedMessage()
     {
-        GameState gameState = CreateRouteOneWildBattle();
+        GameState gameState = CreateRoadOneWildBattle();
         foreach (Pokemon pokemon in gameState.MainPlayer.PokemonInventory)
         {
             pokemon.Health = 0;
@@ -91,10 +91,10 @@ public class WildBattleFlowTests
         Assert.DoesNotContain("A wild", io.OutputText);
     }
 
-    private static GameState CreateRouteOneWildBattle()
+    private static GameState CreateRoadOneWildBattle()
     {
         GameState gameState = GameSetup.CreateForLoad();
-        gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Route 1"));
+        gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Road 1"));
         return gameState;
     }
 

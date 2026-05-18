@@ -10,7 +10,7 @@ namespace UnitTest
         {
             Map map = new();
 
-            Assert.Equal("Professor's Lab", map.StartRoom.Name);
+            Assert.Equal("Maia's Stable", map.StartRoom.Name);
         }
 
         // Checks that the start room connects north to Ikena.
@@ -23,14 +23,14 @@ namespace UnitTest
             Assert.Equal("Ikena", map.StartRoom.North!.Name);
         }
 
-        // Checks that the room north of the start room links back south to the start room.
+        // Checks that the starting room follows the one-way opening from the map spec.
         [Fact]
-        public void Constructor_CreatesReciprocalNorthSouthConnection()
+        public void Constructor_DoesNotLinkIkenaBackToStartRoom()
         {
             Map map = new();
 
             Assert.NotNull(map.StartRoom.North);
-            Assert.Same(map.StartRoom, map.StartRoom.North!.South);
+            Assert.NotSame(map.StartRoom, map.StartRoom.North!.South);
         }
 
         // Checks that each special room property points to the expected named room in the updated map.
@@ -42,8 +42,8 @@ namespace UnitTest
             Assert.Equal("Oak Pass", map.GymLeader1Room.Name);
             Assert.Equal("New Nucleon", map.GymLeader2Room.Name);
             Assert.Equal("Ikena", map.GymLeader3Room.Name);
-            Assert.Equal("Dracoton", map.GymLeader4Room.Name);
-            Assert.Equal("Championships", map.ChampionRoom.Name);
+            Assert.Equal("Wyrmrest", map.GymLeader4Room.Name);
+            Assert.Equal("Guardian's Tower", map.ChampionRoom.Name);
         }
 
         // Checks that GetRoom returns the same room instance stored in the map properties.
@@ -52,24 +52,37 @@ namespace UnitTest
         {
             Map map = new();
 
-            Assert.Same(map.StartRoom, map.GetRoom("Professor's Lab"));
+            Assert.Same(map.StartRoom, map.GetRoom("Maia's Stable"));
             Assert.Same(map.GymLeader1Room, map.GetRoom("Oak Pass"));
-            Assert.Same(map.ChampionRoom, map.GetRoom("Championships"));
+            Assert.Same(map.ChampionRoom, map.GetRoom("Guardian's Tower"));
         }
 
-        // Checks that Oak Pass now uses reciprocal east-west links with Route 2 and Route 3.
+        // Checks the updated vertical Road 2, Oak Pass, Road 3 chain.
         [Fact]
-        public void Constructor_LinksOakPassReciprocallyWithAdjacentRoutes()
+        public void Constructor_LinksOakPassWithAdjacentRoads()
         {
             Map map = new();
             Room oakPass = map.GetRoom("Oak Pass");
 
-            Assert.NotNull(oakPass.East);
-            Assert.NotNull(oakPass.West);
-            Assert.Equal("Route 2", oakPass.East!.Name);
-            Assert.Equal("Route 3", oakPass.West!.Name);
-            Assert.Same(oakPass, oakPass.East.West);
-            Assert.Same(oakPass, oakPass.West.East);
+            Assert.NotNull(oakPass.North);
+            Assert.NotNull(oakPass.South);
+            Assert.Equal("Road 2", oakPass.North!.Name);
+            Assert.Equal("Road 3", oakPass.South!.Name);
+            Assert.Same(oakPass, oakPass.North.South);
+            Assert.Same(oakPass, oakPass.South.North);
+        }
+
+        // Checks the new eastern map branch through Wyrmrest and Nucleon.
+        [Fact]
+        public void Constructor_LinksRoadSevenToNucleonBranch()
+        {
+            Map map = new();
+
+            Assert.Equal("Wyrmrest", map.GetRoom("Road 7").South!.Name);
+            Assert.Equal("Mountains", map.GetRoom("Wyrmrest").South!.Name);
+            Assert.Equal("Radioactive Way", map.GetRoom("Mountains").South!.Name);
+            Assert.Equal("Nucleon", map.GetRoom("Radioactive Way").South!.Name);
+            Assert.Equal("Road 5", map.GetRoom("Nucleon").West!.Name);
         }
 
         // Checks that requesting an unknown room throws a clear argument exception.
@@ -88,8 +101,9 @@ namespace UnitTest
         {
             Map map = new();
 
-            Assert.Equal(15, map.Rooms.Count);
-            Assert.True(map.Rooms.ContainsKey("Professor's Lab"));
+            Assert.Equal(19, map.Rooms.Count);
+            Assert.True(map.Rooms.ContainsKey("Maia's Stable"));
+            Assert.True(map.Rooms.ContainsKey("Guardian's Tower"));
             Assert.True(map.Rooms.ContainsKey("The End"));
         }
     }

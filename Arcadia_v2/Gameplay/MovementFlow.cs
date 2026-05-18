@@ -1,5 +1,6 @@
 #nullable enable
 
+using System.Linq;
 using Arcadia_v2.Map;
 using Arcadia_v2.Commands;
 
@@ -61,7 +62,12 @@ namespace Arcadia_v2
                 return false;
             }
 
-            if (destination.RequiresChampionDefeatToEnter && !arcadiaChampion.Defeated)
+            if (IsWaterTypeLocked(io, mainPlayer, currentRoom, destination))
+            {
+                return false;
+            }
+
+            if (IsChampionLocked(currentRoom, destination) && !arcadiaChampion.Defeated)
             {
                 io.WriteLine("Your not ready to go here yet. You must become the Champion of the region to proceed.");
                 return false;
@@ -93,12 +99,45 @@ namespace Arcadia_v2
 
         private static int GetRequiredBadgesForMovement(Room currentRoom, Room destination)
         {
-            if (currentRoom.Name == "Route 4" && destination.Name == "New Nucleon")
+            if (currentRoom.Name == "Ikena" && destination.Name == "Road 6")
             {
-                return 1;
+                return 3;
+            }
+
+            if (currentRoom.Name == "Road 5" && destination.Name == "Nucleon")
+            {
+                return 4;
             }
 
             return destination.RequiredBadgesToEnter;
+        }
+
+        private static bool IsWaterTypeLocked(IGameIO io, Player mainPlayer, Room currentRoom, Room destination)
+        {
+            if (!RequiresWaterTypeForMovement(currentRoom, destination))
+            {
+                return false;
+            }
+
+            if (mainPlayer.PokemonInventory.Any(pokemon => pokemon.Type == PokemonType.Water))
+            {
+                return false;
+            }
+
+            io.WriteLine("You need a Water-type Pokemon on your team before this way unlocks!");
+            return true;
+        }
+
+        private static bool RequiresWaterTypeForMovement(Room currentRoom, Room destination)
+        {
+            return currentRoom.Name == "Ikena" && destination.Name == "Road 5"
+                || currentRoom.Name == "New Nucleon" && destination.Name == "Road 5";
+        }
+
+        private static bool IsChampionLocked(Room currentRoom, Room destination)
+        {
+            return destination.RequiresChampionDefeatToEnter
+                || currentRoom.Name == "Road 8" && destination.Name == "Guardian's Tower";
         }
 
         // Moves the player and displays the new room.

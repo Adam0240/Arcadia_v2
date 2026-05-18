@@ -5,20 +5,24 @@ namespace Arcadia_v2.Map
 {
     public class Map
     {
-        private const string ProfessorLab = "Professor's Lab";
+        private const string MaiaStable = "Maia's Stable";
         private const string Ikena = "Ikena";
-        private const string Route1 = "Route 1";
-        private const string Route2 = "Route 2";
+        private const string Road1 = "Road 1";
+        private const string Road2 = "Road 2";
         private const string OakPass = "Oak Pass";
-        private const string Route3 = "Route 3";
-        private const string Route4 = "Route 4";
+        private const string Road3 = "Road 3";
+        private const string Road4 = "Road 4";
         private const string NewNucleon = "New Nucleon";
-        private const string Route5 = "Route 5";
-        private const string Route6 = "Route 6";
-        private const string Dracoton = "Dracoton";
-        private const string Route7 = "Route 7";
-        private const string VictoryRoad = "Victory Road";
-        private const string Championships = "Championships";
+        private const string Road5 = "Road 5";
+        private const string Road6 = "Road 6";
+        private const string Road7 = "Road 7";
+        private const string Wyrmrest = "Wyrmrest";
+        private const string Mountains = "Mountains";
+        private const string RadioactiveWay = "Radioactive Way";
+        private const string Nucleon = "Nucleon";
+        private const string FinalTrials = "Final Trials";
+        private const string GuardiansTower = "Guardian's Tower";
+        private const string Road8 = "Road 8";
         private const string TheEnd = "The End";
 
         public Room StartRoom { get; }
@@ -36,12 +40,12 @@ namespace Arcadia_v2.Map
         {
             mRooms = CreateRooms();
 
-            StartRoom = GetRoom(ProfessorLab);
+            StartRoom = GetRoom(MaiaStable);
             GymLeader1Room = GetRoom(OakPass);
             GymLeader2Room = GetRoom(NewNucleon);
             GymLeader3Room = GetRoom(Ikena);
-            GymLeader4Room = GetRoom(Dracoton);
-            ChampionRoom = GetRoom(Championships);
+            GymLeader4Room = GetRoom(Wyrmrest);
+            ChampionRoom = GetRoom(GuardiansTower);
 
             ConnectRooms();
             PopulateWildPokemon();
@@ -52,20 +56,24 @@ namespace Arcadia_v2.Map
         {
             return new Dictionary<string, Room>
             {
-                [ProfessorLab] = new Room(ProfessorLab, "Where new trainers obtain their first pokemon!"),
+                [MaiaStable] = new Room(MaiaStable, "Where new trainers obtain their first pokemon!"),
                 [Ikena] = new Room(Ikena, "Small peaceful town where hero's are born") { IsTown = true },
-                [Route1] = new Room(Route1, "Where you make your first step into your Pokemon Journey!"),
-                [Route2] = new Room(Route2, ""),
+                [Road1] = new Room(Road1, "Where you make your first step into your Pokemon Journey!"),
+                [Road2] = new Room(Road2, ""),
                 [OakPass] = new Room(OakPass, "Town surrounded by trees and forest Pokemon") { IsTown = true },
-                [Route3] = new Room(Route3, ""),
-                [Route4] = new Room(Route4, "Tunnel"),
-                [NewNucleon] = new Room(NewNucleon, "Founded after Nucleon incident") { IsTown = true, RequiredBadgesToEnter = 2 },
-                [Route5] = new Room(Route5, "") { RequiredBadgesToEnter = 1 },
-                [Route6] = new Room(Route6, "") { RequiredBadgesToEnter = 3 },
-                [Dracoton] = new Room(Dracoton, "Home of Dragons and Dragon Masters") { IsTown = true, RequiredBadgesToEnter = 4 },
-                [Route7] = new Room(Route7, ""),
-                [VictoryRoad] = new Room(VictoryRoad, "Expert trainers and future Champions all travel through here") { IsTown = true },
-                [Championships] = new Room(Championships, "Where you find out if your the best!"),
+                [Road3] = new Room(Road3, ""),
+                [Road4] = new Room(Road4, "Tunnel"),
+                [NewNucleon] = new Room(NewNucleon, "Founded after Nucleon incident") { IsTown = true },
+                [Road5] = new Room(Road5, ""),
+                [Road6] = new Room(Road6, ""),
+                [Road7] = new Room(Road7, ""),
+                [Wyrmrest] = new Room(Wyrmrest, "Home of Dragons and Dragon Masters") { IsTown = true },
+                [Mountains] = new Room(Mountains, ""),
+                [RadioactiveWay] = new Room(RadioactiveWay, ""),
+                [Nucleon] = new Room(Nucleon, "") { IsTown = true },
+                [FinalTrials] = new Room(FinalTrials, "Expert trainers and future champions all travel through here"),
+                [GuardiansTower] = new Room(GuardiansTower, "Where you find out if you're the best!"),
+                [Road8] = new Room(Road8, ""),
                 [TheEnd] = new Room(TheEnd, "Decide where you wish to stay") { IsFinalRoom = true, RequiresChampionDefeatToEnter = true }
             };
         }
@@ -73,70 +81,86 @@ namespace Arcadia_v2.Map
         // Wires up room neighbors after all room instances already exist.
         private void ConnectRooms()
         {
-            Room pokeLab = GetRoom(ProfessorLab);
+            Room maiaStable = GetRoom(MaiaStable);
             Room ikena = GetRoom(Ikena);
-            Room route1 = GetRoom(Route1);
-            Room route2 = GetRoom(Route2);
+            Room road1 = GetRoom(Road1);
+            Room road2 = GetRoom(Road2);
             Room oakPass = GetRoom(OakPass);
-            Room route3 = GetRoom(Route3);
-            Room route4 = GetRoom(Route4);
+            Room road3 = GetRoom(Road3);
+            Room road4 = GetRoom(Road4);
             Room newNucleon = GetRoom(NewNucleon);
-            Room route5 = GetRoom(Route5);
-            Room route6 = GetRoom(Route6);
-            Room dracoton = GetRoom(Dracoton);
-            Room route7 = GetRoom(Route7);
-            Room victoryRoad = GetRoom(VictoryRoad);
-            Room championships = GetRoom(Championships);
+            Room road5 = GetRoom(Road5);
+            Room road6 = GetRoom(Road6);
+            Room road7 = GetRoom(Road7);
+            Room wyrmrest = GetRoom(Wyrmrest);
+            Room mountains = GetRoom(Mountains);
+            Room radioactiveWay = GetRoom(RadioactiveWay);
+            Room nucleon = GetRoom(Nucleon);
+            Room finalTrials = GetRoom(FinalTrials);
+            Room guardiansTower = GetRoom(GuardiansTower);
+            Room road8 = GetRoom(Road8);
             Room theEnd = GetRoom(TheEnd);
 
-            pokeLab.North = ikena;
+            maiaStable.North = ikena;
 
-            ikena.North = route5;
-            ikena.East = route6;
-            ikena.South = pokeLab;
-            ikena.West = route1;
+            ikena.North = theEnd;
+            ikena.East = road6;
+            ikena.South = road5;
+            ikena.West = road1;
 
-            route1.East = ikena;
-            route1.West = route2;
+            road1.North = road8;
+            road1.East = ikena;
+            road1.South = road2;
 
-            route2.East = route1;
-            route2.West = oakPass;
+            road2.North = road1;
+            road2.South = oakPass;
 
-            oakPass.North = newNucleon;
-            oakPass.East = route2;
-            oakPass.West = route3;
+            oakPass.North = road2;
+            oakPass.South = road3;
 
-            route3.North = route4;
-            route3.East = oakPass;
+            road3.North = oakPass;
+            road3.South = road4;
 
-            route4.North = newNucleon;
-            route4.South = route3;
+            road4.North = road3;
+            road4.South = newNucleon;
 
-            newNucleon.East = route5;
-            newNucleon.South = route4;
-            newNucleon.West = oakPass;
+            newNucleon.North = road4;
+            newNucleon.East = road5;
 
-            route5.West = newNucleon;
-            route5.East = dracoton;
-            route5.South = ikena;
+            road5.North = ikena;
+            road5.East = nucleon;
+            road5.West = newNucleon;
 
-            route6.North = dracoton;
-            route6.West = ikena;
+            road6.North = finalTrials;
+            road6.South = road7;
+            road6.West = ikena;
 
-            dracoton.East = route7;
-            dracoton.South = route6;
-            dracoton.West = route5;
+            road7.North = road6;
+            road7.South = wyrmrest;
 
-            route7.North = victoryRoad;
-            route7.West = dracoton;
+            wyrmrest.North = road7;
+            wyrmrest.South = mountains;
 
-            victoryRoad.North = championships;
-            victoryRoad.South = route7;
+            mountains.North = wyrmrest;
+            mountains.South = radioactiveWay;
 
-            championships.North = theEnd;
-            championships.South = victoryRoad;
+            radioactiveWay.North = mountains;
+            radioactiveWay.South = nucleon;
 
-            theEnd.South = championships;
+            nucleon.North = radioactiveWay;
+            nucleon.West = road5;
+
+            finalTrials.North = guardiansTower;
+            finalTrials.South = road6;
+
+            guardiansTower.East = finalTrials;
+            guardiansTower.South = ikena;
+            guardiansTower.West = road8;
+
+            road8.North = guardiansTower;
+            road8.South = road1;
+
+            theEnd.South = ikena;
         }
 
         // Populates wild Pokemon room assignments while cloning each entry for isolated encounter state.
@@ -144,19 +168,19 @@ namespace Arcadia_v2.Map
         {
             IReadOnlyList<Arcadia_v2.Pokemon> mapPokemon = Arcadia_v2.GameData.CreatePokemon();
 
-            AddPokemonToRoom(Route1, mapPokemon[3]);
-            AddPokemonToRoom(Route2, mapPokemon[15]);
-            AddPokemonToRoom(Route2, mapPokemon[12]);
-            AddPokemonToRoom(Route3, mapPokemon[9]);
-            AddPokemonToRoom(Route3, mapPokemon[11]);
-            AddPokemonToRoom(Route4, mapPokemon[10]);
-            AddPokemonToRoom(Route5, mapPokemon[7]);
-            AddPokemonToRoom(Route6, mapPokemon[14]);
-            AddPokemonToRoom(Route7, mapPokemon[4]);
-            AddPokemonToRoom(Route7, mapPokemon[13]);
-            AddPokemonToRoom(VictoryRoad, mapPokemon[8]);
-            AddPokemonToRoom(VictoryRoad, mapPokemon[6]);
-            AddPokemonToRoom(VictoryRoad, mapPokemon[17]);
+            AddPokemonToRoom(Road1, mapPokemon[3]);
+            AddPokemonToRoom(Road2, mapPokemon[15]);
+            AddPokemonToRoom(Road2, mapPokemon[12]);
+            AddPokemonToRoom(Road3, mapPokemon[9]);
+            AddPokemonToRoom(Road3, mapPokemon[11]);
+            AddPokemonToRoom(Road4, mapPokemon[10]);
+            AddPokemonToRoom(Road5, mapPokemon[7]);
+            AddPokemonToRoom(Road6, mapPokemon[14]);
+            AddPokemonToRoom(Road7, mapPokemon[4]);
+            AddPokemonToRoom(Road7, mapPokemon[13]);
+            AddPokemonToRoom(Mountains, mapPokemon[8]);
+            AddPokemonToRoom(RadioactiveWay, mapPokemon[6]);
+            AddPokemonToRoom(FinalTrials, mapPokemon[17]);
             AddPokemonToRoom(TheEnd, mapPokemon[19]);
         }
 
