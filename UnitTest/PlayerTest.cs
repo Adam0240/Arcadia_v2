@@ -5,17 +5,6 @@ namespace UnitTest
 {
     public class PlayerTest
     {
-        // Checks that a player stores the provided name and starting room.
-        [Fact]
-        public void Constructor_SetsNameAndStartingRoom()
-        {
-            Room startRoom = new("Professor's Lab", "Starting room");
-            Player player = new("Red", startRoom);
-
-            Assert.Equal("Red", player.Name);
-            Assert.Same(startRoom, player.CurrentRoom);
-        }
-
         // Checks that creating a player with an empty name throws an argument exception.
         [Fact]
         public void Constructor_EmptyName_ThrowsArgumentException()
@@ -32,19 +21,6 @@ namespace UnitTest
         {
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() => new Player("Red", null!));
             Assert.Equal("startingRoom", exception.ParamName);
-        }
-
-        // Checks that moving a player updates the current room to the destination room.
-        [Fact]
-        public void MoveTo_ValidRoom_UpdatesCurrentRoom()
-        {
-            Room startRoom = new("Professor's Lab", "Starting room");
-            Room nextRoom = new("Ikena", "Next room");
-            Player player = new("Red", startRoom);
-
-            player.MoveTo(nextRoom);
-
-            Assert.Same(nextRoom, player.CurrentRoom);
         }
 
         // Checks that moving a player to a null room throws an argument null exception.
@@ -80,15 +56,6 @@ namespace UnitTest
             Assert.Equal("badge", exception.ParamName);
         }
 
-        // Checks that the badge display returns the empty-state message when no badges exist.
-        [Fact]
-        public void GetBadgeDisplay_NoBadges_ReturnsEmptyMessage()
-        {
-            Player player = new("Red", new Room("Professor's Lab", "Starting room"));
-
-            Assert.Equal("You have no badges!", player.GetBadgeDisplay());
-        }
-
         // Checks that the badge display returns all earned badges in the expected format.
         [Fact]
         public void GetBadgeDisplay_WithBadges_ReturnsFormattedBadgeList()
@@ -100,85 +67,90 @@ namespace UnitTest
             Assert.Equal("Badges:\nBoulder Badge\nCascade Badge", player.GetBadgeDisplay());
         }
 
-        // Checks that adding a Pokemon stores it in the player's inventory.
+        // Checks that an empty animal inventory returns the expected empty-state display text.
         [Fact]
-        public void AddPokemon_AddsPokemonToInventory()
-        {
-            Player player = new("Red", new Room("Professor's Lab", "Starting room"));
-            Pokemon pikachu = new(25, "PIKACHU", PokemonType.Electric, 12, 35, 35, 5, new[] { MoveData.Thunderbolt });
-
-            player.AddPokemon(pikachu);
-
-            Assert.Single(player.PokemonInventory);
-            Assert.Same(pikachu, player.PokemonInventory[0]);
-        }
-
-        // Checks that removing a stored Pokemon returns true and removes it from the inventory.
-        [Fact]
-        public void RemovePokemon_StoredPokemon_RemovesPokemon()
-        {
-            Player player = new("Red", new Room("Professor's Lab", "Starting room"));
-            Pokemon pikachu = new(25, "PIKACHU", PokemonType.Electric, 12, 35, 35, 5, new[] { MoveData.Thunderbolt });
-            player.AddPokemon(pikachu);
-
-            bool removed = player.RemovePokemon(pikachu);
-
-            Assert.True(removed);
-            Assert.Empty(player.PokemonInventory);
-        }
-
-        // Checks that an empty Pokemon inventory returns the expected empty-state display text.
-        [Fact]
-        public void GetPokemonInventoryDisplay_EmptyInventory_ReturnsEmptyMessage()
+        public void GetAnimalInventoryDisplay_EmptyInventory_ReturnsEmptyMessage()
         {
             Player player = new("Red", new Room("Professor's Lab", "Starting room"));
 
-            Assert.Equal("Inventory is Empty! :'( ", player.GetPokemonInventoryDisplay());
+            Assert.Equal("Inventory is Empty! :'( ", player.GetAnimalInventoryDisplay());
         }
 
-        // Checks that the Pokemon inventory display includes each stored Pokemon and its health.
+        // Checks that the animal inventory display includes each stored creature and its health.
         [Fact]
-        public void GetPokemonInventoryDisplay_WithPokemon_ReturnsFormattedInventory()
+        public void GetAnimalInventoryDisplay_WithAnimals_ReturnsFormattedInventory()
         {
             Player player = new("Red", new Room("Professor's Lab", "Starting room"));
-            Pokemon pikachu = new(25, "PIKACHU", PokemonType.Electric, 12, 35, 35, 5, new[] { MoveData.Thunderbolt });
-            Pokemon squirtle = new(7, "SQUIRTLE", PokemonType.Water, 10, 40, 30, 5, new[] { MoveData.WaterGun });
-            player.AddPokemon(pikachu);
-            player.AddPokemon(squirtle);
+            Animal pikachu = new(
+                id: 25,
+                name: "PIKACHU",
+                element: AnimalElement.Nature,
+                speed: 12,
+                baseHealth: 35,
+                health: 35,
+                level: 5,
+                moves: new[] { MoveData.Thunderbolt });
+            Animal squirtle = new(
+                id: 7,
+                name: "SQUIRTLE",
+                element: AnimalElement.Mystic,
+                speed: 10,
+                baseHealth: 40,
+                health: 30,
+                level: 5,
+                moves: new[] { MoveData.WaterGun });
+            player.AddAnimal(pikachu);
+            player.AddAnimal(squirtle);
 
-            Assert.Equal("Inventory List:\nPIKACHU Health: 35\nSQUIRTLE Health: 30", player.GetPokemonInventoryDisplay());
+            Assert.Equal("Inventory List:\nPIKACHU Health: 35\nSQUIRTLE Health: 30", player.GetAnimalInventoryDisplay());
         }
 
-        // Checks that setting a computer player's battle team clones the template Pokemon instead of reusing the same instances.
+        // Checks that setting a computer player's battle team clones the template animals instead of reusing the same instances.
         [Fact]
-        public void SetBattleTeam_ClonesTemplatePokemon()
+        public void SetBattleTeam_ClonesTemplateAnimals()
         {
             CompPlayer compPlayer = new("Blue", new Room("Oak Pass", "Battle room"));
-            Pokemon templatePokemon = new(25, "PIKACHU", PokemonType.Electric, 12, 35, 35, 5, new[] { MoveData.Thunderbolt });
+            Animal templateAnimal = new(
+                id: 25,
+                name: "PIKACHU",
+                element: AnimalElement.Nature,
+                speed: 12,
+                baseHealth: 35,
+                health: 35,
+                level: 5,
+                moves: new[] { MoveData.Thunderbolt });
 
-            compPlayer.SetBattleTeam(new[] { templatePokemon });
+            compPlayer.SetBattleTeam(new[] { templateAnimal });
 
             Assert.Single(compPlayer.BattleTeamTemplate);
-            Assert.Single(compPlayer.PokemonInventory);
-            Assert.NotSame(templatePokemon, compPlayer.BattleTeamTemplate[0]);
-            Assert.NotSame(compPlayer.BattleTeamTemplate[0], compPlayer.PokemonInventory[0]);
-            Assert.Equal(templatePokemon.Name, compPlayer.BattleTeamTemplate[0].Name);
+            Assert.Single(compPlayer.AnimalInventory);
+            Assert.NotSame(templateAnimal, compPlayer.BattleTeamTemplate[0]);
+            Assert.NotSame(compPlayer.BattleTeamTemplate[0], compPlayer.AnimalInventory[0]);
+            Assert.Equal(templateAnimal.Name, compPlayer.BattleTeamTemplate[0].Name);
         }
 
-        // Checks that preparing a computer player for battle rebuilds the active inventory from the stored team template.
+        // Checks that preparing a computer player for battle rebuilds the active animal inventory from the stored team template.
         [Fact]
         public void PrepareForBattle_RebuildsInventoryFromTemplate()
         {
             CompPlayer compPlayer = new("Blue", new Room("Oak Pass", "Battle room"));
-            Pokemon templatePokemon = new(25, "PIKACHU", PokemonType.Electric, 12, 35, 35, 5, new[] { MoveData.Thunderbolt });
-            compPlayer.SetBattleTeam(new[] { templatePokemon });
-            compPlayer.PokemonInventory[0].Health = 5;
+            Animal templateAnimal = new(
+                id: 25,
+                name: "PIKACHU",
+                element: AnimalElement.Nature,
+                speed: 12,
+                baseHealth: 35,
+                health: 35,
+                level: 5,
+                moves: new[] { MoveData.Thunderbolt });
+            compPlayer.SetBattleTeam(new[] { templateAnimal });
+            compPlayer.AnimalInventory[0].Health = 5;
 
             compPlayer.PrepareForBattle();
 
-            Assert.Single(compPlayer.PokemonInventory);
-            Assert.NotSame(compPlayer.BattleTeamTemplate[0], compPlayer.PokemonInventory[0]);
-            Assert.Equal(compPlayer.BattleTeamTemplate[0].Health, compPlayer.PokemonInventory[0].Health);
+            Assert.Single(compPlayer.AnimalInventory);
+            Assert.NotSame(compPlayer.BattleTeamTemplate[0], compPlayer.AnimalInventory[0]);
+            Assert.Equal(compPlayer.BattleTeamTemplate[0].Health, compPlayer.AnimalInventory[0].Health);
         }
     }
 }

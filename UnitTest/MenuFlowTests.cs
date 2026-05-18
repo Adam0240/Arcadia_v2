@@ -5,21 +5,23 @@ namespace UnitTest;
 
 public class MenuFlowTests
 {
+    // Checks that using the heal menu option in a town restores the active party to full health.
     [Fact]
     public void HandleMenu_HealInTown_RestoresPartyHealth()
     {
         GameState gameState = GameSetup.CreateForLoad();
         gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Ikena"));
-        Pokemon firstPokemon = gameState.MainPlayer.PokemonInventory[0];
-        firstPokemon.Health = 1;
+        Animal firstAnimal = gameState.MainPlayer.AnimalInventory[0];
+        firstAnimal.Health = 1;
         FakeGameIO io = new("heal");
 
         MenuFlow.HandleMenu(io, gameState, new GameSaveService(new FakeGameSaveRepository()));
 
-        Assert.Equal(firstPokemon.BaseHealth, firstPokemon.Health);
-        Assert.Contains("All your Pokemon have been fully restored!", io.OutputText);
+        Assert.Equal(firstAnimal.BaseHealth, firstAnimal.Health);
+        Assert.Contains("All your animals have been fully restored!", io.OutputText);
     }
 
+    // Checks that the save menu option writes save data and reports success through the injected IO.
     [Fact]
     public void HandleMenu_Save_WritesSaveResultToInjectedIo()
     {
@@ -33,6 +35,7 @@ public class MenuFlowTests
         Assert.Contains("Game saved.", io.OutputText);
     }
 
+    // Checks that an invalid menu command prints the invalid-option message.
     [Fact]
     public void HandleMenu_InvalidCommand_WritesInvalidMenuMessageToInjectedIo()
     {

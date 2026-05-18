@@ -7,23 +7,23 @@ namespace Arcadia_v2
     // Shared battle utilities used by both wild and trainer battle flows.
     public static class BattleHelpers
     {
-        public static void PrintBattleStatus(IGameIO io, string opponentLabel, Pokemon playerPokemon, Pokemon opponentPokemon)
+        public static void PrintBattleStatus(IGameIO io, string opponentLabel, Animal playerAnimal, Animal opponentAnimal)
         {
-            io.WriteLine($"Your {playerPokemon.Name}'s health is at: {playerPokemon.Health}");
-            io.WriteLine($"The {opponentLabel} {opponentPokemon.Name}'s health is at: {opponentPokemon.Health}\n");
+            io.WriteLine($"Your {playerAnimal.Name}'s health is at: {playerAnimal.Health}");
+            io.WriteLine($"The {opponentLabel} {opponentAnimal.Name}'s health is at: {opponentAnimal.Health}\n");
         }
 
-        public static void PrintMoveList(IGameIO io, Pokemon pokemon, Func<Move, string> getMoveName)
+        public static void PrintMoveList(IGameIO io, Animal animal, Func<Move, string> getMoveName)
         {
-            for (int i = 0; i < pokemon.Moves.Count; ++i)
+            for (int i = 0; i < animal.Moves.Count; ++i)
             {
-                io.Write($"{getMoveName(pokemon.Moves[i])} -- ");
+                io.Write($"{getMoveName(animal.Moves[i])} -- ");
             }
         }
 
-        public static Move? FindMoveByName(Pokemon pokemon, string moveName, Func<Move, string> getMoveName)
+        public static Move? FindMoveByName(Animal animal, string moveName, Func<Move, string> getMoveName)
         {
-            foreach (Move move in pokemon.Moves)
+            foreach (Move move in animal.Moves)
             {
                 if (getMoveName(move) == moveName)
                 {
@@ -34,10 +34,10 @@ namespace Arcadia_v2
             return null;
         }
 
-        public static Move GetRandomMove(Pokemon pokemon)
+        public static Move GetRandomMove(Animal animal)
         {
-            int moveIndex = Random.Shared.Next(pokemon.Moves.Count);
-            return pokemon.Moves[moveIndex];
+            int moveIndex = Random.Shared.Next(animal.Moves.Count);
+            return animal.Moves[moveIndex];
         }
 
         public static bool IsHealingMove(string moveName)
@@ -45,17 +45,17 @@ namespace Arcadia_v2
             return BattleEngine.IsHealingMove(moveName);
         }
 
-        public static void HandlePlayerTurn(IGameIO io, Pokemon playerPokemon, Pokemon opponentPokemon, string defenderLabel)
+        public static void HandlePlayerTurn(IGameIO io, Animal playerAnimal, Animal opponentAnimal, string defenderLabel)
         {
             while (true)
             {
                 io.WriteLine("Your moves.");
-                PrintMoveList(io, playerPokemon, move => move.Name);
+                PrintMoveList(io, playerAnimal, move => move.Name);
 
                 io.WriteLine("\n\nEnter your move.");
                 string attackMove = Program.ReadUpperTrimmedInput(io);
 
-                Move? selectedMove = FindMoveByName(playerPokemon, attackMove, move => move.Name);
+                Move? selectedMove = FindMoveByName(playerAnimal, attackMove, move => move.Name);
 
                 if (selectedMove == null)
                 {
@@ -65,43 +65,43 @@ namespace Arcadia_v2
 
                 io.WriteLine($"You used {selectedMove.Name}");
 
-                BattleMoveResult result = BattleEngine.UseMove(playerPokemon, opponentPokemon, selectedMove);
-                PrintMoveResult(io, string.Empty, playerPokemon, defenderLabel, opponentPokemon, result);
+                BattleMoveResult result = BattleEngine.UseMove(playerAnimal, opponentAnimal, selectedMove);
+                PrintMoveResult(io, string.Empty, playerAnimal, defenderLabel, opponentAnimal, result);
                 return;
             }
         }
 
-        public static void HandleOpponentTurn(IGameIO io, Pokemon opponentPokemon, Pokemon playerPokemon, string moveHeader, string defenderLabel)
+        public static void HandleOpponentTurn(IGameIO io, Animal opponentAnimal, Animal playerAnimal, string moveHeader, string defenderLabel)
         {
-            if (BattleEngine.IsBattleOver(playerPokemon, opponentPokemon))
+            if (BattleEngine.IsBattleOver(playerAnimal, opponentAnimal))
             {
                 return;
             }
 
-            Move selectedMove = GetRandomMove(opponentPokemon);
+            Move selectedMove = GetRandomMove(opponentAnimal);
 
             io.WriteLine(moveHeader);
-            BattleMoveResult result = BattleEngine.UseMove(opponentPokemon, playerPokemon, selectedMove);
-            PrintMoveResult(io, string.Empty, opponentPokemon, defenderLabel, playerPokemon, result);
+            BattleMoveResult result = BattleEngine.UseMove(opponentAnimal, playerAnimal, selectedMove);
+            PrintMoveResult(io, string.Empty, opponentAnimal, defenderLabel, playerAnimal, result);
         }
 
-        public static bool HandlePlayerFaintedPokemon(IGameIO io, Player mainPlayer, string prompt)
+        public static bool HandlePlayerFaintedAnimal(IGameIO io, Player mainPlayer, string prompt)
         {
-            return HandlePlayerFaintedPokemon(io, mainPlayer, mainPlayer.PokemonInventory[0], prompt);
+            return HandlePlayerFaintedAnimal(io, mainPlayer, mainPlayer.AnimalInventory[0], prompt);
         }
 
-        public static bool HandlePlayerFaintedPokemon(IGameIO io, Player mainPlayer, Pokemon playerPokemon, string prompt)
+        public static bool HandlePlayerFaintedAnimal(IGameIO io, Player mainPlayer, Animal playerAnimal, string prompt)
         {
-            if (!BattleEngine.IsFainted(playerPokemon))
+            if (!BattleEngine.IsFainted(playerAnimal))
             {
                 return false;
             }
 
-            io.WriteLine($"{playerPokemon.Name} fainted.");
+            io.WriteLine($"{playerAnimal.Name} fainted.");
 
-            if (BattleEngine.CanAutoSwapTwoPokemonParty(mainPlayer))
+            if (BattleEngine.CanAutoSwapTwoAnimalParty(mainPlayer))
             {
-                return BattleEngine.TryAutoSwitchTwoPokemonParty(mainPlayer, playerPokemon);
+                return BattleEngine.TryAutoSwitchTwoAnimalParty(mainPlayer, playerAnimal);
             }
 
             while (true)
@@ -111,7 +111,7 @@ namespace Arcadia_v2
 
                 if (IsYes(answer))
                 {
-                    PartyFlow.SwapPokemon(mainPlayer, io);
+                    PartyFlow.SwapAnimals(mainPlayer, io);
                     return true;
                 }
 
@@ -124,13 +124,13 @@ namespace Arcadia_v2
             }
         }
 
-        public static void UseHealingMove(IGameIO io, Pokemon pokemon, int healingPower)
+        public static void UseHealingMove(IGameIO io, Animal animal, int healingPower)
         {
-            BattleMoveResult result = BattleEngine.RestoreHealth(pokemon, healingPower);
+            BattleMoveResult result = BattleEngine.RestoreHealth(animal, healingPower);
             PrintHealingResult(io, result);
         }
 
-        public static void UseAttackMove(IGameIO io, string attackerLabel, Pokemon attacker, string defenderLabel, Pokemon defender, int movePower, string moveName)
+        public static void UseAttackMove(IGameIO io, string attackerLabel, Animal attacker, string defenderLabel, Animal defender, int movePower, string moveName)
         {
             io.WriteLine($"{attackerLabel}{attacker.Name} used {moveName}");
             io.WriteLine($"{defenderLabel}{defender.Name} took {movePower} damage.");
@@ -141,9 +141,9 @@ namespace Arcadia_v2
         private static void PrintMoveResult(
             IGameIO io,
             string attackerLabel,
-            Pokemon attacker,
+            Animal attacker,
             string defenderLabel,
-            Pokemon defender,
+            Animal defender,
             BattleMoveResult result)
         {
             if (result.ResultType is BattleMoveResultType.Healing or BattleMoveResultType.NoEffect)

@@ -31,40 +31,40 @@ namespace Arcadia_v2
 
         private static GameState CreateInitialState(string playerName)
         {
-            List<Pokemon> mainPokemon = GameData.CreatePokemon();
-            List<Pokemon> gymPokemon = GameData.CreatePokemon();
+            List<Animal> mainAnimals = GameData.CreateAnimals();
+            List<Animal> gymAnimals = GameData.CreateAnimals();
 
             Map.Map gameMap = new Map.Map();
 
             Player mainPlayer = new Player(playerName, gameMap.StartRoom);
 
             CompPlayer gymLeader1 = new CompPlayer("Mrs. Mcmann", gameMap.GymLeader1Room);
-            gymLeader1.SetBattleTeam(new[] { gymPokemon[3], gymPokemon[14] });
+            gymLeader1.SetBattleTeam(new[] { gymAnimals[3], gymAnimals[14] });
             gymLeader1.AddBadge("Grass Badge");
 
             CompPlayer gymLeader2 = new CompPlayer("Minofo", gameMap.GymLeader2Room);
-            gymLeader2.SetBattleTeam(new[] { gymPokemon[5], gymPokemon[9] });
+            gymLeader2.SetBattleTeam(new[] { gymAnimals[5], gymAnimals[9] });
             gymLeader2.AddBadge("Water Badge");
 
             CompPlayer gymLeader3 = new CompPlayer("Golden", gameMap.GymLeader3Room);
-            gymLeader3.SetBattleTeam(new[] { gymPokemon[10], gymPokemon[16] });
+            gymLeader3.SetBattleTeam(new[] { gymAnimals[10], gymAnimals[16] });
             gymLeader3.AddBadge("Rock Badge");
 
             CompPlayer gymLeader4 = new CompPlayer("Wiggins", gameMap.GymLeader4Room);
-            gymLeader4.SetBattleTeam(new[] { gymPokemon[13], gymPokemon[17] });
+            gymLeader4.SetBattleTeam(new[] { gymAnimals[13], gymAnimals[17] });
             gymLeader4.AddBadge("Dragon Badge");
 
             CompPlayer arcadiaChampion = new CompPlayer("Adam", gameMap.ChampionRoom);
-            arcadiaChampion.SetBattleTeam(new[] { gymPokemon[4], gymPokemon[8], gymPokemon[6], gymPokemon[18] });
+            arcadiaChampion.SetBattleTeam(new[] { gymAnimals[4], gymAnimals[8], gymAnimals[6], gymAnimals[18] });
             arcadiaChampion.AddBadge("Champion Badge");
 
-            mainPlayer.AddPokemon(mainPokemon[1]);
-            mainPlayer.AddPokemon(mainPokemon[2]);
+            mainPlayer.AddAnimal(mainAnimals[1]);
+            mainPlayer.AddAnimal(mainAnimals[2]);
 
             return new GameState(
                 gameMap,
-                mainPokemon,
-                gymPokemon,
+                mainAnimals,
+                gymAnimals,
                 mainPlayer,
                 gymLeader1,
                 gymLeader2,

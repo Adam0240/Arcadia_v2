@@ -24,9 +24,9 @@ namespace Arcadia_v2.Commands
         public static MenuCommandType ReadMenuCommand(IGameIO io)
         {
             io.WriteLine("\nMenu");
-            io.WriteLine("Heal Pokemon (heal/h)");
+            io.WriteLine("Heal Animals (heal/h)");
             io.WriteLine("Check Bag (bag/b)");
-            io.WriteLine("Swap Pokemon (swap/b)");
+            io.WriteLine("Swap Animals (swap/b)");
             io.WriteLine("Check Gyms (gym/g)");
             io.WriteLine("Save Game (save)");
             io.WriteLine("\nWhat would you like to do?");

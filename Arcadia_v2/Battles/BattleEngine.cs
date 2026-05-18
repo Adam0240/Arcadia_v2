@@ -20,7 +20,7 @@ namespace Arcadia_v2
     // Owns low-level battle rules that should not depend on input or output.
     public static class BattleEngine
     {
-        public static BattleMoveResult UseMove(Pokemon attacker, Pokemon defender, Move move)
+        public static BattleMoveResult UseMove(Animal attacker, Animal defender, Move move)
         {
             ArgumentNullException.ThrowIfNull(attacker);
             ArgumentNullException.ThrowIfNull(defender);
@@ -31,28 +31,28 @@ namespace Arcadia_v2
                 : ApplyDamage(defender, move);
         }
 
-        public static BattleMoveResult RestoreHealth(Pokemon pokemon, int healingPower)
+        public static BattleMoveResult RestoreHealth(Animal animal, int healingPower)
         {
-            ArgumentNullException.ThrowIfNull(pokemon);
+            ArgumentNullException.ThrowIfNull(animal);
 
             if (healingPower < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(healingPower), "Healing power cannot be negative.");
             }
 
-            if (pokemon.Health >= pokemon.BaseHealth)
+            if (animal.Health >= animal.BaseHealth)
             {
-                return new BattleMoveResult(BattleMoveResultType.NoEffect, string.Empty, 0, pokemon.Health);
+                return new BattleMoveResult(BattleMoveResultType.NoEffect, string.Empty, 0, animal.Health);
             }
 
-            int originalHealth = pokemon.Health;
-            pokemon.Health = Math.Min(pokemon.BaseHealth, pokemon.Health + healingPower);
-            int restoredHealth = pokemon.Health - originalHealth;
+            int originalHealth = animal.Health;
+            animal.Health = Math.Min(animal.BaseHealth, animal.Health + healingPower);
+            int restoredHealth = animal.Health - originalHealth;
 
-            return new BattleMoveResult(BattleMoveResultType.Healing, string.Empty, restoredHealth, pokemon.Health);
+            return new BattleMoveResult(BattleMoveResultType.Healing, string.Empty, restoredHealth, animal.Health);
         }
 
-        public static BattleMoveResult ApplyDamage(Pokemon defender, int damage)
+        public static BattleMoveResult ApplyDamage(Animal defender, int damage)
         {
             ArgumentNullException.ThrowIfNull(defender);
 
@@ -76,30 +76,30 @@ namespace Arcadia_v2
             return moveName == "MOONLIGHT" || moveName == "SUNLIGHT";
         }
 
-        public static bool IsFainted(Pokemon pokemon)
+        public static bool IsFainted(Animal animal)
         {
-            ArgumentNullException.ThrowIfNull(pokemon);
-            return pokemon.Health <= 0;
+            ArgumentNullException.ThrowIfNull(animal);
+            return animal.Health <= 0;
         }
 
-        public static bool IsBattleOver(Pokemon firstPokemon, Pokemon secondPokemon)
+        public static bool IsBattleOver(Animal firstAnimal, Animal secondAnimal)
         {
-            return IsFainted(firstPokemon) || IsFainted(secondPokemon);
+            return IsFainted(firstAnimal) || IsFainted(secondAnimal);
         }
 
-        public static bool HasUsablePokemon(GenericPlayer player)
+        public static bool HasUsableAnimals(GenericPlayer player)
         {
             ArgumentNullException.ThrowIfNull(player);
-            return GetNextHealthyPokemonIndex(player) >= 0;
+            return GetNextHealthyAnimalIndex(player) >= 0;
         }
 
-        public static int GetNextHealthyPokemonIndex(GenericPlayer player, int startIndex = 0)
+        public static int GetNextHealthyAnimalIndex(GenericPlayer player, int startIndex = 0)
         {
             ArgumentNullException.ThrowIfNull(player);
 
-            for (int i = startIndex; i < player.PokemonInventory.Count; ++i)
+            for (int i = startIndex; i < player.AnimalInventory.Count; ++i)
             {
-                if (!IsFainted(player.PokemonInventory[i]))
+                if (!IsFainted(player.AnimalInventory[i]))
                 {
                     return i;
                 }
@@ -108,28 +108,28 @@ namespace Arcadia_v2
             return -1;
         }
 
-        public static bool CanAutoSwapTwoPokemonParty(GenericPlayer player)
+        public static bool CanAutoSwapTwoAnimalParty(GenericPlayer player)
         {
             ArgumentNullException.ThrowIfNull(player);
-            return player.PokemonInventory.Count == 2;
+            return player.AnimalInventory.Count == 2;
         }
 
-        public static int GetOnlyOtherPokemonIndex(GenericPlayer player, Pokemon activePokemon)
+        public static int GetOnlyOtherAnimalIndex(GenericPlayer player, Animal activeAnimal)
         {
             ArgumentNullException.ThrowIfNull(player);
-            ArgumentNullException.ThrowIfNull(activePokemon);
+            ArgumentNullException.ThrowIfNull(activeAnimal);
 
-            if (!CanAutoSwapTwoPokemonParty(player))
+            if (!CanAutoSwapTwoAnimalParty(player))
             {
                 return -1;
             }
 
-            if (ReferenceEquals(player.PokemonInventory[0], activePokemon))
+            if (ReferenceEquals(player.AnimalInventory[0], activeAnimal))
             {
                 return 1;
             }
 
-            if (ReferenceEquals(player.PokemonInventory[1], activePokemon))
+            if (ReferenceEquals(player.AnimalInventory[1], activeAnimal))
             {
                 return 0;
             }
@@ -137,67 +137,67 @@ namespace Arcadia_v2
             return -1;
         }
 
-        public static bool TryAutoSwitchTwoPokemonParty(Player player, Pokemon activePokemon)
+        public static bool TryAutoSwitchTwoAnimalParty(Player player, Animal activeAnimal)
         {
             ArgumentNullException.ThrowIfNull(player);
-            ArgumentNullException.ThrowIfNull(activePokemon);
+            ArgumentNullException.ThrowIfNull(activeAnimal);
 
-            int otherPokemonIndex = GetOnlyOtherPokemonIndex(player, activePokemon);
+            int otherAnimalIndex = GetOnlyOtherAnimalIndex(player, activeAnimal);
 
-            if (otherPokemonIndex == -1 || IsFainted(player.PokemonInventory[otherPokemonIndex]))
+            if (otherAnimalIndex == -1 || IsFainted(player.AnimalInventory[otherAnimalIndex]))
             {
                 return false;
             }
 
-            int activePokemonIndex = otherPokemonIndex == 0 ? 1 : 0;
-            player.SwapPokemonPositions(activePokemonIndex, otherPokemonIndex);
+            int activeAnimalIndex = otherAnimalIndex == 0 ? 1 : 0;
+            player.SwapAnimalPositions(activeAnimalIndex, otherAnimalIndex);
             return true;
         }
 
-        public static bool TryCatchWildPokemon(Player player, Pokemon wildPokemon)
+        public static bool TryCatchWildAnimal(Player player, Animal wildAnimal)
         {
             ArgumentNullException.ThrowIfNull(player);
-            ArgumentNullException.ThrowIfNull(wildPokemon);
+            ArgumentNullException.ThrowIfNull(wildAnimal);
 
-            if (player.PokemonInventory.Count >= 6)
+            if (player.AnimalInventory.Count >= 6)
             {
                 return false;
             }
 
-            player.AddPokemon(wildPokemon);
-            player.CurrentRoom.RemoveEncounterPokemon(wildPokemon);
+            player.AddAnimal(wildAnimal);
+            player.CurrentRoom.RemoveEncounterAnimal(wildAnimal);
             return true;
         }
 
-        public static void ReleasePokemonAndCatchWildPokemon(Player player, Pokemon pokemonToRelease, Pokemon wildPokemon)
+        public static void ReleaseAnimalAndCatchWildAnimal(Player player, Animal animalToRelease, Animal wildAnimal)
         {
             ArgumentNullException.ThrowIfNull(player);
-            ArgumentNullException.ThrowIfNull(pokemonToRelease);
-            ArgumentNullException.ThrowIfNull(wildPokemon);
+            ArgumentNullException.ThrowIfNull(animalToRelease);
+            ArgumentNullException.ThrowIfNull(wildAnimal);
 
-            pokemonToRelease.Health = 20;
-            player.CurrentRoom.AddEncounterPokemon(pokemonToRelease);
-            player.RemovePokemon(pokemonToRelease);
+            animalToRelease.Health = 20;
+            player.CurrentRoom.AddEncounterAnimal(animalToRelease);
+            player.RemoveAnimal(animalToRelease);
 
-            player.AddPokemon(wildPokemon);
-            player.CurrentRoom.RemoveEncounterPokemon(wildPokemon);
+            player.AddAnimal(wildAnimal);
+            player.CurrentRoom.RemoveEncounterAnimal(wildAnimal);
         }
 
-        public static void LetWildPokemonRunAway(Player player, Pokemon wildPokemon)
+        public static void LetWildAnimalRunAway(Player player, Animal wildAnimal)
         {
             ArgumentNullException.ThrowIfNull(player);
-            ArgumentNullException.ThrowIfNull(wildPokemon);
+            ArgumentNullException.ThrowIfNull(wildAnimal);
 
-            player.CurrentRoom.RemoveEncounterPokemon(wildPokemon);
+            player.CurrentRoom.RemoveEncounterAnimal(wildAnimal);
         }
 
-        private static BattleMoveResult RestoreHealth(Pokemon pokemon, Move move)
+        private static BattleMoveResult RestoreHealth(Animal animal, Move move)
         {
-            BattleMoveResult result = RestoreHealth(pokemon, move.Power);
+            BattleMoveResult result = RestoreHealth(animal, move.Power);
             return result with { MoveName = move.Name };
         }
 
-        private static BattleMoveResult ApplyDamage(Pokemon defender, Move move)
+        private static BattleMoveResult ApplyDamage(Animal defender, Move move)
         {
             BattleMoveResult result = ApplyDamage(defender, move.Power);
             return result with { MoveName = move.Name };

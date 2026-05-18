@@ -22,12 +22,12 @@ namespace Arcadia_v2
                 case MenuCommandType.Heal:
                     if (mainPlayer.CurrentRoom.IsTown)
                     {
-                        foreach (Pokemon partyPokemon in mainPlayer.PokemonInventory)
+                        foreach (Animal partyAnimal in mainPlayer.AnimalInventory)
                         {
-                            partyPokemon.Health = partyPokemon.BaseHealth;
+                            partyAnimal.Health = partyAnimal.BaseHealth;
                         }
 
-                        io.WriteLine("\nAll your Pokemon have been fully restored!\n");
+                        io.WriteLine("\nAll your animals have been fully restored!\n");
                     }
                     else
                     {
@@ -41,7 +41,7 @@ namespace Arcadia_v2
                     break;
 
                 case MenuCommandType.Swap:
-                    PartyFlow.SwapPokemon(mainPlayer, io);
+                    PartyFlow.SwapAnimals(mainPlayer, io);
                     break;
 
                 case MenuCommandType.Gym:

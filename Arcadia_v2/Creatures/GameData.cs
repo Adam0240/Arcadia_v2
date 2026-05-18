@@ -1,15 +1,14 @@
 #nullable enable
-
 using System.Collections.Generic;
 
 namespace Arcadia_v2
 {
-    // Provides fresh Pokemon roster data for game setup and save restoration.
+    // Provides fresh animal roster data for game setup and save restoration.
     public static class GameData
     {
-        public static List<Pokemon> CreatePokemon()
+        public static List<Animal> CreateAnimals()
         {
-            return new List<Pokemon>(PokeFactory.CreatePokemon());
+            return new List<Animal>(AnimalFactory.CreateAnimals());
         }
     }
 }

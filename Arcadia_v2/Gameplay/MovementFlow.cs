@@ -62,7 +62,7 @@ namespace Arcadia_v2
                 return false;
             }
 
-            if (IsWaterTypeLocked(io, mainPlayer, currentRoom, destination))
+            if (IsMysticLocked(io, mainPlayer, currentRoom, destination))
             {
                 return false;
             }
@@ -112,23 +112,23 @@ namespace Arcadia_v2
             return destination.RequiredBadgesToEnter;
         }
 
-        private static bool IsWaterTypeLocked(IGameIO io, Player mainPlayer, Room currentRoom, Room destination)
+        private static bool IsMysticLocked(IGameIO io, Player mainPlayer, Room currentRoom, Room destination)
         {
-            if (!RequiresWaterTypeForMovement(currentRoom, destination))
+            if (!RequiresMysticForMovement(currentRoom, destination))
             {
                 return false;
             }
 
-            if (mainPlayer.PokemonInventory.Any(pokemon => pokemon.Type == PokemonType.Water))
+            if (mainPlayer.AnimalInventory.Any(animal => animal.Element == AnimalElement.Mystic))
             {
                 return false;
             }
 
-            io.WriteLine("You need a Water-type Pokemon on your team before this way unlocks!");
+            io.WriteLine("You need a Mystic animal on your team before this way unlocks!");
             return true;
         }
 
-        private static bool RequiresWaterTypeForMovement(Room currentRoom, Room destination)
+        private static bool RequiresMysticForMovement(Room currentRoom, Room destination)
         {
             return currentRoom.Name == "Ikena" && destination.Name == "Road 5"
                 || currentRoom.Name == "New Nucleon" && destination.Name == "Road 5";

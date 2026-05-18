@@ -163,31 +163,31 @@ namespace Arcadia_v2.Map
             theEnd.South = ikena;
         }
 
-        // Populates wild Pokemon room assignments while cloning each entry for isolated encounter state.
+        // Populates wild animal room assignments while cloning each entry for isolated encounter state.
         private void PopulateWildPokemon()
         {
-            IReadOnlyList<Arcadia_v2.Pokemon> mapPokemon = Arcadia_v2.GameData.CreatePokemon();
+            IReadOnlyList<Arcadia_v2.Animal> mapAnimals = Arcadia_v2.GameData.CreateAnimals();
 
-            AddPokemonToRoom(Road1, mapPokemon[3]);
-            AddPokemonToRoom(Road2, mapPokemon[15]);
-            AddPokemonToRoom(Road2, mapPokemon[12]);
-            AddPokemonToRoom(Road3, mapPokemon[9]);
-            AddPokemonToRoom(Road3, mapPokemon[11]);
-            AddPokemonToRoom(Road4, mapPokemon[10]);
-            AddPokemonToRoom(Road5, mapPokemon[7]);
-            AddPokemonToRoom(Road6, mapPokemon[14]);
-            AddPokemonToRoom(Road7, mapPokemon[4]);
-            AddPokemonToRoom(Road7, mapPokemon[13]);
-            AddPokemonToRoom(Mountains, mapPokemon[8]);
-            AddPokemonToRoom(RadioactiveWay, mapPokemon[6]);
-            AddPokemonToRoom(FinalTrials, mapPokemon[17]);
-            AddPokemonToRoom(TheEnd, mapPokemon[19]);
+            AddAnimalToRoom(Road1, mapAnimals[3]);
+            AddAnimalToRoom(Road2, mapAnimals[15]);
+            AddAnimalToRoom(Road2, mapAnimals[12]);
+            AddAnimalToRoom(Road3, mapAnimals[9]);
+            AddAnimalToRoom(Road3, mapAnimals[11]);
+            AddAnimalToRoom(Road4, mapAnimals[10]);
+            AddAnimalToRoom(Road5, mapAnimals[7]);
+            AddAnimalToRoom(Road6, mapAnimals[14]);
+            AddAnimalToRoom(Road7, mapAnimals[4]);
+            AddAnimalToRoom(Road7, mapAnimals[13]);
+            AddAnimalToRoom(Mountains, mapAnimals[8]);
+            AddAnimalToRoom(RadioactiveWay, mapAnimals[6]);
+            AddAnimalToRoom(FinalTrials, mapAnimals[17]);
+            AddAnimalToRoom(TheEnd, mapAnimals[19]);
         }
 
-        // Places one wild Pokemon into a room.
-        private void AddPokemonToRoom(string roomName, Arcadia_v2.Pokemon pokemon)
+        // Places one wild animal into a room.
+        private void AddAnimalToRoom(string roomName, Arcadia_v2.Animal animal)
         {
-            GetRoom(roomName).SetRoomPokemon(pokemon);
+            GetRoom(roomName).SetRoomAnimal(animal);
         }
 
         // Returns a room by name so the game can access specific rooms without more map fields.

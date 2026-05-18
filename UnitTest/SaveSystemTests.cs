@@ -5,6 +5,7 @@ namespace UnitTest
 {
     public class SaveSystemTests
     {
+        // Checks that initializing the save repository creates the backing database file.
         [Fact]
         public void Repository_Initialize_CreatesDatabaseFile()
         {
@@ -24,6 +25,7 @@ namespace UnitTest
             }
         }
 
+        // Checks that saving twice and loading returns the most recent saved JSON payload.
         [Fact]
         public void Repository_SaveThenLoad_ReturnsLatestJson()
         {
@@ -45,6 +47,52 @@ namespace UnitTest
             }
         }
 
+        // Checks that saving the live game state writes the current animal-based runtime data into the SQLite save slot.
+        [Fact]
+        public void Repository_SaveGameState_PersistsCurrentAnimalRuntimeData()
+        {
+            string databasePath = CreateTemporaryDatabasePath();
+
+            try
+            {
+                SqliteGameSaveRepository repository = new(databasePath);
+                repository.Initialize();
+
+                GameState gameState = CreateGameState("Red");
+                Animal leadAnimal = gameState.MainPlayer.AnimalInventory[0];
+                leadAnimal.Health = 7;
+                gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Road 2"));
+                gameState.MainPlayer.AddBadge("Grass Badge");
+                gameState.GameMap.GetRoom("Road 1").RestoreEncounterAnimals(new[] { GameData.CreateAnimals()[4] });
+                gameState.GymLeader1.Defeated = true;
+
+                GameSaveService saveService = new(repository);
+
+                saveService.Save(gameState);
+
+                string? persistedJson = repository.LoadJson();
+                Assert.NotNull(persistedJson);
+                GameSaveState persistedState = GameSaveSerializer.Deserialize(persistedJson);
+
+                Assert.Equal(2, persistedState.Version);
+                Assert.Equal("Red", persistedState.Player.Name);
+                Assert.Equal("Road 2", persistedState.Player.CurrentRoomName);
+                Assert.Contains("Grass Badge", persistedState.Player.Badges);
+                Assert.Equal(leadAnimal.Id, persistedState.Player.PokemonInventory[0].Id);
+                Assert.Equal(7, persistedState.Player.PokemonInventory[0].Health);
+                Assert.Equal(leadAnimal.BaseHealth, persistedState.Player.PokemonInventory[0].BaseHealth);
+                Assert.Equal(leadAnimal.Speed, persistedState.Player.PokemonInventory[0].Speed);
+                Assert.Equal(leadAnimal.Moves[0].Name, persistedState.Player.PokemonInventory[0].Moves[0].Name);
+                Assert.Equal(4, persistedState.Rooms.Single(room => room.Name == "Road 1").EncounterPokemon[0].Id);
+                Assert.True(persistedState.Trainers.Single(trainer => trainer.Name == "Mrs. Mcmann").Defeated);
+            }
+            finally
+            {
+                DeleteTemporaryDatabase(databasePath);
+            }
+        }
+
+        // Checks that deleting a save removes the stored slot and reports false on a second delete attempt.
         [Fact]
         public void Repository_DeleteSave_RemovesSlot()
         {
@@ -69,6 +117,7 @@ namespace UnitTest
             }
         }
 
+        // Checks that save-state serialization and deserialization preserve the key persisted fields.
         [Fact]
         public void Serializer_RoundTripsGameSaveState()
         {
@@ -137,25 +186,26 @@ namespace UnitTest
             Assert.Equal("TACKLE", restored.Player.PokemonInventory[0].Moves[0].Name);
         }
 
+        // Checks that capturing and reapplying save data restores the main runtime state of the game.
         [Fact]
         public void Mapper_CaptureAndApply_RestoresRuntimeState()
         {
             GameState gameState = CreateGameState("Red");
-            Pokemon playerPokemon = gameState.MainPlayer.PokemonInventory[0];
-            playerPokemon.Health = 7;
+            Animal playerAnimal = gameState.MainPlayer.AnimalInventory[0];
+            playerAnimal.Health = 7;
 
             gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Road 2"));
             gameState.MainPlayer.AddBadge("Grass Badge");
             gameState.GymLeader1.Defeated = true;
-            gameState.GameMap.GetRoom("Road 1").RestoreEncounterPokemon(new[] { GameData.CreatePokemon()[4] });
+            gameState.GameMap.GetRoom("Road 1").RestoreEncounterAnimals(new[] { GameData.CreateAnimals()[4] });
 
             GameSaveState captured = GameStateMapper.Capture(gameState);
 
             gameState.MainPlayer.RestoreName("Changed");
             gameState.MainPlayer.MoveTo(gameState.GameMap.StartRoom);
             gameState.MainPlayer.RestoreBadges(Array.Empty<string>());
-            gameState.MainPlayer.RestorePokemonInventory(new[] { GameData.CreatePokemon()[5] });
-            gameState.GameMap.GetRoom("Road 1").RestoreEncounterPokemon(Array.Empty<Pokemon>());
+            gameState.MainPlayer.RestoreAnimalInventory(new[] { GameData.CreateAnimals()[5] });
+            gameState.GameMap.GetRoom("Road 1").RestoreEncounterAnimals(Array.Empty<Animal>());
             gameState.GymLeader1.Defeated = false;
 
             GameStateMapper.Apply(gameState, captured);
@@ -163,50 +213,95 @@ namespace UnitTest
             Assert.Equal("Red", gameState.MainPlayer.Name);
             Assert.Equal("Road 2", gameState.MainPlayer.CurrentRoom.Name);
             Assert.Equal("Grass Badge", gameState.MainPlayer.Badges[0]);
-            Assert.Equal(playerPokemon.Id, gameState.MainPlayer.PokemonInventory[0].Id);
-            Assert.Equal(7, gameState.MainPlayer.PokemonInventory[0].Health);
-            Assert.Single(gameState.GameMap.GetRoom("Road 1").EncounterPokemon);
+            Assert.Equal(playerAnimal.Id, gameState.MainPlayer.AnimalInventory[0].Id);
+            Assert.Equal(7, gameState.MainPlayer.AnimalInventory[0].Health);
+            Assert.Single(gameState.GameMap.GetRoom("Road 1").EncounterAnimals);
             Assert.True(gameState.GymLeader1.Defeated);
         }
 
+        // Checks that saving through the service sends the current animal-based runtime data to the repository JSON payload.
         [Fact]
-        public void Mapper_CaptureAndApply_RestoresPokemonRuntimeStatsAndMoves()
+        public void Service_Save_SendsCurrentAnimalRuntimeDataToRepository()
         {
             GameState gameState = CreateGameState("Red");
-            Pokemon changedPokemon = new(
-                1,
-                "UMBREON",
-                PokemonType.Dark,
-                21,
-                101,
-                88,
-                7,
-                new[]
+            Animal changedAnimal = new(
+                id: 1,
+                name: "UMBREON",
+                element: AnimalElement.Nature,
+                speed: 21,
+                baseHealth: 101,
+                health: 88,
+                level: 7,
+                moves: new[]
                 {
                     new Move("CUSTOMBITE", MoveType.Dark, 13),
                     new Move("CUSTOMSPARK", MoveType.Electric, 11)
                 });
-            gameState.MainPlayer.RestorePokemonInventory(new[] { changedPokemon });
+            gameState.MainPlayer.RestoreAnimalInventory(new[] { changedAnimal });
+            gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Road 2"));
+            FakeGameSaveRepository repository = new();
+            GameSaveService saveService = new(repository);
+
+            SaveCommandResult result = saveService.Save(gameState);
+
+            string? savedJson = repository.SaveJsonValue;
+            Assert.NotNull(savedJson);
+            GameSaveState savedState = GameSaveSerializer.Deserialize(savedJson);
+            Assert.True(result.Succeeded);
+            Assert.Equal("Game saved.", result.Message);
+            Assert.Equal("Road 2", savedState.Player.CurrentRoomName);
+            Assert.Equal(1, savedState.Player.PokemonInventory[0].Id);
+            Assert.Equal("UMBREON", savedState.Player.PokemonInventory[0].Name);
+            Assert.Equal(21, savedState.Player.PokemonInventory[0].Speed);
+            Assert.Equal(101, savedState.Player.PokemonInventory[0].BaseHealth);
+            Assert.Equal(88, savedState.Player.PokemonInventory[0].Health);
+            Assert.Equal(7, savedState.Player.PokemonInventory[0].Level);
+            Assert.Equal("CUSTOMBITE", savedState.Player.PokemonInventory[0].Moves[0].Name);
+            Assert.Equal(MoveType.Dark, savedState.Player.PokemonInventory[0].Moves[0].Type);
+            Assert.Equal(13, savedState.Player.PokemonInventory[0].Moves[0].Power);
+            Assert.Equal("CUSTOMSPARK", savedState.Player.PokemonInventory[0].Moves[1].Name);
+        }
+
+        // Checks that capturing and reapplying save data restores modified runtime stats and custom moves.
+        [Fact]
+        public void Mapper_CaptureAndApply_RestoresAnimalRuntimeStatsAndMoves()
+        {
+            GameState gameState = CreateGameState("Red");
+            Animal changedAnimal = new(
+                id: 1,
+                name: "UMBREON",
+                element: AnimalElement.Nature,
+                speed: 21,
+                baseHealth: 101,
+                health: 88,
+                level: 7,
+                moves: new[]
+                {
+                    new Move("CUSTOMBITE", MoveType.Dark, 13),
+                    new Move("CUSTOMSPARK", MoveType.Electric, 11)
+                });
+            gameState.MainPlayer.RestoreAnimalInventory(new[] { changedAnimal });
 
             GameSaveState captured = GameStateMapper.Capture(gameState);
 
-            gameState.MainPlayer.RestorePokemonInventory(new[] { GameData.CreatePokemon()[2] });
+            gameState.MainPlayer.RestoreAnimalInventory(new[] { GameData.CreateAnimals()[2] });
             GameStateMapper.Apply(gameState, captured);
 
-            Pokemon restoredPokemon = gameState.MainPlayer.PokemonInventory[0];
+            Animal restoredAnimal = gameState.MainPlayer.AnimalInventory[0];
             Assert.Equal(2, captured.Version);
-            Assert.Equal(1, restoredPokemon.Id);
-            Assert.Equal("UMBREON", restoredPokemon.Name);
-            Assert.Equal(21, restoredPokemon.Speed);
-            Assert.Equal(101, restoredPokemon.BaseHealth);
-            Assert.Equal(88, restoredPokemon.Health);
-            Assert.Equal(7, restoredPokemon.Level);
-            Assert.Equal("CUSTOMBITE", restoredPokemon.Moves[0].Name);
-            Assert.Equal(MoveType.Dark, restoredPokemon.Moves[0].Type);
-            Assert.Equal(13, restoredPokemon.Moves[0].Power);
-            Assert.Equal("CUSTOMSPARK", restoredPokemon.Moves[1].Name);
+            Assert.Equal(1, restoredAnimal.Id);
+            Assert.Equal("UMBREON", restoredAnimal.Name);
+            Assert.Equal(21, restoredAnimal.Speed);
+            Assert.Equal(101, restoredAnimal.BaseHealth);
+            Assert.Equal(88, restoredAnimal.Health);
+            Assert.Equal(7, restoredAnimal.Level);
+            Assert.Equal("CUSTOMBITE", restoredAnimal.Moves[0].Name);
+            Assert.Equal(MoveType.Dark, restoredAnimal.Moves[0].Type);
+            Assert.Equal(13, restoredAnimal.Moves[0].Power);
+            Assert.Equal("CUSTOMSPARK", restoredAnimal.Moves[1].Name);
         }
 
+        // Checks that version 1 save data falls back to factory defaults for fields that were not present yet.
         [Fact]
         public void Mapper_ApplyVersion1PokemonSave_FallsBackToFactoryDefaultsForMissingRuntimeFields()
         {
@@ -227,16 +322,17 @@ namespace UnitTest
 
             GameStateMapper.Apply(gameState, oldSaveState);
 
-            Pokemon template = GameData.CreatePokemon().Single(pokemon => pokemon.Id == 1);
-            Pokemon restoredPokemon = gameState.MainPlayer.PokemonInventory[0];
+            Animal template = GameData.CreateAnimals().Single(animal => animal.Id == 1);
+            Animal restoredAnimal = gameState.MainPlayer.AnimalInventory[0];
             Assert.Equal("Blue", gameState.MainPlayer.Name);
-            Assert.Equal(12, restoredPokemon.Health);
-            Assert.Equal(template.Level, restoredPokemon.Level);
-            Assert.Equal(template.BaseHealth, restoredPokemon.BaseHealth);
-            Assert.Equal(template.Speed, restoredPokemon.Speed);
-            Assert.Equal(template.Moves.Select(move => move.Name), restoredPokemon.Moves.Select(move => move.Name));
+            Assert.Equal(12, restoredAnimal.Health);
+            Assert.Equal(template.Level, restoredAnimal.Level);
+            Assert.Equal(template.BaseHealth, restoredAnimal.BaseHealth);
+            Assert.Equal(template.Speed, restoredAnimal.Speed);
+            Assert.Equal(template.Moves.Select(move => move.Name), restoredAnimal.Moves.Select(move => move.Name));
         }
 
+        // Checks that applying save data with out-of-range health values throws a validation error.
         [Theory]
         [InlineData(-1)]
         [InlineData(76)]
@@ -259,6 +355,7 @@ namespace UnitTest
             Assert.Throws<InvalidOperationException>(() => GameStateMapper.Apply(gameState, saveState));
         }
 
+        // Checks that the load service reports failure when persisted creature health exceeds the allowed range.
         [Fact]
         public void Service_LoadPokemonSaveWithInvalidHealth_ReturnsFailure()
         {
@@ -274,6 +371,7 @@ namespace UnitTest
             Assert.Equal("Save data could not be loaded.", result.Message);
         }
 
+        // Checks that startup loads an existing save without showing the new-game-only menu layout.
         [Fact]
         public void StartupFlow_WithSave_LoadsSavedGameWithoutShowingNewGameOption()
         {
@@ -294,6 +392,7 @@ namespace UnitTest
             Assert.Contains("Game loaded.", io.OutputText);
         }
 
+        // Checks that deleting an existing save returns startup to the new-game-only menu flow.
         [Fact]
         public void StartupFlow_DeleteExistingSaveThenNewGame_ShowsNewGameOptionAgain()
         {
@@ -314,6 +413,7 @@ namespace UnitTest
             Assert.DoesNotContain("3. Delete Game", io.OutputText);
         }
 
+        // Checks that invalid delete confirmation input re-displays the confirmation prompt instead of proceeding.
         [Fact]
         public void StartupFlow_DeleteInvalidConfirmation_ReDisplaysConfirmationPrompt()
         {
@@ -334,6 +434,7 @@ namespace UnitTest
             Assert.Contains("Game loaded.", io.OutputText);
         }
 
+        // Checks that invalid startup input without a save re-displays only the new game option.
         [Fact]
         public void StartupFlow_InvalidChoiceWithoutSave_ReDisplaysOnlyNewGameOption()
         {
@@ -352,38 +453,38 @@ namespace UnitTest
 
         private static GameState CreateGameState(string playerName)
         {
-            List<Pokemon> mainPokemon = GameData.CreatePokemon();
-            List<Pokemon> gymPokemon = GameData.CreatePokemon();
+            List<Animal> mainAnimals = GameData.CreateAnimals();
+            List<Animal> gymAnimals = GameData.CreateAnimals();
             Arcadia_v2.Map.Map gameMap = new();
 
             Player mainPlayer = new(playerName, gameMap.StartRoom);
-            mainPlayer.AddPokemon(mainPokemon[1]);
-            mainPlayer.AddPokemon(mainPokemon[2]);
+            mainPlayer.AddAnimal(mainAnimals[1]);
+            mainPlayer.AddAnimal(mainAnimals[2]);
 
             CompPlayer gymLeader1 = new("Mrs. Mcmann", gameMap.GymLeader1Room);
-            gymLeader1.SetBattleTeam(new[] { gymPokemon[3], gymPokemon[14] });
+            gymLeader1.SetBattleTeam(new[] { gymAnimals[3], gymAnimals[14] });
             gymLeader1.AddBadge("Grass Badge");
 
             CompPlayer gymLeader2 = new("Minofo", gameMap.GymLeader2Room);
-            gymLeader2.SetBattleTeam(new[] { gymPokemon[5], gymPokemon[9] });
+            gymLeader2.SetBattleTeam(new[] { gymAnimals[5], gymAnimals[9] });
             gymLeader2.AddBadge("Water Badge");
 
             CompPlayer gymLeader3 = new("Golden", gameMap.GymLeader3Room);
-            gymLeader3.SetBattleTeam(new[] { gymPokemon[10], gymPokemon[16] });
+            gymLeader3.SetBattleTeam(new[] { gymAnimals[10], gymAnimals[16] });
             gymLeader3.AddBadge("Rock Badge");
 
             CompPlayer gymLeader4 = new("Wiggins", gameMap.GymLeader4Room);
-            gymLeader4.SetBattleTeam(new[] { gymPokemon[13], gymPokemon[17] });
+            gymLeader4.SetBattleTeam(new[] { gymAnimals[13], gymAnimals[17] });
             gymLeader4.AddBadge("Dragon Badge");
 
             CompPlayer arcadiaChampion = new("Adam", gameMap.ChampionRoom);
-            arcadiaChampion.SetBattleTeam(new[] { gymPokemon[4], gymPokemon[8], gymPokemon[6], gymPokemon[18] });
+            arcadiaChampion.SetBattleTeam(new[] { gymAnimals[4], gymAnimals[8], gymAnimals[6], gymAnimals[18] });
             arcadiaChampion.AddBadge("Champion Badge");
 
             return new GameState(
                 gameMap,
-                mainPokemon,
-                gymPokemon,
+                mainAnimals,
+                gymAnimals,
                 mainPlayer,
                 gymLeader1,
                 gymLeader2,

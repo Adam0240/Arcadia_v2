@@ -20,7 +20,7 @@ namespace Arcadia_v2.Saves
                     .Select(room => new RoomSaveState
                     {
                         Name = room.Name,
-                        EncounterPokemon = CapturePokemonList(room.EncounterPokemon)
+                        EncounterPokemon = CaptureAnimalList(room.EncounterAnimals)
                     })
                     .ToList(),
                 Trainers = GetTrainers(gameState)
@@ -34,12 +34,12 @@ namespace Arcadia_v2.Saves
             ArgumentNullException.ThrowIfNull(gameState);
             ArgumentNullException.ThrowIfNull(state);
 
-            Dictionary<int, Pokemon> pokemonById = GameData.CreatePokemon()
-                .ToDictionary(pokemon => pokemon.Id);
+            Dictionary<int, Animal> animalsById = GameData.CreateAnimals()
+                .ToDictionary(animal => animal.Id);
 
-            ApplyPlayer(gameState, state.Player, pokemonById);
-            ApplyRooms(gameState, state.Rooms, pokemonById);
-            ApplyTrainers(gameState, state.Trainers, pokemonById);
+            ApplyPlayer(gameState, state.Player, animalsById);
+            ApplyRooms(gameState, state.Rooms, animalsById);
+            ApplyTrainers(gameState, state.Trainers, animalsById);
         }
 
         private static PlayerSaveState CapturePlayer(Player player)
@@ -49,7 +49,7 @@ namespace Arcadia_v2.Saves
                 Name = player.Name,
                 CurrentRoomName = player.CurrentRoom.Name,
                 Badges = player.Badges.ToList(),
-                PokemonInventory = CapturePokemonList(player.PokemonInventory)
+                PokemonInventory = CaptureAnimalList(player.AnimalInventory)
             };
         }
 
@@ -61,22 +61,22 @@ namespace Arcadia_v2.Saves
                 CurrentRoomName = trainer.CurrentRoom.Name,
                 Defeated = trainer.Defeated,
                 Badges = trainer.Badges.ToList(),
-                BattleTeamTemplate = CapturePokemonList(trainer.BattleTeamTemplate)
+                BattleTeamTemplate = CaptureAnimalList(trainer.BattleTeamTemplate)
             };
         }
 
-        private static List<PokemonSaveState> CapturePokemonList(IReadOnlyList<Pokemon> pokemonList)
+        private static List<PokemonSaveState> CaptureAnimalList(IReadOnlyList<Animal> animalList)
         {
-            return pokemonList
-                .Select(pokemon => new PokemonSaveState
+            return animalList
+                .Select(animal => new PokemonSaveState
                 {
-                    Id = pokemon.Id,
-                    Name = pokemon.Name,
-                    Level = pokemon.Level,
-                    Health = pokemon.Health,
-                    BaseHealth = pokemon.BaseHealth,
-                    Speed = pokemon.Speed,
-                    Moves = pokemon.Moves
+                    Id = animal.Id,
+                    Name = animal.Name,
+                    Level = animal.Level,
+                    Health = animal.Health,
+                    BaseHealth = animal.BaseHealth,
+                    Speed = animal.Speed,
+                    Moves = animal.Moves
                         .Select(move => new MoveSaveState
                         {
                             Name = move.Name,
@@ -91,29 +91,29 @@ namespace Arcadia_v2.Saves
         private static void ApplyPlayer(
             GameState gameState,
             PlayerSaveState playerState,
-            IReadOnlyDictionary<int, Pokemon> pokemonById)
+            IReadOnlyDictionary<int, Animal> animalsById)
         {
             gameState.MainPlayer.RestoreName(playerState.Name);
             gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom(playerState.CurrentRoomName));
             gameState.MainPlayer.RestoreBadges(playerState.Badges);
-            gameState.MainPlayer.RestorePokemonInventory(CreatePokemon(playerState.PokemonInventory, pokemonById));
+            gameState.MainPlayer.RestoreAnimalInventory(CreateAnimals(playerState.PokemonInventory, animalsById));
         }
 
         private static void ApplyRooms(
             GameState gameState,
             IReadOnlyList<RoomSaveState> rooms,
-            IReadOnlyDictionary<int, Pokemon> pokemonById)
+            IReadOnlyDictionary<int, Animal> animalsById)
         {
             foreach (RoomSaveState roomState in rooms)
             {
-                gameState.GameMap.GetRoom(roomState.Name).RestoreEncounterPokemon(CreatePokemon(roomState.EncounterPokemon, pokemonById));
+                gameState.GameMap.GetRoom(roomState.Name).RestoreEncounterAnimals(CreateAnimals(roomState.EncounterPokemon, animalsById));
             }
         }
 
         private static void ApplyTrainers(
             GameState gameState,
             IReadOnlyList<TrainerSaveState> trainers,
-            IReadOnlyDictionary<int, Pokemon> pokemonById)
+            IReadOnlyDictionary<int, Animal> animalsById)
         {
             Dictionary<string, CompPlayer> trainersByName = GetTrainers(gameState)
                 .ToDictionary(trainer => trainer.Name, StringComparer.Ordinal);
@@ -129,31 +129,31 @@ namespace Arcadia_v2.Saves
                 trainer.MoveTo(gameState.GameMap.GetRoom(trainerState.CurrentRoomName));
                 trainer.Defeated = trainerState.Defeated;
                 trainer.RestoreBadges(trainerState.Badges);
-                trainer.SetBattleTeam(CreatePokemon(trainerState.BattleTeamTemplate, pokemonById));
+                trainer.SetBattleTeam(CreateAnimals(trainerState.BattleTeamTemplate, animalsById));
             }
         }
 
-        private static List<Pokemon> CreatePokemon(
+        private static List<Animal> CreateAnimals(
             IEnumerable<PokemonSaveState> savedPokemon,
-            IReadOnlyDictionary<int, Pokemon> pokemonById)
+            IReadOnlyDictionary<int, Animal> animalsById)
         {
-            List<Pokemon> restoredPokemon = new();
+            List<Animal> restoredAnimals = new();
 
             foreach (PokemonSaveState pokemonState in savedPokemon)
             {
-                if (!pokemonById.TryGetValue(pokemonState.Id, out Pokemon? template))
+                if (!animalsById.TryGetValue(pokemonState.Id, out Animal? template))
                 {
                     throw new InvalidOperationException($"Unknown Pokemon id in save data: {pokemonState.Id}");
                 }
 
-                Pokemon pokemon = CreatePokemonFromSaveState(pokemonState, template);
-                restoredPokemon.Add(pokemon);
+                Animal animal = CreateAnimalFromSaveState(pokemonState, template);
+                restoredAnimals.Add(animal);
             }
 
-            return restoredPokemon;
+            return restoredAnimals;
         }
 
-        private static Pokemon CreatePokemonFromSaveState(PokemonSaveState pokemonState, Pokemon template)
+        private static Animal CreateAnimalFromSaveState(PokemonSaveState pokemonState, Animal template)
         {
             string name = string.IsNullOrWhiteSpace(pokemonState.Name)
                 ? template.Name
@@ -172,15 +172,15 @@ namespace Arcadia_v2.Saves
                 ? pokemonState.Moves.Select(moveState => new Move(moveState.Name, moveState.Type, moveState.Power))
                 : template.Moves;
 
-            return new Pokemon(
-                pokemonState.Id,
-                name,
-                template.Type,
-                speed,
-                baseHealth,
-                health,
-                level,
-                moves);
+            return new Animal(
+                id: pokemonState.Id,
+                name: name,
+                element: template.Element,
+                speed: speed,
+                baseHealth: baseHealth,
+                health: health,
+                level: level,
+                moves: moves);
         }
 
         private static int ValidateHealth(int health, int baseHealth, string pokemonName)

@@ -4,68 +4,226 @@ using System.Collections.Generic;
 
 namespace Arcadia_v2
 {
-    // Builds the hard-coded Pokemon roster separately from the Pokemon model.
-    public static class PokeFactory
+    // Builds the hard-coded animal roster separately from the runtime model.
+    public static class AnimalFactory
     {
-        private static Pokemon CreatePokemonEntry(
+        private static Animal CreateAnimalEntry(
             int id,
             string name,
-            PokemonType type,
+            AnimalElement element,
             int speed,
             int baseHealth,
             int health,
             int level,
             params Move[] moves)
         {
-            return new Pokemon(id, name, type, speed, baseHealth, health, level, moves);
+            return new Animal(
+                id: id,
+                name: name,
+                element: element,
+                speed: speed,
+                baseHealth: baseHealth,
+                health: health,
+                level: level,
+                moves: moves);
         }
 
-        public static IReadOnlyList<Pokemon> CreatePokemon()
+        public static IReadOnlyList<Animal> CreateAnimals()
         {
-            List<Pokemon> pokemon = new List<Pokemon>
+            List<Animal> animals = new List<Animal>
             {
-                // Special Pokemon
-                CreatePokemonEntry(0, "Null0", PokemonType.Normal, 0, 0, 0, 0, MoveData.Tackle, MoveData.Tackle, MoveData.Tackle, MoveData.Tackle),
+                CreateAnimalEntry(
+                    id: 0,
+                    name: "Null0",
+                    element: AnimalElement.Nature,
+                    speed: 0,
+                    baseHealth: 0,
+                    health: 0,
+                    level: 0,
+                    moves: new[] { MoveData.Tackle, MoveData.Tackle, MoveData.Tackle, MoveData.Tackle }),
 
-                // Dark Pokemon
-                CreatePokemonEntry(1, "UMBREON", PokemonType.Dark, 9, 75, 75, 0, MoveData.Moonlight, MoveData.DarkPulse, MoveData.Bite, MoveData.Tackle),
+                CreateAnimalEntry(
+                    id: 1,
+                    name: "UMBREON",
+                    element: AnimalElement.Nature,
+                    speed: 9,
+                    baseHealth: 75,
+                    health: 75,
+                    level: 0,
+                    moves: new[] { MoveData.Moonlight, MoveData.DarkPulse, MoveData.Bite, MoveData.Tackle }),
 
-                // Psychic Pokemon
-                CreatePokemonEntry(2, "ESPEON", PokemonType.Psychic, 7, 75, 75, 0, MoveData.Sunlight, MoveData.Confusion, MoveData.Psychic, MoveData.Moonblast),
+                CreateAnimalEntry(
+                    id: 2,
+                    name: "ESPEON",
+                    element: AnimalElement.Nature,
+                    speed: 7,
+                    baseHealth: 75,
+                    health: 75,
+                    level: 0,
+                    moves: new[] { MoveData.Sunlight, MoveData.Confusion, MoveData.Psychic, MoveData.Moonblast }),
 
-                // Grass Pokemon
-                CreatePokemonEntry(3, "BULBASAUR", PokemonType.Grass, 7, 40, 40, 0, MoveData.Tackle, MoveData.VineWhip, MoveData.RazerLeaf, MoveData.QuickAttack),
-                CreatePokemonEntry(4, "VENUSAUR", PokemonType.Grass, 7, 80, 80, 0, MoveData.PetalBlizzard, MoveData.SolarBeam, MoveData.Earthquake, MoveData.Sunlight),
-                CreatePokemonEntry(14, "VILEPLUME", PokemonType.Grass, 7, 80, 80, 0, MoveData.SeedBomb, MoveData.RazerLeaf, MoveData.Earthquake, MoveData.Psychic),
+                CreateAnimalEntry(
+                    id: 3,
+                    name: "BULBASAUR",
+                    element: AnimalElement.Nature,
+                    speed: 7,
+                    baseHealth: 40,
+                    health: 40,
+                    level: 0,
+                    moves: new[] { MoveData.Tackle, MoveData.VineWhip, MoveData.RazerLeaf, MoveData.QuickAttack }),
+                CreateAnimalEntry(
+                    id: 4,
+                    name: "VENUSAUR",
+                    element: AnimalElement.Nature,
+                    speed: 7,
+                    baseHealth: 80,
+                    health: 80,
+                    level: 0,
+                    moves: new[] { MoveData.PetalBlizzard, MoveData.SolarBeam, MoveData.Earthquake, MoveData.Sunlight }),
+                CreateAnimalEntry(
+                    id: 14,
+                    name: "VILEPLUME",
+                    element: AnimalElement.Nature,
+                    speed: 7,
+                    baseHealth: 80,
+                    health: 80,
+                    level: 0,
+                    moves: new[] { MoveData.SeedBomb, MoveData.RazerLeaf, MoveData.Earthquake, MoveData.Psychic }),
 
-                // Water Pokemon
-                CreatePokemonEntry(5, "SQUIRTLE", PokemonType.Water, 7, 40, 40, 0, MoveData.WaterGun, MoveData.QuickAttack, MoveData.WaterPulse, MoveData.Bite),
-                CreatePokemonEntry(6, "BLASTOISE", PokemonType.Water, 7, 80, 80, 0, MoveData.Bite, MoveData.HydroPump, MoveData.Surf, MoveData.QuickAttack),
-                CreatePokemonEntry(12, "MAGIKARP", PokemonType.Water, 7, 40, 40, 0, MoveData.Splash, MoveData.Tackle, MoveData.QuickAttack, MoveData.Growl),
-                CreatePokemonEntry(13, "GYRADOS", PokemonType.Water, 7, 80, 80, 0, MoveData.Bite, MoveData.HydroPump, MoveData.Earthquake, MoveData.Surf),
+                CreateAnimalEntry(
+                    id: 5,
+                    name: "SQUIRTLE",
+                    element: AnimalElement.Mystic,
+                    speed: 7,
+                    baseHealth: 40,
+                    health: 40,
+                    level: 0,
+                    moves: new[] { MoveData.WaterGun, MoveData.QuickAttack, MoveData.WaterPulse, MoveData.Bite }),
+                CreateAnimalEntry(
+                    id: 6,
+                    name: "BLASTOISE",
+                    element: AnimalElement.Mystic,
+                    speed: 7,
+                    baseHealth: 80,
+                    health: 80,
+                    level: 0,
+                    moves: new[] { MoveData.Bite, MoveData.HydroPump, MoveData.Surf, MoveData.QuickAttack }),
+                CreateAnimalEntry(
+                    id: 12,
+                    name: "MAGIKARP",
+                    element: AnimalElement.Mystic,
+                    speed: 7,
+                    baseHealth: 40,
+                    health: 40,
+                    level: 0,
+                    moves: new[] { MoveData.Splash, MoveData.Tackle, MoveData.QuickAttack, MoveData.Growl }),
+                CreateAnimalEntry(
+                    id: 13,
+                    name: "GYRADOS",
+                    element: AnimalElement.Mystic,
+                    speed: 7,
+                    baseHealth: 80,
+                    health: 80,
+                    level: 0,
+                    moves: new[] { MoveData.Bite, MoveData.HydroPump, MoveData.Earthquake, MoveData.Surf }),
 
-                // Fire Pokemon
-                CreatePokemonEntry(7, "CHARMANDER", PokemonType.Fire, 7, 40, 40, 0, MoveData.Tackle, MoveData.Ember, MoveData.FireFang, MoveData.QuickAttack),
-                CreatePokemonEntry(16, "CHARMELEON", PokemonType.Fire, 7, 65, 65, 0, MoveData.Flamethrower, MoveData.QuickAttack, MoveData.Bite, MoveData.FlameWheel),
-                CreatePokemonEntry(8, "CHARIZARD", PokemonType.Fire, 7, 80, 80, 0, MoveData.WingAttack, MoveData.Flamethrower, MoveData.FireBlitz, MoveData.QuickAttack),
+                CreateAnimalEntry(
+                    id: 7,
+                    name: "CHARMANDER",
+                    element: AnimalElement.Nature,
+                    speed: 7,
+                    baseHealth: 40,
+                    health: 40,
+                    level: 0,
+                    moves: new[] { MoveData.Tackle, MoveData.Ember, MoveData.FireFang, MoveData.QuickAttack }),
+                CreateAnimalEntry(
+                    id: 16,
+                    name: "CHARMELEON",
+                    element: AnimalElement.Nature,
+                    speed: 7,
+                    baseHealth: 65,
+                    health: 65,
+                    level: 0,
+                    moves: new[] { MoveData.Flamethrower, MoveData.QuickAttack, MoveData.Bite, MoveData.FlameWheel }),
+                CreateAnimalEntry(
+                    id: 8,
+                    name: "CHARIZARD",
+                    element: AnimalElement.Nature,
+                    speed: 7,
+                    baseHealth: 80,
+                    health: 80,
+                    level: 0,
+                    moves: new[] { MoveData.WingAttack, MoveData.Flamethrower, MoveData.FireBlitz, MoveData.QuickAttack }),
 
-                // Ground Pokemon
-                CreatePokemonEntry(9, "GRAVELER", PokemonType.Ground, 7, 70, 70, 0, MoveData.QuickAttack, MoveData.RockSmash, MoveData.RollOut, MoveData.Earthquake),
-                CreatePokemonEntry(10, "ONIX", PokemonType.Ground, 7, 75, 75, 0, MoveData.QuickAttack, MoveData.RockSmash, MoveData.RollOut, MoveData.Earthquake),
+                CreateAnimalEntry(
+                    id: 9,
+                    name: "GRAVELER",
+                    element: AnimalElement.Nature,
+                    speed: 7,
+                    baseHealth: 70,
+                    health: 70,
+                    level: 0,
+                    moves: new[] { MoveData.QuickAttack, MoveData.RockSmash, MoveData.RollOut, MoveData.Earthquake }),
+                CreateAnimalEntry(
+                    id: 10,
+                    name: "ONIX",
+                    element: AnimalElement.Nature,
+                    speed: 7,
+                    baseHealth: 75,
+                    health: 75,
+                    level: 0,
+                    moves: new[] { MoveData.QuickAttack, MoveData.RockSmash, MoveData.RollOut, MoveData.Earthquake }),
 
-                // Electric Pokemon
-                CreatePokemonEntry(11, "PIKACHU", PokemonType.Electric, 7, 75, 75, 0, MoveData.Spark, MoveData.Thunderbolt, MoveData.QuickAttack, MoveData.Surf),
+                CreateAnimalEntry(
+                    id: 11,
+                    name: "PIKACHU",
+                    element: AnimalElement.Nature,
+                    speed: 7,
+                    baseHealth: 75,
+                    health: 75,
+                    level: 0,
+                    moves: new[] { MoveData.Spark, MoveData.Thunderbolt, MoveData.QuickAttack, MoveData.Surf }),
 
-                // Flying Pokemon
-                CreatePokemonEntry(15, "PIDGEY", PokemonType.Flying, 7, 45, 45, 0, MoveData.Tackle, MoveData.Peck, MoveData.QuickAttack, MoveData.WingAttack),
+                CreateAnimalEntry(
+                    id: 15,
+                    name: "PIDGEY",
+                    element: AnimalElement.Nature,
+                    speed: 7,
+                    baseHealth: 45,
+                    health: 45,
+                    level: 0,
+                    moves: new[] { MoveData.Tackle, MoveData.Peck, MoveData.QuickAttack, MoveData.WingAttack }),
 
-                // Dragon Pokemon
-                CreatePokemonEntry(17, "SALAMANCE", PokemonType.Dragon, 7, 90, 90, 0, MoveData.Flamethrower, MoveData.WingAttack, MoveData.Earthquake, MoveData.Surf),
-                CreatePokemonEntry(18, "DRAGONITE", PokemonType.Dragon, 7, 90, 90, 0, MoveData.Flamethrower, MoveData.WingAttack, MoveData.Earthquake, MoveData.Surf),
-                CreatePokemonEntry(19, "ARCEUS", PokemonType.Dragon, 7, 100, 100, 0, MoveData.Earthquake, MoveData.DarkPulse, MoveData.Moonblast, MoveData.HydroPump)
+                CreateAnimalEntry(
+                    id: 17,
+                    name: "SALAMANCE",
+                    element: AnimalElement.Nature,
+                    speed: 7,
+                    baseHealth: 90,
+                    health: 90,
+                    level: 0,
+                    moves: new[] { MoveData.Flamethrower, MoveData.WingAttack, MoveData.Earthquake, MoveData.Surf }),
+                CreateAnimalEntry(
+                    id: 18,
+                    name: "DRAGONITE",
+                    element: AnimalElement.Nature,
+                    speed: 7,
+                    baseHealth: 90,
+                    health: 90,
+                    level: 0,
+                    moves: new[] { MoveData.Flamethrower, MoveData.WingAttack, MoveData.Earthquake, MoveData.Surf }),
+                CreateAnimalEntry(
+                    id: 19,
+                    name: "ARCEUS",
+                    element: AnimalElement.Nature,
+                    speed: 7,
+                    baseHealth: 100,
+                    health: 100,
+                    level: 0,
+                    moves: new[] { MoveData.Earthquake, MoveData.DarkPulse, MoveData.Moonblast, MoveData.HydroPump })
             };
 
-            return pokemon;
+            return animals;
         }
     }
 }

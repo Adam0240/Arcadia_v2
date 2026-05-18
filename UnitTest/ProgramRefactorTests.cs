@@ -27,59 +27,61 @@ public class ProgramFlowTests
         Assert.Contains("Enter your name", io.OutputText);
     }
 
-    // Verifies that a two-Pokemon party swaps immediately without asking for Pokemon names.
+    // Verifies that a two-animal party swaps immediately without asking for creature names.
     [Fact]
-    public void SwapPokemon_WithTwoPokemon_AutoSwapsPartyPositions()
+    public void SwapAnimals_WithTwoAnimals_AutoSwapsPartyPositions()
     {
         Player player = new Player("Trainer", new Map().StartRoom);
-        player.AddPokemon(new Pokemon(1, "UMBREON", PokemonType.Dark, 7, 10, 10, 1, new[] { MoveData.Bite }));
-        player.AddPokemon(new Pokemon(2, "ESPEON", PokemonType.Psychic, 7, 10, 10, 1, new[] { MoveData.Psychic }));
+        player.AddAnimal(new Animal(id: 1, name: "UMBREON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Bite }));
+        player.AddAnimal(new Animal(id: 2, name: "ESPEON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Psychic }));
         FakeGameIO io = new();
 
-        PartyFlow.SwapPokemon(player, io);
+        PartyFlow.SwapAnimals(player, io);
 
-        Assert.Equal("ESPEON", player.PokemonInventory[0].Name);
-        Assert.Equal("UMBREON", player.PokemonInventory[1].Name);
+        Assert.Equal("ESPEON", player.AnimalInventory[0].Name);
+        Assert.Equal("UMBREON", player.AnimalInventory[1].Name);
         Assert.Contains("You are swapping: UMBREON and ESPEON .", io.OutputText);
         Assert.DoesNotContain("Who would you like to trade positions with?", io.OutputText);
     }
 
+    // Verifies that an invalid first swap name causes the party swap flow to re-prompt until a valid name is entered.
     [Fact]
-    public void SwapPokemon_InvalidFirstName_RePromptsUntilValidName()
+    public void SwapAnimals_InvalidFirstName_RePromptsUntilValidName()
     {
         Player player = CreateFourPokemonPlayer();
 
         FakeGameIO io = new("missing", "umbreon", "espeon");
 
-        PartyFlow.SwapPokemon(player, io);
+        PartyFlow.SwapAnimals(player, io);
 
-        Assert.Equal("ESPEON", player.PokemonInventory[0].Name);
-        Assert.Equal("UMBREON", player.PokemonInventory[1].Name);
-        Assert.Contains("Invalid Pokemon name MISSING .", io.OutputText);
-        Assert.Equal(2, io.OutputText.Split("Heres your Pokemon. Who would you like to trade positions with?").Length - 1);
+        Assert.Equal("ESPEON", player.AnimalInventory[0].Name);
+        Assert.Equal("UMBREON", player.AnimalInventory[1].Name);
+        Assert.Contains("Invalid animal name MISSING .", io.OutputText);
+        Assert.Equal(2, io.OutputText.Split("Here are your animals. Who would you like to trade positions with?").Length - 1);
     }
 
+    // Verifies that the swap flow uses exact matched party indexes when swapping within a four-creature party.
     [Fact]
-    public void SwapPokemon_WithFourPokemon_UsesExactMatchedIndexes()
+    public void SwapAnimals_WithFourAnimals_UsesExactMatchedIndexes()
     {
         Player player = CreateFourPokemonPlayer();
         FakeGameIO io = new("jolteon", "flareon");
 
-        PartyFlow.SwapPokemon(player, io);
+        PartyFlow.SwapAnimals(player, io);
 
-        Assert.Equal("UMBREON", player.PokemonInventory[0].Name);
-        Assert.Equal("ESPEON", player.PokemonInventory[1].Name);
-        Assert.Equal("FLAREON", player.PokemonInventory[2].Name);
-        Assert.Equal("JOLTEON", player.PokemonInventory[3].Name);
+        Assert.Equal("UMBREON", player.AnimalInventory[0].Name);
+        Assert.Equal("ESPEON", player.AnimalInventory[1].Name);
+        Assert.Equal("FLAREON", player.AnimalInventory[2].Name);
+        Assert.Equal("JOLTEON", player.AnimalInventory[3].Name);
     }
 
     private static Player CreateFourPokemonPlayer()
     {
         Player player = new Player("Trainer", new Map().StartRoom);
-        player.AddPokemon(new Pokemon(1, "UMBREON", PokemonType.Dark, 7, 10, 10, 1, new[] { MoveData.Bite }));
-        player.AddPokemon(new Pokemon(2, "ESPEON", PokemonType.Psychic, 7, 10, 10, 1, new[] { MoveData.Psychic }));
-        player.AddPokemon(new Pokemon(3, "JOLTEON", PokemonType.Electric, 7, 10, 10, 1, new[] { MoveData.Thunderbolt }));
-        player.AddPokemon(new Pokemon(4, "FLAREON", PokemonType.Fire, 7, 10, 10, 1, new[] { MoveData.Ember }));
+        player.AddAnimal(new Animal(id: 1, name: "UMBREON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Bite }));
+        player.AddAnimal(new Animal(id: 2, name: "ESPEON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Psychic }));
+        player.AddAnimal(new Animal(id: 3, name: "JOLTEON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Thunderbolt }));
+        player.AddAnimal(new Animal(id: 4, name: "FLAREON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Ember }));
         return player;
     }
 

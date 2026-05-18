@@ -64,7 +64,7 @@ namespace UnitTest
 
             Assert.Equal(MenuCommandType.Swap, result);
             Assert.Contains("Menu", io.OutputText);
-            Assert.Contains("Swap Pokemon", io.OutputText);
+            Assert.Contains("Swap Animals", io.OutputText);
             Assert.Contains("Save Game", io.OutputText);
             Assert.DoesNotContain("Load Game", io.OutputText);
             Assert.DoesNotContain("Delete Save", io.OutputText);

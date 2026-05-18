@@ -2,7 +2,7 @@
 
 namespace Arcadia_v2
 {
-    // Handles wild Pokemon battles, including player moves, wild Pokemon moves,
+    // Handles wild animal battles, including player moves, wild animal moves,
     // switching after fainting, and catch/release flow.
     public static class WildBattleFlow
     {
@@ -10,22 +10,22 @@ namespace Arcadia_v2
         {
             Player mainPlayer = gameState.MainPlayer;
 
-            if (!BattleEngine.HasUsablePokemon(mainPlayer))
+            if (!BattleEngine.HasUsableAnimals(mainPlayer))
             {
-                io.WriteLine("All pokemon in your party are fainted.");
+                io.WriteLine("All animals in your party are fainted.");
                 return;
             }
 
-            if (!mainPlayer.CurrentRoom.HasEncounterPokemon())
+            if (!mainPlayer.CurrentRoom.HasEncounterAnimals())
             {
-                io.WriteLine("No pokemon nearby");
+                io.WriteLine("No animals nearby");
                 return;
             }
 
-            Pokemon wildPokemon = mainPlayer.CurrentRoom.EncounterPokemon[0];
-            BattleState battleState = BattleState.CreateWildBattle(mainPlayer, wildPokemon);
+            Animal wildAnimal = mainPlayer.CurrentRoom.EncounterAnimals[0];
+            BattleState battleState = BattleState.CreateWildBattle(mainPlayer, wildAnimal);
 
-            io.WriteLine($"A wild {wildPokemon.Name} attacked!");
+            io.WriteLine($"A wild {wildAnimal.Name} attacked!");
 
             bool isPlayerTurn = true;
 
@@ -39,7 +39,7 @@ namespace Arcadia_v2
                 }
                 else
                 {
-                    HandleWildPokemonTurn(io, mainPlayer, battleState);
+                    HandleWildAnimalTurn(io, mainPlayer, battleState);
                 }
 
                 isPlayerTurn = !isPlayerTurn;
@@ -48,64 +48,64 @@ namespace Arcadia_v2
             FinishWildBattle(io, mainPlayer, battleState);
         }
 
-        // Prints the current health for the player's active Pokemon and the wild Pokemon.
+        // Prints the current health for the player's active animal and the wild animal.
         private static void PrintBattleStatus(IGameIO io, BattleState battleState)
         {
-            BattleHelpers.PrintBattleStatus(io, "wild", battleState.PlayerPokemon, battleState.OpponentPokemon);
+            BattleHelpers.PrintBattleStatus(io, "wild", battleState.PlayerAnimal, battleState.OpponentAnimal);
         }
 
         // Handles the player's turn by reading a move and applying the selected move's effect.
         private static void HandlePlayerTurn(IGameIO io, BattleState battleState)
         {
-            BattleHelpers.HandlePlayerTurn(io, battleState.PlayerPokemon, battleState.OpponentPokemon, "The wild ");
+            BattleHelpers.HandlePlayerTurn(io, battleState.PlayerAnimal, battleState.OpponentAnimal, "The wild ");
         }
 
-        // Handles the wild Pokemon's turn by selecting one random move and applying damage.
-        private static void HandleWildPokemonTurn(IGameIO io, Player mainPlayer, BattleState battleState)
+        // Handles the wild animal's turn by selecting one random move and applying damage.
+        private static void HandleWildAnimalTurn(IGameIO io, Player mainPlayer, BattleState battleState)
         {
-            Pokemon wildPokemon = battleState.OpponentPokemon;
+            Animal wildAnimal = battleState.OpponentAnimal;
 
-            BattleHelpers.HandleOpponentTurn(io, wildPokemon, battleState.PlayerPokemon, $"{wildPokemon.Name} Move", string.Empty);
+            BattleHelpers.HandleOpponentTurn(io, wildAnimal, battleState.PlayerAnimal, $"{wildAnimal.Name} Move", string.Empty);
 
-            if (BattleHelpers.HandlePlayerFaintedPokemon(io, mainPlayer, battleState.PlayerPokemon, "Would you like to switch Pokemon? (YES/NO)"))
+            if (BattleHelpers.HandlePlayerFaintedAnimal(io, mainPlayer, battleState.PlayerAnimal, "Would you like to switch animals? (YES/NO)"))
             {
-                battleState.UseFirstHealthyPlayerPokemon();
+                battleState.UseFirstHealthyPlayerAnimal();
             }
         }
 
-        // Finishes the wild battle after either the player's Pokemon or the wild Pokemon faints.
+        // Finishes the wild battle after either the player's animal or the wild animal faints.
         private static void FinishWildBattle(IGameIO io, Player mainPlayer, BattleState battleState)
         {
-            if (BattleEngine.IsFainted(battleState.PlayerPokemon))
+            if (BattleEngine.IsFainted(battleState.PlayerAnimal))
             {
-                io.WriteLine($"{battleState.PlayerPokemon.Name} fainted.");
+                io.WriteLine($"{battleState.PlayerAnimal.Name} fainted.");
                 return;
             }
 
-            if (BattleEngine.IsFainted(battleState.OpponentPokemon))
+            if (BattleEngine.IsFainted(battleState.OpponentAnimal))
             {
-                io.WriteLine($"{battleState.OpponentPokemon.Name} fainted.");
-                HandleCatchChoice(io, mainPlayer, battleState.OpponentPokemon);
+                io.WriteLine($"{battleState.OpponentAnimal.Name} fainted.");
+                HandleCatchChoice(io, mainPlayer, battleState.OpponentAnimal);
             }
         }
 
-        // Handles the player's choice to catch or leave the fainted wild Pokemon.
-        private static void HandleCatchChoice(IGameIO io, Player mainPlayer, Pokemon wildPokemon)
+        // Handles the player's choice to catch or leave the fainted wild animal.
+        private static void HandleCatchChoice(IGameIO io, Player mainPlayer, Animal wildAnimal)
         {
             while (true)
             {
-                io.WriteLine($"Would you like to catch {wildPokemon.Name}? -- (yes or no)");
+                io.WriteLine($"Would you like to catch {wildAnimal.Name}? -- (yes or no)");
                 string answer = Program.ReadUpperTrimmedInput(io);
 
                 if (BattleHelpers.IsYes(answer))
                 {
-                    CatchPokemon(io, mainPlayer, wildPokemon);
+                    CatchAnimal(io, mainPlayer, wildAnimal);
                     return;
                 }
 
                 if (BattleHelpers.IsNo(answer))
                 {
-                    LetWildPokemonRunAway(io, mainPlayer, wildPokemon);
+                    LetWildAnimalRunAway(io, mainPlayer, wildAnimal);
                     return;
                 }
 
@@ -113,32 +113,32 @@ namespace Arcadia_v2
             }
         }
 
-        // Catches the wild Pokemon if the player has space, otherwise asks whether to release one.
-        private static void CatchPokemon(IGameIO io, Player mainPlayer, Pokemon wildPokemon)
+        // Catches the wild animal if the player has space, otherwise asks whether to release one.
+        private static void CatchAnimal(IGameIO io, Player mainPlayer, Animal wildAnimal)
         {
-            if (mainPlayer.PokemonInventory.Count < 6)
+            if (mainPlayer.AnimalInventory.Count < 6)
             {
-                AddCaughtPokemon(io, mainPlayer, wildPokemon);
+                AddCaughtAnimal(io, mainPlayer, wildAnimal);
                 return;
             }
 
-            io.WriteLine($"\n{mainPlayer.Name}'s PokeInventory is full.");
-            io.WriteLine("You can only have 6 Pokemon with you at a time.");
+            io.WriteLine($"\n{mainPlayer.Name}'s animal inventory is full.");
+            io.WriteLine("You can only have 6 animals with you at a time.");
 
             while (true)
             {
-                io.WriteLine("Would you like to release a Pokemon? -- (yes or no)");
+                io.WriteLine("Would you like to release an animal? -- (yes or no)");
                 string answer = Program.ReadUpperTrimmedInput(io);
 
                 if (BattleHelpers.IsYes(answer))
                 {
-                    ReleasePokemonAndCatchWildPokemon(io, mainPlayer, wildPokemon);
+                    ReleaseAnimalAndCatchWildAnimal(io, mainPlayer, wildAnimal);
                     return;
                 }
 
                 if (BattleHelpers.IsNo(answer))
                 {
-                    LetWildPokemonRunAway(io, mainPlayer, wildPokemon);
+                    LetWildAnimalRunAway(io, mainPlayer, wildAnimal);
                     return;
                 }
 
@@ -146,66 +146,66 @@ namespace Arcadia_v2
             }
         }
 
-        // Releases one Pokemon from the player's party, then catches the wild Pokemon.
-        private static void ReleasePokemonAndCatchWildPokemon(IGameIO io, Player mainPlayer, Pokemon wildPokemon)
+        // Releases one animal from the player's party, then catches the wild animal.
+        private static void ReleaseAnimalAndCatchWildAnimal(IGameIO io, Player mainPlayer, Animal wildAnimal)
         {
-            io.WriteLine(mainPlayer.GetPokemonInventoryDisplay());
+            io.WriteLine(mainPlayer.GetAnimalInventoryDisplay());
 
-            Pokemon pokemonToRelease = AskForPokemonToRelease(io, mainPlayer);
+            Animal animalToRelease = AskForAnimalToRelease(io, mainPlayer);
 
-            io.WriteLine($"You are releasing: {pokemonToRelease.Name}");
+            io.WriteLine($"You are releasing: {animalToRelease.Name}");
 
-            BattleEngine.ReleasePokemonAndCatchWildPokemon(mainPlayer, pokemonToRelease, wildPokemon);
+            BattleEngine.ReleaseAnimalAndCatchWildAnimal(mainPlayer, animalToRelease, wildAnimal);
 
-            io.WriteLine($"You caught {wildPokemon.Name}!");
+            io.WriteLine($"You caught {wildAnimal.Name}!");
         }
 
-        // Keeps asking until the player enters the name of a Pokemon currently in their party.
-        private static Pokemon AskForPokemonToRelease(IGameIO io, Player mainPlayer)
+        // Keeps asking until the player enters the name of an animal currently in their party.
+        private static Animal AskForAnimalToRelease(IGameIO io, Player mainPlayer)
         {
             while (true)
             {
                 io.WriteLine("Who would you like to release?");
-                string pokemonName = Program.ReadUpperTrimmedInput(io);
+                string animalName = Program.ReadUpperTrimmedInput(io);
 
-                Pokemon? pokemonToRelease = FindPokemonByName(mainPlayer, pokemonName);
+                Animal? animalToRelease = FindAnimalByName(mainPlayer, animalName);
 
-                if (pokemonToRelease != null)
+                if (animalToRelease != null)
                 {
-                    return pokemonToRelease;
+                    return animalToRelease;
                 }
 
-                io.WriteLine($"{pokemonName} is not a valid Pokemon name.");
+                io.WriteLine($"{animalName} is not a valid animal name.");
             }
         }
 
-        // Finds a Pokemon in the player's party by name.
-        private static Pokemon? FindPokemonByName(Player mainPlayer, string pokemonName)
+        // Finds an animal in the player's party by name.
+        private static Animal? FindAnimalByName(Player mainPlayer, string animalName)
         {
-            foreach (Pokemon pokemon in mainPlayer.PokemonInventory)
+            foreach (Animal animal in mainPlayer.AnimalInventory)
             {
-                if (pokemon.Name == pokemonName)
+                if (animal.Name == animalName)
                 {
-                    return pokemon;
+                    return animal;
                 }
             }
 
             return null;
         }
 
-        // Adds the wild Pokemon to the player's party and removes it from the room.
-        private static void AddCaughtPokemon(IGameIO io, Player mainPlayer, Pokemon wildPokemon)
+        // Adds the wild animal to the player's party and removes it from the room.
+        private static void AddCaughtAnimal(IGameIO io, Player mainPlayer, Animal wildAnimal)
         {
-            BattleEngine.TryCatchWildPokemon(mainPlayer, wildPokemon);
+            BattleEngine.TryCatchWildAnimal(mainPlayer, wildAnimal);
 
-            io.WriteLine($"You caught {wildPokemon.Name}!");
+            io.WriteLine($"You caught {wildAnimal.Name}!");
         }
 
-        // Removes the wild Pokemon from the room after the player chooses not to catch it.
-        private static void LetWildPokemonRunAway(IGameIO io, Player mainPlayer, Pokemon wildPokemon)
+        // Removes the wild animal from the room after the player chooses not to catch it.
+        private static void LetWildAnimalRunAway(IGameIO io, Player mainPlayer, Animal wildAnimal)
         {
-            BattleEngine.LetWildPokemonRunAway(mainPlayer, wildPokemon);
-            io.WriteLine($"{wildPokemon.Name} ran away!");
+            BattleEngine.LetWildAnimalRunAway(mainPlayer, wildAnimal);
+            io.WriteLine($"{wildAnimal.Name} ran away!");
         }
 
     }

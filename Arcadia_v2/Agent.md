@@ -1,140 +1,87 @@
 ## Overview
 
-I have redesigned my game map. Update the existing map so routes are now called roads, add the extra towns and areas, and update each room's directional connections based on the table below.
+Replace the current Pokemon model usage with the new Animal model in a controlled migration step.
 
-Use the exact room names shown here.
+The repo currently still uses `Pokemon`, `PokemonType`, and Pokemon-based collections throughout the game and tests. A new replacement model already exists in the codebase as `Animal` with `AnimalElement`.
 
-## Map Directions
+## Goal For This Stage
 
-1. Professor's Lab
-   - North: Ikena
-   - East: N/A
-   - South: N/A
-   - West: N/A
-   - Note: This is the starting room. Once the player leaves, they cannot return. Ignore that design issue for now.
+Complete the first migration stage from Pokemon to Animal without changing the game's core behavior beyond the requested element remapping.
 
-2. Ikena
-   - North: The End
-   - East: Road 6
-   - South: Road 5
-   - West: Road 1
-   - Lock notes:
-     - North to The End is locked until the region's guardian/champion has been defeated.
-     - East to Road 6 is locked until 3 badges are obtained.
-     - South to Road 5 is locked until the player has a Water-type Pokemon on their team.
+At the end of this stage:
 
-3. Road 1
-   - North: Road 8
-   - East: Ikena
-   - South: Road 2
-   - West: N/A
+- Production code should use `Animal` instead of `Pokemon`.
+- Element checks should use `AnimalElement` instead of `PokemonType`.
+- Pokemon creation should be replaced by animal creation using the new element rules below.
+- The existing "must have a water-type Pokemon" progression check should become a "must have a mystic animal" check.
+- `Pokemon.cs` should no longer be the active model used by the project.
 
-4. Road 2
-   - North: Road 1
-   - East: N/A
-   - South: Oak Pass
-   - West: N/A
+## Element Mapping Rules
 
-5. Oak Pass
-   - North: Road 2
-   - East: N/A
-   - South: Road 3
-   - West: N/A
+Use these temporary migration rules for all existing creature roster entries:
 
-6. Road 3
-   - North: Oak Pass
-   - East: N/A
-   - South: Road 4
-   - West: N/A
+- Any creature that was previously `PokemonType.Water` should become `AnimalElement.Mystic`.
+- Every other creature should become `AnimalElement.Nature` for now.
 
-7. Road 4
-   - North: Road 3
-   - East: N/A
-   - South: New Nucleon
-   - West: N/A
+Do not try to preserve the old detailed type spread in this stage. This step is intentionally temporary and simplified.
 
-8. New Nucleon
-   - North: Road 4
-   - East: Road 5
-   - South: N/A
-   - West: N/A
-   - Lock notes:
-     - East to Road 5 is locked until the player has a Water-type Pokemon on their team.
+## Required Code Changes
 
-9. Road 5
-   - North: Ikena
-   - East: Nucleon
-   - South: N/A
-   - West: New Nucleon
-   - Lock notes:
-     - East to Nucleon is locked until 4 badges are obtained.
+1. Replace the core model usage.
 
-10. Road 6
-    - North: Final Trials
-    - East: N/A
-    - South: Road 7
-    - West: Ikena
+- Update code that currently depends on `Pokemon` so it depends on `Animal` instead.
+- Update constructor calls, method parameters, return types, local variables, lists, and properties.
+- Update `Clone()` and any save/load reconstruction paths to use `Animal`.
 
-11. Road 7
-    - North: Road 6
-    - East: N/A
-    - South: Wyrmrest
-    - West: N/A
+2. Replace the type system usage.
 
-12. Wyrmrest
-    - North: Road 7
-    - East: N/A
-    - South: Mountains
-    - West: N/A
-    - Note: Dracoton has been renamed to Wyrmrest. Update the fourth gym leader's location to this room.
+- Replace `PokemonType` references with `AnimalElement`.
+- Replace the `Type` property usage with the `Element` property where applicable.
+- Update any logic that compares elements, especially movement unlock checks.
 
-13. Mountains
-    - North: Wyrmrest
-    - East: N/A
-    - South: Radioactive Way
-    - West: N/A
+3. Update factory/data creation.
 
-14. Radioactive Way
-    - North: Mountains
-    - East: N/A
-    - South: Nucleon
-    - West: N/A
+- Replace the current Pokemon factory/data flow with Animal-based creation.
+- Update roster creation so all non-water entries use `AnimalElement.Nature`.
+- Update former water entries to use `AnimalElement.Mystic`.
+- Keep the current stats, moves, ids, and names unchanged unless required by the model rename.
 
-15. Nucleon
-    - North: Radioactive Way
-    - East: N/A
-    - South: N/A
-    - West: Road 5
+4. Update save and game setup flow.
 
-16. Final Trials
-    - North: Guardian's Tower
-    - East: N/A
-    - South: Road 6
-    - West: N/A
+- Update `GameData`, factory usage, and save restoration code so they return and rebuild `Animal` instances.
+- Preserve current save behavior as much as possible within this migration step.
+- If save DTO names remain Pokemon-based for now, that is acceptable in this stage as long as runtime objects are migrated correctly.
 
-17. Guardian's Tower
-    - North: N/A
-    - East: Final Trials
-    - South: Ikena
-    - West: Road 8
+5. Update gameplay checks and text where required.
 
-18. Road 8
-    - North: Guardian's Tower
-    - East: N/A
-    - South: Road 1
-    - West: N/A
+- Replace the team-check logic that currently looks for `PokemonType.Water` so it checks for `AnimalElement.Mystic`.
+- Update player-facing text that specifically refers to the movement requirement as "Water-type Pokemon" if that text is directly tied to the check being changed.
 
-19. The End
-    - North: N/A
-    - East: N/A
-    - South: Ikena
-    - West: N/A
+6. Update tests.
 
-## Implementation Notes
+- Update affected unit tests so they compile against `Animal` and `AnimalElement`.
+- Update any assertions that depend on the old water-type gating rule so they now reflect the mystic-element rule.
 
-- Rename all existing `Route X` rooms to `Road X`.
-- Add the new rooms: `Mountains`, `Radioactive Way`, `Nucleon`, `Final Trials`, `Guardian's Tower`, and `Road 8`.
-- Replace `Dracoton` with `Wyrmrest` everywhere, including the fourth gym leader location.
-- Preserve existing game behavior unless it conflicts with the map and lock rules above.
-- If the code does not already support Water-type movement locks, add that behavior where movement permissions are checked.
-- If any unit test check directions ensure they are updated to reflect the updated map. 
+## Out Of Scope For This Stage
+
+- Do not redesign moves, stats, battle flow, or save schema names unless required to complete the rename.
+- Do not attempt a full lore/text rewrite from Pokemon to Animal everywhere in the game unless the text directly blocks clarity or test correctness.
+- Do not introduce a second migration layer that keeps both `Pokemon` and `Animal` active in production code unless that is absolutely necessary to keep the build passing.
+
+## Suggested Implementation Order
+
+1.. Migrate the core creature model usages from `Pokemon` to `Animal`.
+2. Migrate `PokemonType` comparisons to `AnimalElement`.
+3. Update roster/factory creation and `GameData`.
+4. Update movement gating from water to mystic.
+5. Update tests and fix any compile/runtime fallout.
+6. Run the full unit test project.
+
+## Acceptance Criteria
+
+- Production code compiles using `Animal` as the active runtime creature model.
+- `PokemonType` is no longer used in active production logic for creature elements.
+- Former water-type roster entries now use `AnimalElement.Mystic`.
+- All other roster entries now use `AnimalElement.Nature`.
+- The progression check that used to require a water-type Pokemon now requires a mystic animal instead.
+- Relevant tests are updated and passing.

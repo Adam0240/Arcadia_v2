@@ -19,9 +19,9 @@ namespace Arcadia_v2
 
         public static void Run(IGameIO io, Player main, CompPlayer opponent)
         {
-            if (!BattleEngine.HasUsablePokemon(main))
+            if (!BattleEngine.HasUsableAnimals(main))
             {
-                io.WriteLine("All pokemon in your party are fainted.");
+                io.WriteLine("All animals in your party are fainted.");
                 return;
             }
 
@@ -30,8 +30,8 @@ namespace Arcadia_v2
             BattleState battleState = BattleState.CreateTrainerBattle(main, opponent);
 
             io.WriteLine($"{main.Name} vs {opponent.Name}\n");
-            io.WriteLine($"You sent out {battleState.PlayerPokemon.Name}");
-            io.WriteLine($"{opponent.Name} sent out {battleState.OpponentPokemon.Name}");
+            io.WriteLine($"You sent out {battleState.PlayerAnimal.Name}");
+            io.WriteLine($"{opponent.Name} sent out {battleState.OpponentAnimal.Name}");
 
             bool isPlayerTurn = true;
 
@@ -42,7 +42,7 @@ namespace Arcadia_v2
                 if (isPlayerTurn)
                 {
                     HandlePlayerTurn(io, battleState);
-                    HandleOpponentFaintedPokemon(io, battleState, opponent);
+                    HandleOpponentFaintedAnimal(io, battleState, opponent);
                 }
                 else
                 {
@@ -55,57 +55,57 @@ namespace Arcadia_v2
             FinishTrainerBattle(io, battleState, main, opponent);
         }
 
-        // Prints the current health of both active Pokemon.
+        // Prints the current health of both active animals.
         private static void PrintBattleStatus(IGameIO io, BattleState battleState)
         {
-            BattleHelpers.PrintBattleStatus(io, "opponents", battleState.PlayerPokemon, battleState.OpponentPokemon);
+            BattleHelpers.PrintBattleStatus(io, "opponents", battleState.PlayerAnimal, battleState.OpponentAnimal);
         }
 
         // Handles the player's turn by resolving the selected move against the opponent.
         private static void HandlePlayerTurn(IGameIO io, BattleState battleState)
         {
-            BattleHelpers.HandlePlayerTurn(io, battleState.PlayerPokemon, battleState.OpponentPokemon, string.Empty);
+            BattleHelpers.HandlePlayerTurn(io, battleState.PlayerAnimal, battleState.OpponentAnimal, string.Empty);
         }
 
-        // Handles the opponent's turn by choosing one random move from the opponent's active Pokemon.
+        // Handles the opponent's turn by choosing one random move from the opponent's active animal.
         private static void HandleOpponentTurn(IGameIO io, BattleState battleState, Player main)
         {
-            Pokemon opponentPokemon = battleState.OpponentPokemon;
+            Animal opponentAnimal = battleState.OpponentAnimal;
 
-            BattleHelpers.HandleOpponentTurn(io, opponentPokemon, battleState.PlayerPokemon, $"{opponentPokemon.Name} Move", string.Empty);
+            BattleHelpers.HandleOpponentTurn(io, opponentAnimal, battleState.PlayerAnimal, $"{opponentAnimal.Name} Move", string.Empty);
 
-            if (BattleHelpers.HandlePlayerFaintedPokemon(io, main, battleState.PlayerPokemon, "Would you like to switch Pokemon?"))
+            if (BattleHelpers.HandlePlayerFaintedAnimal(io, main, battleState.PlayerAnimal, "Would you like to switch animals?"))
             {
-                battleState.UseFirstHealthyPlayerPokemon();
+                battleState.UseFirstHealthyPlayerAnimal();
             }
         }
 
-        // Handles the opponent sending out another Pokemon after the active one faints.
-        private static void HandleOpponentFaintedPokemon(IGameIO io, BattleState battleState, CompPlayer opponent)
+        // Handles the opponent sending out another animal after the active one faints.
+        private static void HandleOpponentFaintedAnimal(IGameIO io, BattleState battleState, CompPlayer opponent)
         {
-            if (!BattleEngine.IsFainted(battleState.OpponentPokemon))
+            if (!BattleEngine.IsFainted(battleState.OpponentAnimal))
             {
                 return;
             }
 
-            if (!battleState.TrySwitchOpponentToNextHealthyPokemon(battleState.OpponentActiveIndex + 1))
+            if (!battleState.TrySwitchOpponentToNextHealthyAnimal(battleState.OpponentActiveIndex + 1))
             {
                 return;
             }
 
-            io.WriteLine($"\n{opponent.Name} sent out {battleState.OpponentPokemon.Name}\n");
+            io.WriteLine($"\n{opponent.Name} sent out {battleState.OpponentAnimal.Name}\n");
         }
 
         // Handles the final result of the trainer battle.
         private static void FinishTrainerBattle(IGameIO io, BattleState battleState, Player main, CompPlayer opponent)
         {
-            if (BattleEngine.IsFainted(battleState.PlayerPokemon))
+            if (BattleEngine.IsFainted(battleState.PlayerAnimal))
             {
-                io.WriteLine($"{battleState.PlayerPokemon.Name} fainted.");
+                io.WriteLine($"{battleState.PlayerAnimal.Name} fainted.");
                 return;
             }
 
-            if (BattleEngine.IsFainted(battleState.OpponentPokemon))
+            if (BattleEngine.IsFainted(battleState.OpponentAnimal))
             {
                 io.WriteLine($"{opponent.Name} defeated.");
                 io.WriteLine("Congratulations! You defeated me. Please take this badge to honor your victory.");

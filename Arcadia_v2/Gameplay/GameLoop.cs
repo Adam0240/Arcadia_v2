@@ -79,7 +79,7 @@ namespace Arcadia_v2
             return true;
         }
 
-        // Handles action commands such as wild battle, Pokemon list, and menu.
+        // Handles action commands such as wild battle, animal list, and menu.
         private static bool HandleActionCommand(
             IGameIO io,
             GameState gameState,
@@ -99,7 +99,7 @@ namespace Arcadia_v2
                     break;
 
                 case ActionCommandType.PokeInventory:
-                    io.WriteLine(gameState.MainPlayer.GetPokemonInventoryDisplay());
+                    io.WriteLine(gameState.MainPlayer.GetAnimalInventoryDisplay());
                     break;
 
                 case ActionCommandType.Menu:
@@ -128,7 +128,7 @@ namespace Arcadia_v2
 
             RoomDisplay.Print(io, mainPlayer.CurrentRoom);
 
-            if (mainPlayer.CurrentRoom.HasEncounterPokemon())
+            if (mainPlayer.CurrentRoom.HasEncounterAnimals())
             {
                 PrintArceusChallenge(io);
                 return true;
@@ -142,11 +142,11 @@ namespace Arcadia_v2
         {
             io.WriteLine("\n\nArceus Voice: I knew you would eventually find your way here.");
             io.WriteLine("Your potential was clear to me the first time you were in my presence.");
-            io.WriteLine("You have proven you're the best Pokemon Trainer in Arcadia. But are you stronger than the god of this region?");
+            io.WriteLine("You have proven you're the best trainer in Arcadia. But are you stronger than the god of this region?");
             io.WriteLine("Face me to find out if you truly are the best.\n");
         }
 
-        // Asks whether the player wants to remain in the Pokemon world after clearing the final encounter.
+        // Asks whether the player wants to remain in this world after clearing the final encounter.
         private static bool AskPlayerToStay(IGameIO io)
         {
             io.WriteLine("\nYou have defeated all the strongest trainers in this region.\n");

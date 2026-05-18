@@ -10,8 +10,8 @@ namespace Arcadia_v2
     {
         public GameState(
             Map.Map gameMap,
-            List<Pokemon> mainPokemon,
-            List<Pokemon> gymPokemon,
+            List<Animal> mainAnimals,
+            List<Animal> gymAnimals,
             Player mainPlayer,
             CompPlayer gymLeader1,
             CompPlayer gymLeader2,
@@ -20,8 +20,8 @@ namespace Arcadia_v2
             CompPlayer arcadiaChampion)
         {
             GameMap = gameMap;
-            MainPokemon = mainPokemon;
-            GymPokemon = gymPokemon;
+            MainAnimals = mainAnimals;
+            GymAnimals = gymAnimals;
             MainPlayer = mainPlayer;
             GymLeader1 = gymLeader1;
             GymLeader2 = gymLeader2;
@@ -31,8 +31,8 @@ namespace Arcadia_v2
         }
 
         public Map.Map GameMap { get; }
-        public List<Pokemon> MainPokemon { get; }
-        public List<Pokemon> GymPokemon { get; }
+        public List<Animal> MainAnimals { get; }
+        public List<Animal> GymAnimals { get; }
         public Player MainPlayer { get; }
         public CompPlayer GymLeader1 { get; }
         public CompPlayer GymLeader2 { get; }

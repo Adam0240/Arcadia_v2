@@ -5,8 +5,9 @@ namespace UnitTest;
 
 public class TrainerBattleFlowTests
 {
+    // Checks that trainer battles send out the next healthy opponent creature after the active one faints.
     [Fact]
-    public void Run_WhenOpponentPokemonFaints_SendsOutNextHealthyPokemon()
+    public void Run_WhenOpponentAnimalFaints_SendsOutNextHealthyAnimal()
     {
         Player player = CreatePlayer();
         CompPlayer opponent = CreateOpponent();
@@ -17,6 +18,7 @@ public class TrainerBattleFlowTests
         Assert.Contains("Rival sent out SECOND", io.OutputText);
     }
 
+    // Checks that defeating an entire opponent team marks the trainer defeated and awards the badge.
     [Fact]
     public void Run_WhenOpponentTeamFaints_CompletesBattleAndAwardsBadge()
     {
@@ -31,12 +33,13 @@ public class TrainerBattleFlowTests
         Assert.Contains("Rival defeated.", io.OutputText);
     }
 
+    // Checks that trainer battles rebuild a fresh opponent battle team before the fight begins.
     [Fact]
     public void Run_PreparesFreshTrainerTeamBeforeBattle()
     {
         Player player = CreatePlayer();
         CompPlayer opponent = CreateOpponent();
-        opponent.PokemonInventory[0].Health = 1;
+        opponent.AnimalInventory[0].Health = 1;
         FakeGameIO io = new("stronghit", "stronghit");
 
         TrainerBattleFlow.Run(io, player, opponent);
@@ -44,11 +47,12 @@ public class TrainerBattleFlowTests
         Assert.Contains("The opponents FIRST's health is at: 5", io.OutputText);
     }
 
+    // Checks that trainer battles start with the next healthy player creature when the lead has fainted.
     [Fact]
     public void Run_WhenPlayerLeadIsFainted_StartsWithNextHealthyPokemon()
     {
         Player player = CreatePlayer();
-        player.PokemonInventory[0].Health = 0;
+        player.AnimalInventory[0].Health = 0;
         CompPlayer opponent = CreateOpponent();
         FakeGameIO io = new("stronghit", "stronghit");
 
@@ -57,26 +61,27 @@ public class TrainerBattleFlowTests
         Assert.Contains("You sent out BACKUP", io.OutputText);
     }
 
+    // Checks that trainer battles stop immediately with the party-fainted message when no usable player creatures remain.
     [Fact]
-    public void Run_WhenAllPlayerPokemonAreFainted_PrintsPartyFaintedMessage()
+    public void Run_WhenAllPlayerAnimalsAreFainted_PrintsPartyFaintedMessage()
     {
         Player player = CreatePlayer();
-        player.PokemonInventory[0].Health = 0;
-        player.PokemonInventory[1].Health = 0;
+        player.AnimalInventory[0].Health = 0;
+        player.AnimalInventory[1].Health = 0;
         CompPlayer opponent = CreateOpponent();
         FakeGameIO io = new();
 
         TrainerBattleFlow.Run(io, player, opponent);
 
-        Assert.Contains("All pokemon in your party are fainted.", io.OutputText);
+        Assert.Contains("All animals in your party are fainted.", io.OutputText);
         Assert.DoesNotContain("You sent out", io.OutputText);
     }
 
     private static Player CreatePlayer()
     {
         Player player = new("Trainer", new Map().StartRoom);
-        player.AddPokemon(new Pokemon(1, "LEAD", PokemonType.Normal, 5, 50, 50, 1, new[] { new Move("STRONGHIT", MoveType.Normal, 10) }));
-        player.AddPokemon(new Pokemon(2, "BACKUP", PokemonType.Normal, 5, 50, 50, 1, new[] { new Move("STRONGHIT", MoveType.Normal, 10) }));
+        player.AddAnimal(new Animal(id: 1, name: "LEAD", element: AnimalElement.Nature, speed: 5, baseHealth: 50, health: 50, level: 1, moves: new[] { new Move("STRONGHIT", MoveType.Normal, 10) }));
+        player.AddAnimal(new Animal(id: 2, name: "BACKUP", element: AnimalElement.Nature, speed: 5, baseHealth: 50, health: 50, level: 1, moves: new[] { new Move("STRONGHIT", MoveType.Normal, 10) }));
         return player;
     }
 
@@ -86,8 +91,8 @@ public class TrainerBattleFlowTests
         opponent.AddBadge("Test Badge");
         opponent.SetBattleTeam(new[]
         {
-            new Pokemon(3, "FIRST", PokemonType.Normal, 5, 5, 5, 1, new[] { MoveData.Splash }),
-            new Pokemon(4, "SECOND", PokemonType.Normal, 5, 5, 5, 1, new[] { MoveData.Splash })
+            new Animal(id: 3, name: "FIRST", element: AnimalElement.Nature, speed: 5, baseHealth: 5, health: 5, level: 1, moves: new[] { MoveData.Splash }),
+            new Animal(id: 4, name: "SECOND", element: AnimalElement.Nature, speed: 5, baseHealth: 5, health: 5, level: 1, moves: new[] { MoveData.Splash })
         });
         return opponent;
     }

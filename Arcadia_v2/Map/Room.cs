@@ -1,11 +1,10 @@
 using System.Collections.Generic;
-
 namespace Arcadia_v2.Map
 {
     // Defines a room object that stores its own details and links to neighboring rooms.
     public class Room
     {
-        private readonly List<Arcadia_v2.Pokemon> mEncounterPokemon = new();
+        private readonly List<Arcadia_v2.Animal> mEncounterAnimals = new();
 
         // Exposes the room's name as a read-only property.
         public string Name { get; }
@@ -21,8 +20,8 @@ namespace Arcadia_v2.Map
         public Room? East { get; set; }
         public Room? West { get; set; }
 
-        // Room encounter state stays on the room because wild battles depend on room-local Pokemon lists.
-        public IReadOnlyList<Arcadia_v2.Pokemon> EncounterPokemon => mEncounterPokemon;
+        // Room encounter state stays on the room because wild battles depend on room-local animal lists.
+        public IReadOnlyList<Arcadia_v2.Animal> EncounterAnimals => mEncounterAnimals;
 
         // Creates a new room with a name and description.
         public Room(string name, string description)
@@ -31,44 +30,44 @@ namespace Arcadia_v2.Map
             Description = description;
         }
 
-        // Adds a cloned wild Pokemon entry to the room so encounter state stays local to that room.
-        public void SetRoomPokemon(Arcadia_v2.Pokemon pokemon)
+        // Adds a cloned wild animal entry to the room so encounter state stays local to that room.
+        public void SetRoomAnimal(Arcadia_v2.Animal animal)
         {
-            ArgumentNullException.ThrowIfNull(pokemon);
-            mEncounterPokemon.Add(pokemon.Clone());
+            ArgumentNullException.ThrowIfNull(animal);
+            mEncounterAnimals.Add(animal.Clone());
         }
 
-        // Adds a Pokemon instance to the room encounter list without cloning when gameplay releases an owned Pokemon into the room.
-        public void AddEncounterPokemon(Arcadia_v2.Pokemon pokemon)
+        // Adds an animal instance to the room encounter list without cloning when gameplay releases an owned animal into the room.
+        public void AddEncounterAnimal(Arcadia_v2.Animal animal)
         {
-            ArgumentNullException.ThrowIfNull(pokemon);
-            mEncounterPokemon.Add(pokemon);
+            ArgumentNullException.ThrowIfNull(animal);
+            mEncounterAnimals.Add(animal);
         }
 
-        // Removes a Pokemon from the room encounter list and reports whether it was found.
-        public bool RemoveEncounterPokemon(Arcadia_v2.Pokemon pokemon)
+        // Removes an animal from the room encounter list and reports whether it was found.
+        public bool RemoveEncounterAnimal(Arcadia_v2.Animal animal)
         {
-            ArgumentNullException.ThrowIfNull(pokemon);
-            return mEncounterPokemon.Remove(pokemon);
+            ArgumentNullException.ThrowIfNull(animal);
+            return mEncounterAnimals.Remove(animal);
         }
 
         // Replaces room encounter state from persisted save data.
-        public void RestoreEncounterPokemon(IEnumerable<Arcadia_v2.Pokemon> encounterPokemon)
+        public void RestoreEncounterAnimals(IEnumerable<Arcadia_v2.Animal> encounterAnimals)
         {
-            ArgumentNullException.ThrowIfNull(encounterPokemon);
+            ArgumentNullException.ThrowIfNull(encounterAnimals);
 
-            mEncounterPokemon.Clear();
+            mEncounterAnimals.Clear();
 
-            foreach (Arcadia_v2.Pokemon pokemon in encounterPokemon)
+            foreach (Arcadia_v2.Animal animal in encounterAnimals)
             {
-                AddEncounterPokemon(pokemon);
+                AddEncounterAnimal(animal);
             }
         }
 
-        // Reports whether the room currently has any encounter Pokemon available.
-        public bool HasEncounterPokemon()
+        // Reports whether the room currently has any encounter animals available.
+        public bool HasEncounterAnimals()
         {
-            return mEncounterPokemon.Count > 0;
+            return mEncounterAnimals.Count > 0;
         }
     }
 }

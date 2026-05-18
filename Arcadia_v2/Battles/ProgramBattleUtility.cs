@@ -6,7 +6,7 @@ namespace Arcadia_v2
     public static partial class Program
     {
         // Damage is clamped at zero here so battle HP never underflows into negative values.
-        public static void ApplyDamage(Pokemon target, int damage)
+        public static void ApplyDamage(Animal target, int damage)
         {
             if (damage < 0)
             {

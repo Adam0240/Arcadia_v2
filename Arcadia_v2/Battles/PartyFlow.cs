@@ -2,41 +2,41 @@
 
 namespace Arcadia_v2
 {
-    // Handles party-order interactions such as swapping active Pokemon positions.
+    // Handles party-order interactions such as swapping active animal positions.
     public static class PartyFlow
     {
-        public static void SwapPokemon(Player main, IGameIO io)
+        public static void SwapAnimals(Player main, IGameIO io)
         {
-            if (BattleEngine.CanAutoSwapTwoPokemonParty(main))
+            if (BattleEngine.CanAutoSwapTwoAnimalParty(main))
             {
-                SwapPokemonByIndex(main, io, firstIndex: 0, secondIndex: 1);
+                SwapAnimalsByIndex(main, io, firstIndex: 0, secondIndex: 1);
                 return;
             }
 
-            int firstIndex = PromptForPokemonIndex(
+            int firstIndex = PromptForAnimalIndex(
                 main,
                 io,
-                "Heres your Pokemon. Who would you like to trade positions with?",
+                "Here are your animals. Who would you like to trade positions with?",
                 showInventory: true);
 
-            int secondIndex = PromptForPokemonIndex(
+            int secondIndex = PromptForAnimalIndex(
                 main,
                 io,
-                $"\nWho would you like to swap {main.PokemonInventory[firstIndex].Name} with?\n",
+                $"\nWho would you like to swap {main.AnimalInventory[firstIndex].Name} with?\n",
                 showInventory: false);
 
-            SwapPokemonByIndex(main, io, firstIndex, secondIndex);
+            SwapAnimalsByIndex(main, io, firstIndex, secondIndex);
         }
 
-        private static void SwapPokemonByIndex(Player main, IGameIO io, int firstIndex, int secondIndex)
+        private static void SwapAnimalsByIndex(Player main, IGameIO io, int firstIndex, int secondIndex)
         {
-            string firstPokemonName = main.PokemonInventory[firstIndex].Name;
-            string secondPokemonName = main.PokemonInventory[secondIndex].Name;
-            io.WriteLine($"You are swapping: {firstPokemonName} and {secondPokemonName} .\n");
-            main.SwapPokemonPositions(firstIndex, secondIndex);
+            string firstAnimalName = main.AnimalInventory[firstIndex].Name;
+            string secondAnimalName = main.AnimalInventory[secondIndex].Name;
+            io.WriteLine($"You are swapping: {firstAnimalName} and {secondAnimalName} .\n");
+            main.SwapAnimalPositions(firstIndex, secondIndex);
         }
 
-        private static int PromptForPokemonIndex(Player main, IGameIO io, string prompt, bool showInventory)
+        private static int PromptForAnimalIndex(Player main, IGameIO io, string prompt, bool showInventory)
         {
             while (true)
             {
@@ -44,28 +44,28 @@ namespace Arcadia_v2
 
                 if (showInventory)
                 {
-                    io.WriteLine(main.GetPokemonInventoryDisplay());
+                    io.WriteLine(main.GetAnimalInventoryDisplay());
                     io.WriteLine();
                 }
 
-                string pokemonName = Program.ReadUpperTrimmedInput(io);
-                int pokemonIndex = FindPokemonIndexByName(main, pokemonName);
+                string animalName = Program.ReadUpperTrimmedInput(io);
+                int animalIndex = FindAnimalIndexByName(main, animalName);
 
-                if (pokemonIndex >= 0)
+                if (animalIndex >= 0)
                 {
-                    return pokemonIndex;
+                    return animalIndex;
                 }
 
-                io.WriteLine($"Invalid Pokemon name {pokemonName} .");
-                io.WriteLine("Must type in exact name of pokemon!");
+                io.WriteLine($"Invalid animal name {animalName} .");
+                io.WriteLine("Must type in exact name of animal!");
             }
         }
 
-        private static int FindPokemonIndexByName(Player main, string pokemonName)
+        private static int FindAnimalIndexByName(Player main, string animalName)
         {
-            for (int i = 0; i < main.PokemonInventory.Count; ++i)
+            for (int i = 0; i < main.AnimalInventory.Count; ++i)
             {
-                if (main.PokemonInventory[i].Name == pokemonName)
+                if (main.AnimalInventory[i].Name == animalName)
                 {
                     return i;
                 }

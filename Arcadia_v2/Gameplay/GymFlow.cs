@@ -106,7 +106,7 @@ namespace Arcadia_v2
                 return;
             }
 
-            io.WriteLine("No Pokemon Gym in area.");
+            io.WriteLine("No gym in area.");
         }
 
         // Handles the shared trainer interaction pattern:

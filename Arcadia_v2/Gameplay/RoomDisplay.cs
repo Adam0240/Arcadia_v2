@@ -14,13 +14,13 @@ namespace Arcadia_v2
             ArgumentNullException.ThrowIfNull(room);
             ArgumentNullException.ThrowIfNull(io);
 
-            string nearbyPokemon = room.EncounterPokemon.Count == 0
+            string nearbyAnimals = room.EncounterAnimals.Count == 0
                 ? "None"
-                : string.Join(", ", room.EncounterPokemon.Select(pokemon => pokemon.Name));
+                : string.Join(", ", room.EncounterAnimals.Select(animal => animal.Name));
 
             io.WriteLine(room.Name);
             io.WriteLine(room.Description);
-            io.WriteLine($"Pokemon Nearby: {nearbyPokemon}");
+            io.WriteLine($"Animals Nearby: {nearbyAnimals}");
         }
     }
 }
