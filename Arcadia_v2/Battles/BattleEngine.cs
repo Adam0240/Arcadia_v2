@@ -175,7 +175,7 @@ namespace Arcadia_v2
             ArgumentNullException.ThrowIfNull(animalToRelease);
             ArgumentNullException.ThrowIfNull(wildAnimal);
 
-            animalToRelease.Health = 20;
+            animalToRelease.Health = animalToRelease.BaseHealth;
             player.CurrentRoom.AddEncounterAnimal(animalToRelease);
             player.RemoveAnimal(animalToRelease);
 

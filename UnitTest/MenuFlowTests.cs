@@ -35,6 +35,46 @@ public class MenuFlowTests
         Assert.Contains("Game saved.", io.OutputText);
     }
 
+    // Checks that the bag menu option prints the player's badge list.
+    [Fact]
+    public void HandleMenu_Bag_PrintsBadgeDisplay()
+    {
+        GameState gameState = GameSetup.CreateForLoad();
+        gameState.MainPlayer.AddBadge("Grass Badge");
+        FakeGameIO io = new("bag");
+
+        MenuFlow.HandleMenu(io, gameState, new GameSaveService(new FakeGameSaveRepository()));
+
+        Assert.Contains("Badges:", io.OutputText);
+        Assert.Contains("Grass Badge", io.OutputText);
+    }
+
+    // Checks that the swap menu option dispatches into the party swap flow.
+    [Fact]
+    public void HandleMenu_Swap_SwapsTwoAnimalParty()
+    {
+        GameState gameState = GameSetup.CreateForLoad();
+        FakeGameIO io = new("s");
+
+        MenuFlow.HandleMenu(io, gameState, new GameSaveService(new FakeGameSaveRepository()));
+
+        Assert.Equal("ESPEON", gameState.MainPlayer.AnimalInventory[0].Name);
+        Assert.Equal("UMBREON", gameState.MainPlayer.AnimalInventory[1].Name);
+        Assert.Contains("You are swapping: UMBREON and ESPEON .", io.OutputText);
+    }
+
+    // Checks that the gym menu option dispatches to the gym interaction flow.
+    [Fact]
+    public void HandleMenu_Gym_DispatchesToGymFlow()
+    {
+        GameState gameState = GameSetup.CreateForLoad();
+        FakeGameIO io = new("gym");
+
+        MenuFlow.HandleMenu(io, gameState, new GameSaveService(new FakeGameSaveRepository()));
+
+        Assert.Contains("No gym in area.", io.OutputText);
+    }
+
     // Checks that an invalid menu command prints the invalid-option message.
     [Fact]
     public void HandleMenu_InvalidCommand_WritesInvalidMenuMessageToInjectedIo()

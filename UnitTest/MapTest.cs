@@ -1,3 +1,4 @@
+using Arcadia_v2;
 using Arcadia_v2.Map;
 
 namespace UnitTest
@@ -53,8 +54,30 @@ namespace UnitTest
             Map map = new();
 
             Assert.Same(map.StartRoom, map.GetRoom("Maia's Stable"));
+            Assert.Same(map.StartRoom, map.GetRoom(RoomId.MaiaStable));
             Assert.Same(map.GymLeader1Room, map.GetRoom("Oak Pass"));
             Assert.Same(map.ChampionRoom, map.GetRoom("Guardian's Tower"));
+        }
+
+        // Checks that gate requirements are attached to stable room ids instead of display-name string checks.
+        [Fact]
+        public void GetMovementRequirement_ReturnsNamedTransitionRules()
+        {
+            Map map = new();
+
+            MovementRequirement roadSixRequirement = map.GetMovementRequirement(
+                map.GetRoom(RoomId.Ikena),
+                map.GetRoom(RoomId.Road6));
+            MovementRequirement roadFiveRequirement = map.GetMovementRequirement(
+                map.GetRoom(RoomId.Ikena),
+                map.GetRoom(RoomId.Road5));
+            MovementRequirement openRequirement = map.GetMovementRequirement(
+                map.GetRoom(RoomId.Road1),
+                map.GetRoom(RoomId.Road2));
+
+            Assert.Equal(3, roadSixRequirement.RequiredBadges);
+            Assert.Equal(AnimalElement.Mystic, roadFiveRequirement.RequiredAnimalElement);
+            Assert.Equal(MovementRequirement.None, openRequirement);
         }
 
         // Checks the updated vertical Road 2, Oak Pass, Road 3 chain.

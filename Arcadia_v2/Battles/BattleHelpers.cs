@@ -34,12 +34,6 @@ namespace Arcadia_v2
             return null;
         }
 
-        public static Move GetRandomMove(Animal animal)
-        {
-            int moveIndex = Random.Shared.Next(animal.Moves.Count);
-            return animal.Moves[moveIndex];
-        }
-
         public static bool IsHealingMove(string moveName)
         {
             return BattleEngine.IsHealingMove(moveName);
@@ -73,12 +67,23 @@ namespace Arcadia_v2
 
         public static void HandleOpponentTurn(IGameIO io, Animal opponentAnimal, Animal playerAnimal, string moveHeader, string defenderLabel)
         {
+            HandleOpponentTurn(io, opponentAnimal, playerAnimal, moveHeader, defenderLabel, RandomBattleMoveSelector.Instance);
+        }
+
+        public static void HandleOpponentTurn(
+            IGameIO io,
+            Animal opponentAnimal,
+            Animal playerAnimal,
+            string moveHeader,
+            string defenderLabel,
+            IBattleMoveSelector moveSelector)
+        {
             if (BattleEngine.IsBattleOver(playerAnimal, opponentAnimal))
             {
                 return;
             }
 
-            Move selectedMove = GetRandomMove(opponentAnimal);
+            Move selectedMove = moveSelector.SelectMove(opponentAnimal);
 
             io.WriteLine(moveHeader);
             BattleMoveResult result = BattleEngine.UseMove(opponentAnimal, playerAnimal, selectedMove);

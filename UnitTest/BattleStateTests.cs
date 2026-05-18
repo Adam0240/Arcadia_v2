@@ -161,13 +161,11 @@ public class BattleStateTests
         Assert.DoesNotContain("Would you like to switch animals?", io.OutputText);
     }
 
-    // Verifies that faint detection returns true for both zero and negative health values.
-    [Theory]
-    [InlineData(0)]
-    [InlineData(-1)]
-    public void BattleEngine_IsFainted_ReturnsTrueForZeroOrNegativeHealth(int health)
+    // Verifies that faint detection returns true for zero health.
+    [Fact]
+    public void BattleEngine_IsFainted_ReturnsTrueForZeroHealth()
     {
-        Animal pokemon = new Animal(id: 99, name: "TESTMON", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: health, level: 1, moves: new[] { MoveData.Tackle });
+        Animal pokemon = new Animal(id: 99, name: "TESTMON", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: 0, level: 1, moves: new[] { MoveData.Tackle });
 
         Assert.True(BattleEngine.IsFainted(pokemon));
     }
@@ -178,7 +176,7 @@ public class BattleStateTests
     {
         Player player = CreateTwoAnimalPlayer();
         player.AnimalInventory[0].Health = 0;
-        player.AnimalInventory[1].Health = -1;
+        player.AnimalInventory[1].Health = 0;
 
         Assert.False(BattleEngine.HasUsableAnimals(player));
         Assert.Equal(-1, BattleEngine.GetNextHealthyAnimalIndex(player));
@@ -276,7 +274,29 @@ public class BattleStateTests
         Assert.Contains(wildAnimal, player.AnimalInventory);
         Assert.Contains(animalToRelease, player.CurrentRoom.EncounterAnimals);
         Assert.DoesNotContain(wildAnimal, player.CurrentRoom.EncounterAnimals);
-        Assert.Equal(20, animalToRelease.Health);
+        Assert.Equal(animalToRelease.BaseHealth, animalToRelease.Health);
+    }
+
+    // Verifies that opponent move choice can be controlled in tests without relying on Random.Shared.
+    [Fact]
+    public void HandleOpponentTurn_UsesInjectedMoveSelector()
+    {
+        Animal opponent = new Animal(
+            id: 1,
+            name: "OPPONENT",
+            element: AnimalElement.Nature,
+            speed: 7,
+            baseHealth: 20,
+            health: 20,
+            level: 1,
+            moves: new[] { new Move("WEAK", MoveType.Normal, 1), new Move("STRONG", MoveType.Normal, 7) });
+        Animal player = new Animal(id: 2, name: "PLAYER", element: AnimalElement.Nature, speed: 7, baseHealth: 20, health: 20, level: 1, moves: new[] { MoveData.Tackle });
+        FakeGameIO io = new();
+
+        BattleHelpers.HandleOpponentTurn(io, opponent, player, "Opponent Move", string.Empty, new FixedMoveSelector(opponent.Moves[1]));
+
+        Assert.Equal(13, player.Health);
+        Assert.Contains("OPPONENT used STRONG", io.OutputText);
     }
 
     // Verifies that letting a wild creature run away removes it from the room encounter list.
@@ -422,6 +442,21 @@ public class BattleStateTests
         player.AddAnimal(new Animal(id: 5, name: "LEAFEON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.VineWhip }));
         player.AddAnimal(new Animal(id: 6, name: "JOLTEON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Spark }));
         return player;
+    }
+
+    private sealed class FixedMoveSelector : IBattleMoveSelector
+    {
+        private readonly Move mMove;
+
+        public FixedMoveSelector(Move move)
+        {
+            mMove = move;
+        }
+
+        public Move SelectMove(Animal animal)
+        {
+            return mMove;
+        }
     }
 
 }

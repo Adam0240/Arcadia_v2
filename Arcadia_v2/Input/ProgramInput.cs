@@ -22,8 +22,19 @@ namespace Arcadia_v2
         public static string GetName(IGameIO io)
         {
             ArgumentNullException.ThrowIfNull(io);
-            io.WriteLine("Enter your name");
-            return ReadTrimmedInput(io);
+
+            while (true)
+            {
+                io.WriteLine("Enter your name");
+                string name = ReadTrimmedInput(io);
+
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    return name;
+                }
+
+                io.WriteLine("Name cannot be empty.");
+            }
         }
     }
 }

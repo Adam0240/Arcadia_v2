@@ -33,7 +33,7 @@ namespace Arcadia_v2
                 return;
             }
 
-            if (!CanEnterRoom(io, mainPlayer, arcadiaChampion, mainPlayer.CurrentRoom, destination))
+            if (!CanEnterRoom(io, gameState.GameMap, mainPlayer, arcadiaChampion, mainPlayer.CurrentRoom, destination))
             {
                 return;
             }
@@ -55,19 +55,27 @@ namespace Arcadia_v2
         }
 
         // Checks whether the player is allowed to enter the destination room.
-        private static bool CanEnterRoom(IGameIO io, Player mainPlayer, CompPlayer arcadiaChampion, Room currentRoom, Room destination)
+        private static bool CanEnterRoom(
+            IGameIO io,
+            Map.Map gameMap,
+            Player mainPlayer,
+            CompPlayer arcadiaChampion,
+            Room currentRoom,
+            Room destination)
         {
-            if (IsBadgeLocked(io, mainPlayer, currentRoom, destination))
+            MovementRequirement requirement = gameMap.GetMovementRequirement(currentRoom, destination);
+
+            if (IsBadgeLocked(io, mainPlayer, requirement))
             {
                 return false;
             }
 
-            if (IsMysticLocked(io, mainPlayer, currentRoom, destination))
+            if (IsAnimalElementLocked(io, mainPlayer, requirement))
             {
                 return false;
             }
 
-            if (IsChampionLocked(currentRoom, destination) && !arcadiaChampion.Defeated)
+            if (requirement.RequiresChampionDefeat && !arcadiaChampion.Defeated)
             {
                 io.WriteLine("Your not ready to go here yet. You must become the Champion of the region to proceed.");
                 return false;
@@ -77,9 +85,9 @@ namespace Arcadia_v2
         }
 
         // Checks whether a destination room is locked behind a badge requirement.
-        private static bool IsBadgeLocked(IGameIO io, Player mainPlayer, Room currentRoom, Room destination)
+        private static bool IsBadgeLocked(IGameIO io, Player mainPlayer, MovementRequirement requirement)
         {
-            int requiredBadges = GetRequiredBadgesForMovement(currentRoom, destination);
+            int requiredBadges = requirement.RequiredBadges;
 
             if (requiredBadges <= 0)
             {
@@ -97,47 +105,20 @@ namespace Arcadia_v2
             return true;
         }
 
-        private static int GetRequiredBadgesForMovement(Room currentRoom, Room destination)
+        private static bool IsAnimalElementLocked(IGameIO io, Player mainPlayer, MovementRequirement requirement)
         {
-            if (currentRoom.Name == "Ikena" && destination.Name == "Road 6")
-            {
-                return 3;
-            }
-
-            if (currentRoom.Name == "Road 5" && destination.Name == "Nucleon")
-            {
-                return 4;
-            }
-
-            return destination.RequiredBadgesToEnter;
-        }
-
-        private static bool IsMysticLocked(IGameIO io, Player mainPlayer, Room currentRoom, Room destination)
-        {
-            if (!RequiresMysticForMovement(currentRoom, destination))
+            if (requirement.RequiredAnimalElement == null)
             {
                 return false;
             }
 
-            if (mainPlayer.AnimalInventory.Any(animal => animal.Element == AnimalElement.Mystic))
+            if (mainPlayer.AnimalInventory.Any(animal => animal.Element == requirement.RequiredAnimalElement))
             {
                 return false;
             }
 
-            io.WriteLine("You need a Mystic animal on your team before this way unlocks!");
+            io.WriteLine($"You need a {requirement.RequiredAnimalElement} animal on your team before this way unlocks!");
             return true;
-        }
-
-        private static bool RequiresMysticForMovement(Room currentRoom, Room destination)
-        {
-            return currentRoom.Name == "Ikena" && destination.Name == "Road 5"
-                || currentRoom.Name == "New Nucleon" && destination.Name == "Road 5";
-        }
-
-        private static bool IsChampionLocked(Room currentRoom, Room destination)
-        {
-            return destination.RequiresChampionDefeatToEnter
-                || currentRoom.Name == "Road 8" && destination.Name == "Guardian's Tower";
         }
 
         // Moves the player and displays the new room.

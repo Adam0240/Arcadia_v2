@@ -62,105 +62,40 @@ namespace Arcadia_v2.Commands
 
         public static MainCommandType ParseMainCommand(string? input)
         {
-            string command = ToUpperCase(input);
-
-            if (command == "GO" || command == "G")
-            {
-                return MainCommandType.Go;
-            }
-
-            if (command == "ACTION" || command == "A")
-            {
-                return MainCommandType.Action;
-            }
-
-            return MainCommandType.Invalid;
+            return ParseCommand(input, CommandDefinitions.MainCommands, MainCommandType.Invalid);
         }
 
         public static DirectionCommandType ParseDirectionCommand(string? input)
         {
-            string direction = ToUpperCase(input);
-
-            if (direction == "NORTH")
-            {
-                return DirectionCommandType.North;
-            }
-
-            if (direction == "EAST")
-            {
-                return DirectionCommandType.East;
-            }
-
-            if (direction == "SOUTH")
-            {
-                return DirectionCommandType.South;
-            }
-
-            if (direction == "WEST")
-            {
-                return DirectionCommandType.West;
-            }
-
-            if (direction == "QUIT")
-            {
-                return DirectionCommandType.Quit;
-            }
-
-            return DirectionCommandType.Invalid;
+            return ParseCommand(input, CommandDefinitions.DirectionCommands, DirectionCommandType.Invalid);
         }
 
         public static ActionCommandType ParseActionCommand(string? input)
         {
-            string action = ToUpperCase(input);
-
-            if (action == "BATTLE" || action == "B")
-            {
-                return ActionCommandType.Battle;
-            }
-
-            if (action == "POKEINVENTORY" || action == "PI")
-            {
-                return ActionCommandType.PokeInventory;
-            }
-
-            if (action == "MENU" || action == "M")
-            {
-                return ActionCommandType.Menu;
-            }
-
-            return ActionCommandType.Invalid;
+            return ParseCommand(input, CommandDefinitions.ActionCommands, ActionCommandType.Invalid);
         }
 
         public static MenuCommandType ParseMenuCommand(string? input)
         {
-            string menuChoice = ToUpperCase(input);
+            return ParseCommand(input, CommandDefinitions.MenuCommands, MenuCommandType.Invalid);
+        }
 
-            if (menuChoice == "HEAL" || menuChoice == "H")
+        private static TCommand ParseCommand<TCommand>(
+            string? input,
+            IEnumerable<CommandOption<TCommand>> options,
+            TCommand invalidCommand)
+        {
+            string command = ToUpperCase(input);
+
+            foreach (CommandOption<TCommand> option in options)
             {
-                return MenuCommandType.Heal;
+                if (option.Aliases.Any(alias => ToUpperCase(alias) == command))
+                {
+                    return option.Command;
+                }
             }
 
-            if (menuChoice == "BAG" || menuChoice == "B")
-            {
-                return MenuCommandType.Bag;
-            }
-
-            if (menuChoice == "SWAP" || menuChoice == "S")
-            {
-                return MenuCommandType.Swap;
-            }
-
-            if (menuChoice == "GYM" || menuChoice == "G")
-            {
-                return MenuCommandType.Gym;
-            }
-
-            if (menuChoice == "SAVE")
-            {
-                return MenuCommandType.Save;
-            }
-
-            return MenuCommandType.Invalid;
+            return invalidCommand;
         }
     }
 }

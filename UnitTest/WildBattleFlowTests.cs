@@ -58,7 +58,7 @@ public class WildBattleFlowTests
         Assert.Contains(wildAnimal, gameState.MainPlayer.AnimalInventory);
         Assert.Contains(releasedAnimal, gameState.MainPlayer.CurrentRoom.EncounterAnimals);
         Assert.DoesNotContain(wildAnimal, gameState.MainPlayer.CurrentRoom.EncounterAnimals);
-        Assert.Equal(20, releasedAnimal.Health);
+        Assert.Equal(releasedAnimal.BaseHealth, releasedAnimal.Health);
         Assert.Contains($"You caught {wildAnimal.Name}!", io.OutputText);
     }
 

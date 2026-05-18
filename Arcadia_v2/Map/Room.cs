@@ -1,12 +1,37 @@
 using System.Collections.Generic;
 namespace Arcadia_v2.Map
 {
+    public enum RoomId
+    {
+        Custom = 0,
+        MaiaStable,
+        Ikena,
+        Road1,
+        Road2,
+        OakPass,
+        Road3,
+        Road4,
+        NewNucleon,
+        Road5,
+        Road6,
+        Road7,
+        Wyrmrest,
+        Mountains,
+        RadioactiveWay,
+        Nucleon,
+        FinalTrials,
+        GuardiansTower,
+        Road8,
+        TheEnd
+    }
+
     // Defines a room object that stores its own details and links to neighboring rooms.
     public class Room
     {
         private readonly List<Arcadia_v2.Animal> mEncounterAnimals = new();
 
         // Exposes the room's name as a read-only property.
+        public RoomId Id { get; }
         public string Name { get; }
         public string Description { get; }
         public bool IsTown { get; init; }
@@ -25,7 +50,13 @@ namespace Arcadia_v2.Map
 
         // Creates a new room with a name and description.
         public Room(string name, string description)
+            : this(RoomId.Custom, name, description)
         {
+        }
+
+        public Room(RoomId id, string name, string description)
+        {
+            Id = id;
             Name = name;
             Description = description;
         }

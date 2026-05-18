@@ -59,6 +59,73 @@ namespace UnitTest
                     moves: moves));
         }
 
+        // Checks that creating an animal with a null move is rejected at construction.
+        [Fact]
+        public void Constructor_NullMove_ThrowsArgumentException()
+        {
+            Assert.Throws<ArgumentException>(() =>
+                new Animal(
+                    id: 0,
+                    name: "TESTMON",
+                    element: AnimalElement.Nature,
+                    speed: 1,
+                    baseHealth: 10,
+                    health: 10,
+                    level: 1,
+                    moves: new[] { MoveData.Tackle, null! }));
+        }
+
+        // Checks that an animal cannot be created with an empty name.
+        [Fact]
+        public void Constructor_EmptyName_ThrowsArgumentException()
+        {
+            Assert.Throws<ArgumentException>(() =>
+                new Animal(
+                    id: 0,
+                    name: "",
+                    element: AnimalElement.Nature,
+                    speed: 1,
+                    baseHealth: 10,
+                    health: 10,
+                    level: 1,
+                    moves: new[] { MoveData.Tackle }));
+        }
+
+        // Checks that constructor health is constrained to the animal's valid health range.
+        [Theory]
+        [InlineData(-1)]
+        [InlineData(11)]
+        public void Constructor_InvalidHealth_ThrowsArgumentOutOfRangeException(int health)
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                new Animal(
+                    id: 0,
+                    name: "TESTMON",
+                    element: AnimalElement.Nature,
+                    speed: 1,
+                    baseHealth: 10,
+                    health: health,
+                    level: 1,
+                    moves: new[] { MoveData.Tackle }));
+        }
+
+        // Checks that runtime health assignments are constrained to the animal's valid health range.
+        [Fact]
+        public void Health_InvalidAssignment_ThrowsArgumentOutOfRangeException()
+        {
+            Animal animal = new(
+                id: 0,
+                name: "TESTMON",
+                element: AnimalElement.Nature,
+                speed: 1,
+                baseHealth: 10,
+                health: 10,
+                level: 1,
+                moves: new[] { MoveData.Tackle });
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => animal.Health = 11);
+        }
+
         // Checks that cloning creates a separate animal instance so later health changes do not affect the original.
         [Fact]
         public void Clone_CreatesIndependentAnimalCopy()

@@ -5,26 +5,6 @@ namespace Arcadia_v2.Map
 {
     public class Map
     {
-        private const string MaiaStable = "Maia's Stable";
-        private const string Ikena = "Ikena";
-        private const string Road1 = "Road 1";
-        private const string Road2 = "Road 2";
-        private const string OakPass = "Oak Pass";
-        private const string Road3 = "Road 3";
-        private const string Road4 = "Road 4";
-        private const string NewNucleon = "New Nucleon";
-        private const string Road5 = "Road 5";
-        private const string Road6 = "Road 6";
-        private const string Road7 = "Road 7";
-        private const string Wyrmrest = "Wyrmrest";
-        private const string Mountains = "Mountains";
-        private const string RadioactiveWay = "Radioactive Way";
-        private const string Nucleon = "Nucleon";
-        private const string FinalTrials = "Final Trials";
-        private const string GuardiansTower = "Guardian's Tower";
-        private const string Road8 = "Road 8";
-        private const string TheEnd = "The End";
-
         public Room StartRoom { get; }
         public Room GymLeader1Room { get; }
         public Room GymLeader2Room { get; }
@@ -32,74 +12,78 @@ namespace Arcadia_v2.Map
         public Room GymLeader4Room { get; }
         public Room ChampionRoom { get; }
 
-        public IReadOnlyDictionary<string, Room> Rooms => mRooms;
+        public IReadOnlyDictionary<string, Room> Rooms => mRoomsByName;
 
-        private readonly Dictionary<string, Room> mRooms;
+        private readonly Dictionary<RoomId, Room> mRoomsById;
+        private readonly Dictionary<string, Room> mRoomsByName;
+        private readonly Dictionary<(RoomId From, RoomId To), MovementRequirement> mMovementRequirements = new();
 
         public Map()
         {
-            mRooms = CreateRooms();
+            mRoomsById = CreateRooms();
+            mRoomsByName = mRoomsById.Values.ToDictionary(room => room.Name, StringComparer.Ordinal);
 
-            StartRoom = GetRoom(MaiaStable);
-            GymLeader1Room = GetRoom(OakPass);
-            GymLeader2Room = GetRoom(NewNucleon);
-            GymLeader3Room = GetRoom(Ikena);
-            GymLeader4Room = GetRoom(Wyrmrest);
-            ChampionRoom = GetRoom(GuardiansTower);
+            StartRoom = GetRoom(RoomId.MaiaStable);
+            GymLeader1Room = GetRoom(RoomId.OakPass);
+            GymLeader2Room = GetRoom(RoomId.NewNucleon);
+            GymLeader3Room = GetRoom(RoomId.Ikena);
+            GymLeader4Room = GetRoom(RoomId.Wyrmrest);
+            ChampionRoom = GetRoom(RoomId.GuardiansTower);
 
             ConnectRooms();
+            AddMovementRequirements();
             PopulateWildPokemon();
         }
 
         // Creates all rooms first so connections can be added in one dedicated step.
-        private static Dictionary<string, Room> CreateRooms()
+        private static Dictionary<RoomId, Room> CreateRooms()
         {
-            return new Dictionary<string, Room>
+            return new Dictionary<RoomId, Room>
             {
-                [MaiaStable] = new Room(MaiaStable, "Where new trainers obtain their first pokemon!"),
-                [Ikena] = new Room(Ikena, "Small peaceful town where hero's are born") { IsTown = true },
-                [Road1] = new Room(Road1, "Where you make your first step into your Pokemon Journey!"),
-                [Road2] = new Room(Road2, ""),
-                [OakPass] = new Room(OakPass, "Town surrounded by trees and forest Pokemon") { IsTown = true },
-                [Road3] = new Room(Road3, ""),
-                [Road4] = new Room(Road4, "Tunnel"),
-                [NewNucleon] = new Room(NewNucleon, "Founded after Nucleon incident") { IsTown = true },
-                [Road5] = new Room(Road5, ""),
-                [Road6] = new Room(Road6, ""),
-                [Road7] = new Room(Road7, ""),
-                [Wyrmrest] = new Room(Wyrmrest, "Home of Dragons and Dragon Masters") { IsTown = true },
-                [Mountains] = new Room(Mountains, ""),
-                [RadioactiveWay] = new Room(RadioactiveWay, ""),
-                [Nucleon] = new Room(Nucleon, "") { IsTown = true },
-                [FinalTrials] = new Room(FinalTrials, "Expert trainers and future champions all travel through here"),
-                [GuardiansTower] = new Room(GuardiansTower, "Where you find out if you're the best!"),
-                [Road8] = new Room(Road8, ""),
-                [TheEnd] = new Room(TheEnd, "Decide where you wish to stay") { IsFinalRoom = true, RequiresChampionDefeatToEnter = true }
+                [RoomId.MaiaStable] = new Room(RoomId.MaiaStable, "Maia's Stable", "Where new trainers obtain their first pokemon!"),
+                [RoomId.Ikena] = new Room(RoomId.Ikena, "Ikena", "Small peaceful town where hero's are born") { IsTown = true },
+                [RoomId.Road1] = new Room(RoomId.Road1, "Road 1", "Where you make your first step into your Pokemon Journey!"),
+                [RoomId.Road2] = new Room(RoomId.Road2, "Road 2", ""),
+                [RoomId.OakPass] = new Room(RoomId.OakPass, "Oak Pass", "Town surrounded by trees and forest Pokemon") { IsTown = true },
+                [RoomId.Road3] = new Room(RoomId.Road3, "Road 3", ""),
+                [RoomId.Road4] = new Room(RoomId.Road4, "Road 4", "Tunnel"),
+                [RoomId.NewNucleon] = new Room(RoomId.NewNucleon, "New Nucleon", "Founded after Nucleon incident") { IsTown = true },
+                [RoomId.Road5] = new Room(RoomId.Road5, "Road 5", ""),
+                [RoomId.Road6] = new Room(RoomId.Road6, "Road 6", ""),
+                [RoomId.Road7] = new Room(RoomId.Road7, "Road 7", ""),
+                [RoomId.Wyrmrest] = new Room(RoomId.Wyrmrest, "Wyrmrest", "Home of Dragons and Dragon Masters") { IsTown = true },
+                [RoomId.Mountains] = new Room(RoomId.Mountains, "Mountains", ""),
+                [RoomId.RadioactiveWay] = new Room(RoomId.RadioactiveWay, "Radioactive Way", ""),
+                [RoomId.Nucleon] = new Room(RoomId.Nucleon, "Nucleon", "") { IsTown = true },
+                [RoomId.FinalTrials] = new Room(RoomId.FinalTrials, "Final Trials", "Expert trainers and future champions all travel through here"),
+                [RoomId.GuardiansTower] = new Room(RoomId.GuardiansTower, "Guardian's Tower", "Where you find out if you're the best!"),
+                [RoomId.Road8] = new Room(RoomId.Road8, "Road 8", ""),
+                [RoomId.TheEnd] = new Room(RoomId.TheEnd, "The End", "Decide where you wish to stay") { IsFinalRoom = true, RequiresChampionDefeatToEnter = true }
             };
         }
 
         // Wires up room neighbors after all room instances already exist.
         private void ConnectRooms()
         {
-            Room maiaStable = GetRoom(MaiaStable);
-            Room ikena = GetRoom(Ikena);
-            Room road1 = GetRoom(Road1);
-            Room road2 = GetRoom(Road2);
-            Room oakPass = GetRoom(OakPass);
-            Room road3 = GetRoom(Road3);
-            Room road4 = GetRoom(Road4);
-            Room newNucleon = GetRoom(NewNucleon);
-            Room road5 = GetRoom(Road5);
-            Room road6 = GetRoom(Road6);
-            Room road7 = GetRoom(Road7);
-            Room wyrmrest = GetRoom(Wyrmrest);
-            Room mountains = GetRoom(Mountains);
-            Room radioactiveWay = GetRoom(RadioactiveWay);
-            Room nucleon = GetRoom(Nucleon);
-            Room finalTrials = GetRoom(FinalTrials);
-            Room guardiansTower = GetRoom(GuardiansTower);
-            Room road8 = GetRoom(Road8);
-            Room theEnd = GetRoom(TheEnd);
+            Room maiaStable = GetRoom(RoomId.MaiaStable);
+            Room ikena = GetRoom(RoomId.Ikena);
+            Room road1 = GetRoom(RoomId.Road1);
+            Room road2 = GetRoom(RoomId.Road2);
+            Room oakPass = GetRoom(RoomId.OakPass);
+            Room road3 = GetRoom(RoomId.Road3);
+            Room road4 = GetRoom(RoomId.Road4);
+            Room newNucleon = GetRoom(RoomId.NewNucleon);
+            Room road5 = GetRoom(RoomId.Road5);
+            Room road6 = GetRoom(RoomId.Road6);
+            Room road7 = GetRoom(RoomId.Road7);
+            Room wyrmrest = GetRoom(RoomId.Wyrmrest);
+            Room mountains = GetRoom(RoomId.Mountains);
+            Room radioactiveWay = GetRoom(RoomId.RadioactiveWay);
+            Room nucleon = GetRoom(RoomId.Nucleon);
+            Room finalTrials = GetRoom(RoomId.FinalTrials);
+            Room guardiansTower = GetRoom(RoomId.GuardiansTower);
+            Room road8 = GetRoom(RoomId.Road8);
+            Room theEnd = GetRoom(RoomId.TheEnd);
 
             maiaStable.North = ikena;
 
@@ -163,42 +147,93 @@ namespace Arcadia_v2.Map
             theEnd.South = ikena;
         }
 
+        private void AddMovementRequirements()
+        {
+            AddMovementRequirement(RoomId.Ikena, RoomId.Road6, requiredBadges: 3);
+            AddMovementRequirement(RoomId.Road5, RoomId.Nucleon, requiredBadges: 4);
+            AddMovementRequirement(RoomId.Ikena, RoomId.Road5, requiredAnimalElement: AnimalElement.Mystic);
+            AddMovementRequirement(RoomId.NewNucleon, RoomId.Road5, requiredAnimalElement: AnimalElement.Mystic);
+            AddMovementRequirement(RoomId.Road8, RoomId.GuardiansTower, requiresChampionDefeat: true);
+            AddMovementRequirement(RoomId.Ikena, RoomId.TheEnd, requiresChampionDefeat: true);
+        }
+
+        private void AddMovementRequirement(
+            RoomId fromRoomId,
+            RoomId toRoomId,
+            int requiredBadges = 0,
+            AnimalElement? requiredAnimalElement = null,
+            bool requiresChampionDefeat = false)
+        {
+            mMovementRequirements[(fromRoomId, toRoomId)] = new MovementRequirement(
+                requiredBadges,
+                requiredAnimalElement,
+                requiresChampionDefeat);
+        }
+
+        public MovementRequirement GetMovementRequirement(Room currentRoom, Room destination)
+        {
+            ArgumentNullException.ThrowIfNull(currentRoom);
+            ArgumentNullException.ThrowIfNull(destination);
+
+            return mMovementRequirements.TryGetValue((currentRoom.Id, destination.Id), out MovementRequirement requirement)
+                ? requirement
+                : MovementRequirement.None;
+        }
+
         // Populates wild animal room assignments while cloning each entry for isolated encounter state.
         private void PopulateWildPokemon()
         {
             IReadOnlyList<Arcadia_v2.Animal> mapAnimals = Arcadia_v2.GameData.CreateAnimals();
 
-            AddAnimalToRoom(Road1, mapAnimals[3]);
-            AddAnimalToRoom(Road2, mapAnimals[15]);
-            AddAnimalToRoom(Road2, mapAnimals[12]);
-            AddAnimalToRoom(Road3, mapAnimals[9]);
-            AddAnimalToRoom(Road3, mapAnimals[11]);
-            AddAnimalToRoom(Road4, mapAnimals[10]);
-            AddAnimalToRoom(Road5, mapAnimals[7]);
-            AddAnimalToRoom(Road6, mapAnimals[14]);
-            AddAnimalToRoom(Road7, mapAnimals[4]);
-            AddAnimalToRoom(Road7, mapAnimals[13]);
-            AddAnimalToRoom(Mountains, mapAnimals[8]);
-            AddAnimalToRoom(RadioactiveWay, mapAnimals[6]);
-            AddAnimalToRoom(FinalTrials, mapAnimals[17]);
-            AddAnimalToRoom(TheEnd, mapAnimals[19]);
+            AddAnimalToRoom(RoomId.Road1, mapAnimals[3]);
+            AddAnimalToRoom(RoomId.Road2, mapAnimals[15]);
+            AddAnimalToRoom(RoomId.Road2, mapAnimals[12]);
+            AddAnimalToRoom(RoomId.Road3, mapAnimals[9]);
+            AddAnimalToRoom(RoomId.Road3, mapAnimals[11]);
+            AddAnimalToRoom(RoomId.Road4, mapAnimals[10]);
+            AddAnimalToRoom(RoomId.Road5, mapAnimals[7]);
+            AddAnimalToRoom(RoomId.Road6, mapAnimals[14]);
+            AddAnimalToRoom(RoomId.Road7, mapAnimals[4]);
+            AddAnimalToRoom(RoomId.Road7, mapAnimals[13]);
+            AddAnimalToRoom(RoomId.Mountains, mapAnimals[8]);
+            AddAnimalToRoom(RoomId.RadioactiveWay, mapAnimals[6]);
+            AddAnimalToRoom(RoomId.FinalTrials, mapAnimals[17]);
+            AddAnimalToRoom(RoomId.TheEnd, mapAnimals[19]);
         }
 
         // Places one wild animal into a room.
-        private void AddAnimalToRoom(string roomName, Arcadia_v2.Animal animal)
+        private void AddAnimalToRoom(RoomId roomId, Arcadia_v2.Animal animal)
         {
-            GetRoom(roomName).SetRoomAnimal(animal);
+            GetRoom(roomId).SetRoomAnimal(animal);
         }
 
         // Returns a room by name so the game can access specific rooms without more map fields.
         public Room GetRoom(string roomName)
         {
-            if (!mRooms.TryGetValue(roomName, out Room? room))
+            if (!mRoomsByName.TryGetValue(roomName, out Room? room))
             {
                 throw new ArgumentException($"Unknown room: {roomName}", nameof(roomName));
             }
 
             return room;
         }
+
+        public Room GetRoom(RoomId roomId)
+        {
+            if (!mRoomsById.TryGetValue(roomId, out Room? room))
+            {
+                throw new ArgumentException($"Unknown room id: {roomId}", nameof(roomId));
+            }
+
+            return room;
+        }
+    }
+
+    public readonly record struct MovementRequirement(
+        int RequiredBadges,
+        AnimalElement? RequiredAnimalElement,
+        bool RequiresChampionDefeat)
+    {
+        public static MovementRequirement None { get; } = new(0, null, false);
     }
 }

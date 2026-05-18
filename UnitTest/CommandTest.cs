@@ -64,11 +64,23 @@ namespace UnitTest
 
             Assert.Equal(MenuCommandType.Swap, result);
             Assert.Contains("Menu", io.OutputText);
-            Assert.Contains("Swap Animals", io.OutputText);
+            Assert.Contains("Swap Animals (swap/s)", io.OutputText);
+            Assert.DoesNotContain("Swap Animals (swap/b)", io.OutputText);
             Assert.Contains("Save Game", io.OutputText);
             Assert.DoesNotContain("Load Game", io.OutputText);
             Assert.DoesNotContain("Delete Save", io.OutputText);
         }
 
+        // Checks that the displayed swap shortcut maps to the swap command.
+        [Fact]
+        public void ReadMenuCommand_SShortcut_ReturnsSwap()
+        {
+            FakeGameIO io = new("s");
+
+            MenuCommandType result = Commands.ReadMenuCommand(io);
+
+            Assert.Equal(MenuCommandType.Swap, result);
+            Assert.Contains("Swap Animals (swap/s)", io.OutputText);
+        }
     }
 }

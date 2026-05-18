@@ -97,4 +97,19 @@ public class MovementFlowTests
         Assert.Equal("Road 8", gameState.MainPlayer.CurrentRoom.Name);
         Assert.Contains("You must become the Champion of the region to proceed.", io.OutputText);
     }
+
+    // Checks that Guardian's Tower opens from Road 8 once the champion has been defeated.
+    [Fact]
+    public void HandleMovement_FromRoadEightToGuardiansTower_AfterChampionDefeat_AllowsMovement()
+    {
+        GameState gameState = GameSetup.CreateForLoad();
+        gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Road 8"));
+        gameState.ArcadiaChampion.Defeated = true;
+        FakeGameIO io = new();
+
+        MovementFlow.HandleMovement(io, gameState, DirectionCommandType.North, "north");
+
+        Assert.Equal("Guardian's Tower", gameState.MainPlayer.CurrentRoom.Name);
+        Assert.DoesNotContain("You must become the Champion of the region to proceed.", io.OutputText);
+    }
 }

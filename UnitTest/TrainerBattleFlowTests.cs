@@ -77,6 +77,26 @@ public class TrainerBattleFlowTests
         Assert.DoesNotContain("You sent out", io.OutputText);
     }
 
+    // Checks that trainer battle flow can use an injected selector for deterministic opponent move choice.
+    [Fact]
+    public void Run_UsesInjectedMoveSelectorForOpponentTurns()
+    {
+        Player player = new("Trainer", new Map().StartRoom);
+        player.AddAnimal(new Animal(id: 1, name: "LEAD", element: AnimalElement.Nature, speed: 5, baseHealth: 5, health: 5, level: 1, moves: new[] { new Move("WEAKHIT", MoveType.Normal, 1) }));
+        CompPlayer opponent = new("Rival", new Map().StartRoom);
+        opponent.AddBadge("Test Badge");
+        opponent.SetBattleTeam(new[]
+        {
+            new Animal(id: 3, name: "FIRST", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: 20, level: 1, moves: new[] { new Move("WEAK", MoveType.Normal, 1), new Move("STRONG", MoveType.Normal, 5) })
+        });
+        FakeGameIO io = new("weakhit", "no");
+
+        TrainerBattleFlow.Run(io, player, opponent, new FixedMoveSelector(new Move("STRONG", MoveType.Normal, 5)));
+
+        Assert.Equal(0, player.AnimalInventory[0].Health);
+        Assert.Contains("FIRST used STRONG", io.OutputText);
+    }
+
     private static Player CreatePlayer()
     {
         Player player = new("Trainer", new Map().StartRoom);
@@ -95,5 +115,20 @@ public class TrainerBattleFlowTests
             new Animal(id: 4, name: "SECOND", element: AnimalElement.Nature, speed: 5, baseHealth: 5, health: 5, level: 1, moves: new[] { MoveData.Splash })
         });
         return opponent;
+    }
+
+    private sealed class FixedMoveSelector : IBattleMoveSelector
+    {
+        private readonly Move mMove;
+
+        public FixedMoveSelector(Move move)
+        {
+            mMove = move;
+        }
+
+        public Move SelectMove(Animal animal)
+        {
+            return mMove;
+        }
     }
 }

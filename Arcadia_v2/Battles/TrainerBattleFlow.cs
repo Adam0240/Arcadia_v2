@@ -17,7 +17,17 @@ namespace Arcadia_v2
             Run(io, gameState.MainPlayer, opponent);
         }
 
+        public static void Run(IGameIO io, GameState gameState, CompPlayer opponent, IBattleMoveSelector moveSelector)
+        {
+            Run(io, gameState.MainPlayer, opponent, moveSelector);
+        }
+
         public static void Run(IGameIO io, Player main, CompPlayer opponent)
+        {
+            Run(io, main, opponent, RandomBattleMoveSelector.Instance);
+        }
+
+        public static void Run(IGameIO io, Player main, CompPlayer opponent, IBattleMoveSelector moveSelector)
         {
             if (!BattleEngine.HasUsableAnimals(main))
             {
@@ -46,7 +56,7 @@ namespace Arcadia_v2
                 }
                 else
                 {
-                    HandleOpponentTurn(io, battleState, main);
+                    HandleOpponentTurn(io, battleState, main, moveSelector);
                 }
 
                 isPlayerTurn = !isPlayerTurn;
@@ -68,11 +78,11 @@ namespace Arcadia_v2
         }
 
         // Handles the opponent's turn by choosing one random move from the opponent's active animal.
-        private static void HandleOpponentTurn(IGameIO io, BattleState battleState, Player main)
+        private static void HandleOpponentTurn(IGameIO io, BattleState battleState, Player main, IBattleMoveSelector moveSelector)
         {
             Animal opponentAnimal = battleState.OpponentAnimal;
 
-            BattleHelpers.HandleOpponentTurn(io, opponentAnimal, battleState.PlayerAnimal, $"{opponentAnimal.Name} Move", string.Empty);
+            BattleHelpers.HandleOpponentTurn(io, opponentAnimal, battleState.PlayerAnimal, $"{opponentAnimal.Name} Move", string.Empty, moveSelector);
 
             if (BattleHelpers.HandlePlayerFaintedAnimal(io, main, battleState.PlayerAnimal, "Would you like to switch animals?"))
             {

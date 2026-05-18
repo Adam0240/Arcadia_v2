@@ -27,6 +27,19 @@ public class ProgramFlowTests
         Assert.Contains("Enter your name", io.OutputText);
     }
 
+    // Verifies that blank names are rejected at the input boundary instead of crashing player setup.
+    [Fact]
+    public void GetName_BlankInput_RePromptsUntilNameIsEntered()
+    {
+        FakeGameIO io = new("   ", "Ash");
+
+        string result = Program.GetName(io);
+
+        Assert.Equal("Ash", result);
+        Assert.Contains("Name cannot be empty.", io.OutputText);
+        Assert.Equal(2, io.OutputText.Split("Enter your name").Length - 1);
+    }
+
     // Verifies that a two-animal party swaps immediately without asking for creature names.
     [Fact]
     public void SwapAnimals_WithTwoAnimals_AutoSwapsPartyPositions()
