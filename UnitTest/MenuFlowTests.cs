@@ -58,9 +58,9 @@ public class MenuFlowTests
 
         MenuFlow.HandleMenu(io, gameState, new GameSaveService(new FakeGameSaveRepository()));
 
-        Assert.Equal("ESPEON", gameState.MainPlayer.AnimalInventory[0].Name);
-        Assert.Equal("UMBREON", gameState.MainPlayer.AnimalInventory[1].Name);
-        Assert.Contains("You are swapping: UMBREON and ESPEON .", io.OutputText);
+        Assert.Equal("LION", gameState.MainPlayer.AnimalInventory[0].Name);
+        Assert.Equal("CAT", gameState.MainPlayer.AnimalInventory[1].Name);
+        Assert.Contains("You are swapping: CAT and LION .", io.OutputText);
     }
 
     // Checks that the gym menu option dispatches to the gym interaction flow.

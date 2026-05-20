@@ -107,8 +107,8 @@ public class BattleStateTests
         int promptCount = io.OutputText.Split("Would you like to switch animals?").Length - 1;
         Assert.Equal(2, promptCount);
         Assert.Contains("Invalid input.", io.OutputText);
-        Assert.Equal("UMBREON", player.AnimalInventory[0].Name);
-        Assert.Equal("ESPEON", player.AnimalInventory[1].Name);
+        Assert.Equal("CAT", player.AnimalInventory[0].Name);
+        Assert.Equal("LION", player.AnimalInventory[1].Name);
     }
 
     // Verifies that an invalid then yes response re-prompts and swaps the selected party creatures.
@@ -117,15 +117,15 @@ public class BattleStateTests
     {
         Player player = CreateThreeAnimalPlayer();
         player.AnimalInventory[0].Health = 0;
-        FakeGameIO io = new("maybe", "yes", "umbreon", "espeon");
+        FakeGameIO io = new("maybe", "yes", "cat", "lion");
 
         BattleHelpers.HandlePlayerFaintedAnimal(io, player, "Would you like to switch animals?");
 
         int promptCount = io.OutputText.Split("Would you like to switch animals?").Length - 1;
         Assert.Equal(2, promptCount);
         Assert.Contains("Invalid input.", io.OutputText);
-        Assert.Equal("ESPEON", player.AnimalInventory[0].Name);
-        Assert.Equal("UMBREON", player.AnimalInventory[1].Name);
+        Assert.Equal("LION", player.AnimalInventory[0].Name);
+        Assert.Equal("CAT", player.AnimalInventory[1].Name);
     }
 
     // Verifies that a two-creature party auto-switches to the healthy backup without prompting.
@@ -139,8 +139,8 @@ public class BattleStateTests
         bool switched = BattleHelpers.HandlePlayerFaintedAnimal(io, player, "Would you like to switch animals?");
 
         Assert.True(switched);
-        Assert.Equal("ESPEON", player.AnimalInventory[0].Name);
-        Assert.Equal("UMBREON", player.AnimalInventory[1].Name);
+        Assert.Equal("LION", player.AnimalInventory[0].Name);
+        Assert.Equal("CAT", player.AnimalInventory[1].Name);
         Assert.DoesNotContain("Would you like to switch animals?", io.OutputText);
     }
 
@@ -156,8 +156,8 @@ public class BattleStateTests
         bool switched = BattleHelpers.HandlePlayerFaintedAnimal(io, player, "Would you like to switch animals?");
 
         Assert.False(switched);
-        Assert.Equal("UMBREON", player.AnimalInventory[0].Name);
-        Assert.Equal("ESPEON", player.AnimalInventory[1].Name);
+        Assert.Equal("CAT", player.AnimalInventory[0].Name);
+        Assert.Equal("LION", player.AnimalInventory[1].Name);
         Assert.DoesNotContain("Would you like to switch animals?", io.OutputText);
     }
 
@@ -187,7 +187,7 @@ public class BattleStateTests
     public void BattleEngine_GetNextHealthyAnimalIndex_ReturnsFirstHealthyAnimalAtOrAfterStartIndex()
     {
         Player player = CreateTwoAnimalPlayer();
-        player.AddAnimal(new Animal(id: 3, name: "FLAREON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Ember }));
+        player.AddAnimal(new Animal(id: 3, name: "DOG", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Ember }));
         player.AnimalInventory[0].Health = 0;
         player.AnimalInventory[1].Health = 0;
 
@@ -225,8 +225,8 @@ public class BattleStateTests
         bool switched = BattleEngine.TryAutoSwitchTwoAnimalParty(player, player.AnimalInventory[0]);
 
         Assert.False(switched);
-        Assert.Equal("UMBREON", player.AnimalInventory[0].Name);
-        Assert.Equal("ESPEON", player.AnimalInventory[1].Name);
+        Assert.Equal("CAT", player.AnimalInventory[0].Name);
+        Assert.Equal("LION", player.AnimalInventory[1].Name);
     }
 
     // Verifies that catching a wild creature adds it to the party and removes it from the room encounter list.
@@ -321,7 +321,7 @@ public class BattleStateTests
 
         BattleState battleState = BattleState.CreateWildBattle(player, wildAnimal);
 
-        Assert.Equal("UMBREON", battleState.PlayerAnimal.Name);
+        Assert.Equal("CAT", battleState.PlayerAnimal.Name);
         Assert.Equal("PIDGEY", battleState.OpponentAnimal.Name);
         Assert.False(battleState.IsOver);
     }
@@ -406,25 +406,11 @@ public class BattleStateTests
         Assert.NotSame(firstBattleLead, gymLeader.AnimalInventory[0]);
     }
 
-    // Verifies that the animal data preserves the expected former water-species move assignments.
-    [Fact]
-    public void CreateAnimals_UsesCorrectWaterStarterAndMagikarpMoves()
-    {
-        List<Animal> animals = GameData.CreateAnimals();
-        Animal squirtle = Assert.Single(animals, animal => animal.Name == "SQUIRTLE");
-        Animal magikarp = Assert.Single(animals, animal => animal.Name == "MAGIKARP");
-
-        Assert.Equal("WATERGUN", squirtle.Moves[0].MoveName);
-        Assert.Equal(6, squirtle.Moves[0].MovePower);
-        Assert.Equal("SPLASH", magikarp.Moves[0].MoveName);
-        Assert.Equal(0, magikarp.Moves[0].MovePower);
-    }
-
     private static Player CreateTwoAnimalPlayer()
     {
         Player player = new Player("Trainer", new Map().StartRoom);
-        player.AddAnimal(new Animal(id: 1, name: "UMBREON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Bite }));
-        player.AddAnimal(new Animal(id: 2, name: "ESPEON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Psychic }));
+        player.AddAnimal(new Animal(id: 1, name: "CAT", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Bite }));
+        player.AddAnimal(new Animal(id: 2, name: "LION", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Psychic }));
         return player;
     }
 

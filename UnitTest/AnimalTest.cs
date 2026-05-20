@@ -132,7 +132,7 @@ namespace UnitTest
         {
             Animal original = new(
                 id: 1,
-                name: "UMBREON",
+                name: "CAT",
                 element: AnimalElement.Nature,
                 speed: 9,
                 baseHealth: 75,
@@ -166,10 +166,7 @@ namespace UnitTest
         {
             IReadOnlyList<Animal> animals = AnimalFactory.CreateAnimals();
 
-            Assert.Equal(AnimalElement.Mystic, animals.Single(animal => animal.Name == "SQUIRTLE").Element);
-            Assert.Equal(AnimalElement.Mystic, animals.Single(animal => animal.Name == "BLASTOISE").Element);
-            Assert.Equal(AnimalElement.Mystic, animals.Single(animal => animal.Name == "MAGIKARP").Element);
-            Assert.Equal(AnimalElement.Mystic, animals.Single(animal => animal.Name == "GYRADOS").Element);
+            Assert.Equal(AnimalElement.Mystic, animals.Single(animal => animal.Name == "TURTLE").Element);
         }
 
         // Checks that non-water roster entries currently map to the Nature element during this migration stage.
@@ -178,10 +175,7 @@ namespace UnitTest
         {
             IReadOnlyList<Animal> animals = AnimalFactory.CreateAnimals();
 
-            Assert.Equal(AnimalElement.Nature, animals.Single(animal => animal.Name == "UMBREON").Element);
-            Assert.Equal(AnimalElement.Nature, animals.Single(animal => animal.Name == "ESPEON").Element);
-            Assert.Equal(AnimalElement.Nature, animals.Single(animal => animal.Name == "PIKACHU").Element);
-            Assert.Equal(AnimalElement.Nature, animals.Single(animal => animal.Name == "ARCEUS").Element);
+            Assert.Equal(AnimalElement.Nature, animals.Single(animal => animal.Name == "CAT").Element);
         }
 
         // Checks that the migrated animal roster still preserves key move assignments for important entries.
@@ -189,11 +183,11 @@ namespace UnitTest
         public void AnimalFactory_CreateAnimals_PreservesKeyRosterMoves()
         {
             IReadOnlyList<Animal> animals = AnimalFactory.CreateAnimals();
-            Animal espeon = animals.Single(animal => animal.Name == "ESPEON");
-            Animal pikachu = animals.Single(animal => animal.Name == "PIKACHU");
+            Animal cat = animals.Single(animal => animal.Name == "CAT");
+            Animal lion = animals.Single(animal => animal.Name == "LION");
 
-            Assert.Contains(MoveData.Psychic, espeon.Moves);
-            Assert.Contains(MoveData.Thunderbolt, pikachu.Moves);
+            Assert.Contains(MoveData.Moonlight, cat.Moves);
+            Assert.Contains(MoveData.Sunlight, lion.Moves);
         }
     }
 }

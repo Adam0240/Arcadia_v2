@@ -11,6 +11,7 @@ namespace Arcadia_v2
         Mystic,
         Thunder,
         Draconic,
+        Cosmic,
         Nuclear
     }
 
