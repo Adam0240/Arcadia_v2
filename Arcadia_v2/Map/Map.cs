@@ -185,26 +185,35 @@ namespace Arcadia_v2.Map
         {
             IReadOnlyList<Arcadia_v2.Animal> mapAnimals = Arcadia_v2.GameData.CreateAnimals();
 
-            AddAnimalToRoom(RoomId.Road1, mapAnimals[3]);
-            AddAnimalToRoom(RoomId.Road2, mapAnimals[15]);
-            AddAnimalToRoom(RoomId.Road2, mapAnimals[12]);
-            AddAnimalToRoom(RoomId.Road3, mapAnimals[9]);
-            AddAnimalToRoom(RoomId.Road3, mapAnimals[11]);
-            AddAnimalToRoom(RoomId.Road4, mapAnimals[10]);
-            AddAnimalToRoom(RoomId.Road5, mapAnimals[7]);
-            AddAnimalToRoom(RoomId.Road6, mapAnimals[14]);
-            AddAnimalToRoom(RoomId.Road7, mapAnimals[4]);
-            AddAnimalToRoom(RoomId.Road7, mapAnimals[13]);
-            AddAnimalToRoom(RoomId.Mountains, mapAnimals[8]);
-            AddAnimalToRoom(RoomId.RadioactiveWay, mapAnimals[6]);
-            AddAnimalToRoom(RoomId.FinalTrials, mapAnimals[17]);
-            AddAnimalToRoom(RoomId.TheEnd, mapAnimals[19]);
+            AddAnimalToRoom(RoomId.Road1, mapAnimals, AnimalElement.Nature, "Dog");
+            AddAnimalToRoom(RoomId.Road2, mapAnimals, AnimalElement.Nature, "Serpent");
+            AddAnimalToRoom(RoomId.Road2, mapAnimals, AnimalElement.Nature, "Bee");
+            AddAnimalToRoom(RoomId.Road3, mapAnimals, AnimalElement.Nature, "Bird");
+            AddAnimalToRoom(RoomId.Road3, mapAnimals, AnimalElement.Nature, "Ant");
+            AddAnimalToRoom(RoomId.Road4, mapAnimals, AnimalElement.Nature, "Eagle");
+            AddAnimalToRoom(RoomId.Road5, mapAnimals, AnimalElement.Nature, "Turtle");
+            AddAnimalToRoom(RoomId.Road6, mapAnimals, AnimalElement.Nature, "Bear");
+            AddAnimalToRoom(RoomId.Road7, mapAnimals, AnimalElement.Nature, "Wolf");
+            AddAnimalToRoom(RoomId.Road7, mapAnimals, AnimalElement.Nature, "Cub");
+            AddAnimalToRoom(RoomId.Mountains, mapAnimals, AnimalElement.Nature, "Tortoise");
+            AddAnimalToRoom(RoomId.RadioactiveWay, mapAnimals, AnimalElement.Nature, "Stallion");
+            AddAnimalToRoom(RoomId.FinalTrials, mapAnimals, AnimalElement.Mystic, "Cat");
+            AddAnimalToRoom(RoomId.TheEnd, mapAnimals, AnimalElement.Mystic, "Dog");
         }
 
         // Places one wild animal into a room.
         private void AddAnimalToRoom(RoomId roomId, Arcadia_v2.Animal animal)
         {
             GetRoom(roomId).SetRoomAnimal(animal);
+        }
+
+        private void AddAnimalToRoom(
+            RoomId roomId,
+            IReadOnlyList<Arcadia_v2.Animal> animals,
+            Arcadia_v2.AnimalElement element,
+            string speciesName)
+        {
+            AddAnimalToRoom(roomId, Arcadia_v2.GameData.FindAnimal(animals, element, speciesName));
         }
 
         // Returns a room by name so the game can access specific rooms without more map fields.

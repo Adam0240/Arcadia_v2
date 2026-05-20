@@ -7,18 +7,18 @@ namespace Arcadia_v2
 {
     public enum AnimalElement
     {
-        Nature,
-        Mystic,
-        Thunder,
-        Draconic,
-        Cosmic,
-        Nuclear
+        Nature = 0,
+        Mystic = 1,
+        Thunder = 2,
+        Draconic = 3,
+        Cosmic = 4,
+        Nuclear = 5
     }
 
     // Represents an animal's current battle-relevant state.
     public class Animal
     {
-        private int mHealth;
+        private int mCurrentHealth;
         private readonly List<Move> mMoves = new();
 
         public int Id { get; }
@@ -26,17 +26,17 @@ namespace Arcadia_v2
         public AnimalElement Element { get; }
         public int Speed { get; }
         public int BaseHealth { get; }
-        public int Health
+        public int CurrentHealth
         {
-            get => mHealth;
+            get => mCurrentHealth;
             set
             {
                 if (value < 0 || value > BaseHealth)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(value), "Health must be between 0 and base health.");
+                    throw new ArgumentOutOfRangeException(nameof(value), "Current health must be between 0 and base health.");
                 }
 
-                mHealth = value;
+                mCurrentHealth = value;
             }
         }
         public int Level { get; }
@@ -49,7 +49,7 @@ namespace Arcadia_v2
             AnimalElement element,
             int speed,
             int baseHealth,
-            int health,
+            int currentHealth,
             int level,
             IEnumerable<Move> moves)
         {
@@ -92,7 +92,7 @@ namespace Arcadia_v2
             Element = element;
             Speed = speed;
             BaseHealth = baseHealth;
-            Health = health;
+            CurrentHealth = currentHealth;
             Level = level;
         }
 
@@ -105,7 +105,7 @@ namespace Arcadia_v2
                 element: Element,
                 speed: Speed,
                 baseHealth: BaseHealth,
-                health: Health,
+                currentHealth: CurrentHealth,
                 level: Level,
                 moves: Moves);
         }

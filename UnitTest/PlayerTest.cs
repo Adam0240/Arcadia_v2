@@ -76,7 +76,7 @@ namespace UnitTest
             Assert.Equal("Inventory is Empty! :'( ", player.GetAnimalInventoryDisplay());
         }
 
-        // Checks that the animal inventory display includes each stored creature and its health.
+        // Checks that the animal inventory display includes each stored creature and its currentHealth.
         [Fact]
         public void GetAnimalInventoryDisplay_WithAnimals_ReturnsFormattedInventory()
         {
@@ -87,7 +87,7 @@ namespace UnitTest
                 element: AnimalElement.Nature,
                 speed: 12,
                 baseHealth: 35,
-                health: 35,
+                currentHealth: 35,
                 level: 5,
                 moves: new[] { MoveData.Thunderbolt });
             Animal squirtle = new(
@@ -96,7 +96,7 @@ namespace UnitTest
                 element: AnimalElement.Mystic,
                 speed: 10,
                 baseHealth: 40,
-                health: 30,
+                currentHealth: 30,
                 level: 5,
                 moves: new[] { MoveData.WaterGun });
             player.AddAnimal(pikachu);
@@ -116,7 +116,7 @@ namespace UnitTest
                 element: AnimalElement.Nature,
                 speed: 12,
                 baseHealth: 35,
-                health: 35,
+                currentHealth: 35,
                 level: 5,
                 moves: new[] { MoveData.Thunderbolt });
 
@@ -140,17 +140,17 @@ namespace UnitTest
                 element: AnimalElement.Nature,
                 speed: 12,
                 baseHealth: 35,
-                health: 35,
+                currentHealth: 35,
                 level: 5,
                 moves: new[] { MoveData.Thunderbolt });
             compPlayer.SetBattleTeam(new[] { templateAnimal });
-            compPlayer.AnimalInventory[0].Health = 5;
+            compPlayer.AnimalInventory[0].CurrentHealth = 5;
 
             compPlayer.PrepareForBattle();
 
             Assert.Single(compPlayer.AnimalInventory);
             Assert.NotSame(compPlayer.BattleTeamTemplate[0], compPlayer.AnimalInventory[0]);
-            Assert.Equal(compPlayer.BattleTeamTemplate[0].Health, compPlayer.AnimalInventory[0].Health);
+            Assert.Equal(compPlayer.BattleTeamTemplate[0].CurrentHealth, compPlayer.AnimalInventory[0].CurrentHealth);
         }
     }
 }

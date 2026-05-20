@@ -26,9 +26,11 @@ namespace Arcadia_v2
             ArgumentNullException.ThrowIfNull(defender);
             ArgumentNullException.ThrowIfNull(move);
 
-            return IsHealingMove(move)
-                ? RestoreHealth(attacker, move)
-                : ApplyDamage(defender, move);
+            return move.Effect switch
+            {
+                MoveEffect.Healing => RestoreHealth(attacker, move),
+                _ => ApplyDamage(defender, move)
+            };
         }
 
         public static BattleMoveResult RestoreHealth(Animal animal, int healingPower)
@@ -40,16 +42,16 @@ namespace Arcadia_v2
                 throw new ArgumentOutOfRangeException(nameof(healingPower), "Healing power cannot be negative.");
             }
 
-            if (animal.Health >= animal.BaseHealth)
+            if (animal.CurrentHealth >= animal.BaseHealth)
             {
-                return new BattleMoveResult(BattleMoveResultType.NoEffect, string.Empty, 0, animal.Health);
+                return new BattleMoveResult(BattleMoveResultType.NoEffect, string.Empty, 0, animal.CurrentHealth);
             }
 
-            int originalHealth = animal.Health;
-            animal.Health = Math.Min(animal.BaseHealth, animal.Health + healingPower);
-            int restoredHealth = animal.Health - originalHealth;
+            int originalHealth = animal.CurrentHealth;
+            animal.CurrentHealth = Math.Min(animal.BaseHealth, animal.CurrentHealth + healingPower);
+            int restoredHealth = animal.CurrentHealth - originalHealth;
 
-            return new BattleMoveResult(BattleMoveResultType.Healing, string.Empty, restoredHealth, animal.Health);
+            return new BattleMoveResult(BattleMoveResultType.Healing, string.Empty, restoredHealth, animal.CurrentHealth);
         }
 
         public static BattleMoveResult ApplyDamage(Animal defender, int damage)
@@ -61,25 +63,20 @@ namespace Arcadia_v2
                 throw new ArgumentOutOfRangeException(nameof(damage), "Damage cannot be negative.");
             }
 
-            defender.Health = Math.Max(0, defender.Health - damage);
-            return new BattleMoveResult(BattleMoveResultType.Damage, string.Empty, damage, defender.Health);
+            defender.CurrentHealth = Math.Max(0, defender.CurrentHealth - damage);
+            return new BattleMoveResult(BattleMoveResultType.Damage, string.Empty, damage, defender.CurrentHealth);
         }
 
         public static bool IsHealingMove(Move move)
         {
             ArgumentNullException.ThrowIfNull(move);
-            return IsHealingMove(move.Name);
-        }
-
-        public static bool IsHealingMove(string moveName)
-        {
-            return moveName == "MOONLIGHT" || moveName == "SUNLIGHT";
+            return move.Effect == MoveEffect.Healing;
         }
 
         public static bool IsFainted(Animal animal)
         {
             ArgumentNullException.ThrowIfNull(animal);
-            return animal.Health <= 0;
+            return animal.CurrentHealth <= 0;
         }
 
         public static bool IsBattleOver(Animal firstAnimal, Animal secondAnimal)
@@ -175,7 +172,7 @@ namespace Arcadia_v2
             ArgumentNullException.ThrowIfNull(animalToRelease);
             ArgumentNullException.ThrowIfNull(wildAnimal);
 
-            animalToRelease.Health = animalToRelease.BaseHealth;
+            animalToRelease.CurrentHealth = animalToRelease.BaseHealth;
             player.CurrentRoom.AddEncounterAnimal(animalToRelease);
             player.RemoveAnimal(animalToRelease);
 

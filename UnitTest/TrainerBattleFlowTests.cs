@@ -39,7 +39,7 @@ public class TrainerBattleFlowTests
     {
         Player player = CreatePlayer();
         CompPlayer opponent = CreateOpponent();
-        opponent.AnimalInventory[0].Health = 1;
+        opponent.AnimalInventory[0].CurrentHealth = 1;
         FakeGameIO io = new("stronghit", "stronghit");
 
         TrainerBattleFlow.Run(io, player, opponent);
@@ -52,7 +52,7 @@ public class TrainerBattleFlowTests
     public void Run_WhenPlayerLeadIsFainted_StartsWithNextHealthyPokemon()
     {
         Player player = CreatePlayer();
-        player.AnimalInventory[0].Health = 0;
+        player.AnimalInventory[0].CurrentHealth = 0;
         CompPlayer opponent = CreateOpponent();
         FakeGameIO io = new("stronghit", "stronghit");
 
@@ -66,8 +66,8 @@ public class TrainerBattleFlowTests
     public void Run_WhenAllPlayerAnimalsAreFainted_PrintsPartyFaintedMessage()
     {
         Player player = CreatePlayer();
-        player.AnimalInventory[0].Health = 0;
-        player.AnimalInventory[1].Health = 0;
+        player.AnimalInventory[0].CurrentHealth = 0;
+        player.AnimalInventory[1].CurrentHealth = 0;
         CompPlayer opponent = CreateOpponent();
         FakeGameIO io = new();
 
@@ -82,26 +82,26 @@ public class TrainerBattleFlowTests
     public void Run_UsesInjectedMoveSelectorForOpponentTurns()
     {
         Player player = new("Trainer", new Map().StartRoom);
-        player.AddAnimal(new Animal(id: 1, name: "LEAD", element: AnimalElement.Nature, speed: 5, baseHealth: 5, health: 5, level: 1, moves: new[] { new Move("WEAKHIT", MoveType.Normal, 1) }));
+        player.AddAnimal(new Animal(id: 1, name: "LEAD", element: AnimalElement.Nature, speed: 5, baseHealth: 5, currentHealth: 5, level: 1, moves: new[] { new Move("WEAKHIT", MoveType.Neutral, 1) }));
         CompPlayer opponent = new("Rival", new Map().StartRoom);
         opponent.AddBadge("Test Badge");
         opponent.SetBattleTeam(new[]
         {
-            new Animal(id: 3, name: "FIRST", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: 20, level: 1, moves: new[] { new Move("WEAK", MoveType.Normal, 1), new Move("STRONG", MoveType.Normal, 5) })
+            new Animal(id: 3, name: "FIRST", element: AnimalElement.Nature, speed: 5, baseHealth: 20, currentHealth: 20, level: 1, moves: new[] { new Move("WEAK", MoveType.Neutral, 1), new Move("STRONG", MoveType.Neutral, 5) })
         });
         FakeGameIO io = new("weakhit", "no");
 
-        TrainerBattleFlow.Run(io, player, opponent, new FixedMoveSelector(new Move("STRONG", MoveType.Normal, 5)));
+        TrainerBattleFlow.Run(io, player, opponent, new FixedMoveSelector(new Move("STRONG", MoveType.Neutral, 5)));
 
-        Assert.Equal(0, player.AnimalInventory[0].Health);
+        Assert.Equal(0, player.AnimalInventory[0].CurrentHealth);
         Assert.Contains("FIRST used STRONG", io.OutputText);
     }
 
     private static Player CreatePlayer()
     {
         Player player = new("Trainer", new Map().StartRoom);
-        player.AddAnimal(new Animal(id: 1, name: "LEAD", element: AnimalElement.Nature, speed: 5, baseHealth: 50, health: 50, level: 1, moves: new[] { new Move("STRONGHIT", MoveType.Normal, 10) }));
-        player.AddAnimal(new Animal(id: 2, name: "BACKUP", element: AnimalElement.Nature, speed: 5, baseHealth: 50, health: 50, level: 1, moves: new[] { new Move("STRONGHIT", MoveType.Normal, 10) }));
+        player.AddAnimal(new Animal(id: 1, name: "LEAD", element: AnimalElement.Nature, speed: 5, baseHealth: 50, currentHealth: 50, level: 1, moves: new[] { new Move("STRONGHIT", MoveType.Neutral, 10) }));
+        player.AddAnimal(new Animal(id: 2, name: "BACKUP", element: AnimalElement.Nature, speed: 5, baseHealth: 50, currentHealth: 50, level: 1, moves: new[] { new Move("STRONGHIT", MoveType.Neutral, 10) }));
         return player;
     }
 
@@ -111,8 +111,8 @@ public class TrainerBattleFlowTests
         opponent.AddBadge("Test Badge");
         opponent.SetBattleTeam(new[]
         {
-            new Animal(id: 3, name: "FIRST", element: AnimalElement.Nature, speed: 5, baseHealth: 5, health: 5, level: 1, moves: new[] { MoveData.Splash }),
-            new Animal(id: 4, name: "SECOND", element: AnimalElement.Nature, speed: 5, baseHealth: 5, health: 5, level: 1, moves: new[] { MoveData.Splash })
+            new Animal(id: 3, name: "FIRST", element: AnimalElement.Nature, speed: 5, baseHealth: 5, currentHealth: 5, level: 1, moves: new[] { MoveData.Splash }),
+            new Animal(id: 4, name: "SECOND", element: AnimalElement.Nature, speed: 5, baseHealth: 5, currentHealth: 5, level: 1, moves: new[] { MoveData.Splash })
         });
         return opponent;
     }

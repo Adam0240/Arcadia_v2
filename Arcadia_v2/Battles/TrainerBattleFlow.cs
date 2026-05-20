@@ -65,7 +65,7 @@ namespace Arcadia_v2
             FinishTrainerBattle(io, battleState, main, opponent);
         }
 
-        // Prints the current health of both active animals.
+        // Prints the current currentHealth of both active animals.
         private static void PrintBattleStatus(IGameIO io, BattleState battleState)
         {
             BattleHelpers.PrintBattleStatus(io, "opponents", battleState.PlayerAnimal, battleState.OpponentAnimal);

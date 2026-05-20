@@ -57,7 +57,8 @@ public class MovementFlowTests
     public void HandleMovement_FromIkenaToRoadFive_WithMysticAnimal_AllowsMovement()
     {
         GameState gameState = GameSetup.CreateForLoad();
-        gameState.MainPlayer.AddAnimal(GameData.CreateAnimals()[19]);
+        List<Animal> animals = GameData.CreateAnimals();
+        gameState.MainPlayer.AddAnimal(GameData.FindAnimal(animals, AnimalElement.Mystic, "Wolf"));
         FakeGameIO io = new();
 
         MovementFlow.HandleMovement(io, gameState, DirectionCommandType.North, "north");

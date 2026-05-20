@@ -9,8 +9,8 @@ namespace Arcadia_v2
     {
         public static void PrintBattleStatus(IGameIO io, string opponentLabel, Animal playerAnimal, Animal opponentAnimal)
         {
-            io.WriteLine($"Your {playerAnimal.Name}'s health is at: {playerAnimal.Health}");
-            io.WriteLine($"The {opponentLabel} {opponentAnimal.Name}'s health is at: {opponentAnimal.Health}\n");
+            io.WriteLine($"Your {playerAnimal.Name}'s health is at: {playerAnimal.CurrentHealth}");
+            io.WriteLine($"The {opponentLabel} {opponentAnimal.Name}'s health is at: {opponentAnimal.CurrentHealth}\n");
         }
 
         public static void PrintMoveList(IGameIO io, Animal animal, Func<Move, string> getMoveName)
@@ -25,18 +25,13 @@ namespace Arcadia_v2
         {
             foreach (Move move in animal.Moves)
             {
-                if (getMoveName(move) == moveName)
+                if (string.Equals(getMoveName(move), moveName, StringComparison.OrdinalIgnoreCase))
                 {
                     return move;
                 }
             }
 
             return null;
-        }
-
-        public static bool IsHealingMove(string moveName)
-        {
-            return BattleEngine.IsHealingMove(moveName);
         }
 
         public static void HandlePlayerTurn(IGameIO io, Animal playerAnimal, Animal opponentAnimal, string defenderLabel)

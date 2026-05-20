@@ -129,5 +129,18 @@ namespace UnitTest
             Assert.True(map.Rooms.ContainsKey("Guardian's Tower"));
             Assert.True(map.Rooms.ContainsKey("The End"));
         }
+
+        // Checks that wild encounter rosters are assigned by intended species and element.
+        [Fact]
+        public void Constructor_PopulatesWildAnimalsBySpeciesAndElement()
+        {
+            Map map = new();
+
+            Assert.Contains(map.GetRoom(RoomId.Road1).EncounterAnimals, animal => animal.Name == "Nature Dog");
+            Assert.Contains(map.GetRoom(RoomId.Road2).EncounterAnimals, animal => animal.Name == "Nature Serpent");
+            Assert.Contains(map.GetRoom(RoomId.Road2).EncounterAnimals, animal => animal.Name == "Nature Bee");
+            Assert.Contains(map.GetRoom(RoomId.FinalTrials).EncounterAnimals, animal => animal.Name == "Mystic Cat");
+            Assert.Contains(map.GetRoom(RoomId.TheEnd).EncounterAnimals, animal => animal.Name == "Mystic Dog");
+        }
     }
 }

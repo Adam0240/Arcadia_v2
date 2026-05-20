@@ -60,10 +60,12 @@ namespace UnitTest
 
                 GameState gameState = CreateGameState("Red");
                 Animal leadAnimal = gameState.MainPlayer.AnimalInventory[0];
-                leadAnimal.Health = 7;
+                List<Animal> roadAnimals = GameData.CreateAnimals();
+                Animal roadOneAnimal = GameData.FindAnimal(roadAnimals, AnimalElement.Nature, "Horse");
+                leadAnimal.CurrentHealth = 7;
                 gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Road 2"));
                 gameState.MainPlayer.AddBadge("Grass Badge");
-                gameState.GameMap.GetRoom("Road 1").RestoreEncounterAnimals(new[] { GameData.CreateAnimals()[4] });
+                gameState.GameMap.GetRoom("Road 1").RestoreEncounterAnimals(new[] { roadOneAnimal });
                 gameState.GymLeader1.Defeated = true;
 
                 GameSaveService saveService = new(repository);
@@ -79,11 +81,11 @@ namespace UnitTest
                 Assert.Equal("Road 2", persistedState.Player.CurrentRoomName);
                 Assert.Contains("Grass Badge", persistedState.Player.Badges);
                 Assert.Equal(leadAnimal.Id, persistedState.Player.PokemonInventory[0].Id);
-                Assert.Equal(7, persistedState.Player.PokemonInventory[0].Health);
+                Assert.Equal(7, persistedState.Player.PokemonInventory[0].CurrentHealth);
                 Assert.Equal(leadAnimal.BaseHealth, persistedState.Player.PokemonInventory[0].BaseHealth);
                 Assert.Equal(leadAnimal.Speed, persistedState.Player.PokemonInventory[0].Speed);
                 Assert.Equal(leadAnimal.Moves[0].Name, persistedState.Player.PokemonInventory[0].Moves[0].Name);
-                Assert.Equal(4, persistedState.Rooms.Single(room => room.Name == "Road 1").EncounterPokemon[0].Id);
+                Assert.Equal(roadOneAnimal.Id, persistedState.Rooms.Single(room => room.Name == "Road 1").EncounterPokemon[0].Id);
                 Assert.True(persistedState.Trainers.Single(trainer => trainer.Name == "Mrs. Mcmann").Defeated);
             }
             finally
@@ -135,12 +137,12 @@ namespace UnitTest
                             Id = 1,
                             Name = "BULBASAUR",
                             Level = 5,
-                            Health = 30,
+                            CurrentHealth = 30,
                             BaseHealth = 40,
                             Speed = 7,
                             Moves = new List<MoveSaveState>
                             {
-                                new() { Name = "TACKLE", Type = MoveType.Normal, Power = 5 }
+                                new() { Name = "TACKLE", Type = MoveType.Neutral, Power = 5, Effect = MoveEffect.Damage }
                             }
                         }
                     }
@@ -152,7 +154,7 @@ namespace UnitTest
                         Name = "Road 1",
                         EncounterPokemon = new List<PokemonSaveState>
                         {
-                            new() { Id = 3, Name = "PIDGEY", Health = 12 }
+                            new() { Id = 3, Name = "PIDGEY", CurrentHealth = 12 }
                         }
                     }
                 },
@@ -166,7 +168,7 @@ namespace UnitTest
                         Badges = new List<string> { "Grass Badge" },
                         BattleTeamTemplate = new List<PokemonSaveState>
                         {
-                            new() { Id = 4, Name = "CHARMANDER", Health = 20 }
+                            new() { Id = 4, Name = "CHARMANDER", CurrentHealth = 20 }
                         }
                     }
                 }
@@ -192,19 +194,21 @@ namespace UnitTest
         {
             GameState gameState = CreateGameState("Red");
             Animal playerAnimal = gameState.MainPlayer.AnimalInventory[0];
-            playerAnimal.Health = 7;
+            playerAnimal.CurrentHealth = 7;
 
             gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Road 2"));
             gameState.MainPlayer.AddBadge("Grass Badge");
             gameState.GymLeader1.Defeated = true;
-            gameState.GameMap.GetRoom("Road 1").RestoreEncounterAnimals(new[] { GameData.CreateAnimals()[4] });
+            List<Animal> roadAnimals = GameData.CreateAnimals();
+            gameState.GameMap.GetRoom("Road 1").RestoreEncounterAnimals(new[] { GameData.FindAnimal(roadAnimals, AnimalElement.Nature, "Horse") });
 
             GameSaveState captured = GameStateMapper.Capture(gameState);
 
             gameState.MainPlayer.RestoreName("Changed");
             gameState.MainPlayer.MoveTo(gameState.GameMap.StartRoom);
             gameState.MainPlayer.RestoreBadges(Array.Empty<string>());
-            gameState.MainPlayer.RestoreAnimalInventory(new[] { GameData.CreateAnimals()[5] });
+            List<Animal> replacementAnimals = GameData.CreateAnimals();
+            gameState.MainPlayer.RestoreAnimalInventory(new[] { GameData.FindAnimal(replacementAnimals, AnimalElement.Nature, "Stallion") });
             gameState.GameMap.GetRoom("Road 1").RestoreEncounterAnimals(Array.Empty<Animal>());
             gameState.GymLeader1.Defeated = false;
 
@@ -214,7 +218,7 @@ namespace UnitTest
             Assert.Equal("Road 2", gameState.MainPlayer.CurrentRoom.Name);
             Assert.Equal("Grass Badge", gameState.MainPlayer.Badges[0]);
             Assert.Equal(playerAnimal.Id, gameState.MainPlayer.AnimalInventory[0].Id);
-            Assert.Equal(7, gameState.MainPlayer.AnimalInventory[0].Health);
+            Assert.Equal(7, gameState.MainPlayer.AnimalInventory[0].CurrentHealth);
             Assert.Single(gameState.GameMap.GetRoom("Road 1").EncounterAnimals);
             Assert.True(gameState.GymLeader1.Defeated);
         }
@@ -230,12 +234,12 @@ namespace UnitTest
                 element: AnimalElement.Nature,
                 speed: 21,
                 baseHealth: 101,
-                health: 88,
+                currentHealth: 88,
                 level: 7,
                 moves: new[]
                 {
-                    new Move("CUSTOMBITE", MoveType.Dark, 13),
-                    new Move("CUSTOMSPARK", MoveType.Electric, 11)
+                    new Move("CUSTOMBITE", MoveType.Nuclear, 13),
+                    new Move("CUSTOMSPARK", MoveType.Thunder, 11, MoveEffect.Healing)
                 });
             gameState.MainPlayer.RestoreAnimalInventory(new[] { changedAnimal });
             gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Road 2"));
@@ -254,12 +258,13 @@ namespace UnitTest
             Assert.Equal("UMBREON", savedState.Player.PokemonInventory[0].Name);
             Assert.Equal(21, savedState.Player.PokemonInventory[0].Speed);
             Assert.Equal(101, savedState.Player.PokemonInventory[0].BaseHealth);
-            Assert.Equal(88, savedState.Player.PokemonInventory[0].Health);
+            Assert.Equal(88, savedState.Player.PokemonInventory[0].CurrentHealth);
             Assert.Equal(7, savedState.Player.PokemonInventory[0].Level);
             Assert.Equal("CUSTOMBITE", savedState.Player.PokemonInventory[0].Moves[0].Name);
-            Assert.Equal(MoveType.Dark, savedState.Player.PokemonInventory[0].Moves[0].Type);
+            Assert.Equal(MoveType.Nuclear, savedState.Player.PokemonInventory[0].Moves[0].Type);
             Assert.Equal(13, savedState.Player.PokemonInventory[0].Moves[0].Power);
             Assert.Equal("CUSTOMSPARK", savedState.Player.PokemonInventory[0].Moves[1].Name);
+            Assert.Equal(MoveEffect.Healing, savedState.Player.PokemonInventory[0].Moves[1].Effect);
         }
 
         // Checks that capturing and reapplying save data restores modified runtime stats and custom moves.
@@ -273,18 +278,19 @@ namespace UnitTest
                 element: AnimalElement.Nature,
                 speed: 21,
                 baseHealth: 101,
-                health: 88,
+                currentHealth: 88,
                 level: 7,
                 moves: new[]
                 {
-                    new Move("CUSTOMBITE", MoveType.Dark, 13),
-                    new Move("CUSTOMSPARK", MoveType.Electric, 11)
+                    new Move("CUSTOMBITE", MoveType.Nuclear, 13),
+                    new Move("CUSTOMSPARK", MoveType.Thunder, 11, MoveEffect.Healing)
                 });
             gameState.MainPlayer.RestoreAnimalInventory(new[] { changedAnimal });
 
             GameSaveState captured = GameStateMapper.Capture(gameState);
 
-            gameState.MainPlayer.RestoreAnimalInventory(new[] { GameData.CreateAnimals()[2] });
+            List<Animal> replacementAnimals = GameData.CreateAnimals();
+            gameState.MainPlayer.RestoreAnimalInventory(new[] { GameData.FindAnimal(replacementAnimals, AnimalElement.Nature, "Dog") });
             GameStateMapper.Apply(gameState, captured);
 
             Animal restoredAnimal = gameState.MainPlayer.AnimalInventory[0];
@@ -293,12 +299,13 @@ namespace UnitTest
             Assert.Equal("UMBREON", restoredAnimal.Name);
             Assert.Equal(21, restoredAnimal.Speed);
             Assert.Equal(101, restoredAnimal.BaseHealth);
-            Assert.Equal(88, restoredAnimal.Health);
+            Assert.Equal(88, restoredAnimal.CurrentHealth);
             Assert.Equal(7, restoredAnimal.Level);
             Assert.Equal("CUSTOMBITE", restoredAnimal.Moves[0].Name);
-            Assert.Equal(MoveType.Dark, restoredAnimal.Moves[0].Type);
+            Assert.Equal(MoveType.Nuclear, restoredAnimal.Moves[0].Type);
             Assert.Equal(13, restoredAnimal.Moves[0].Power);
             Assert.Equal("CUSTOMSPARK", restoredAnimal.Moves[1].Name);
+            Assert.Equal(MoveEffect.Healing, restoredAnimal.Moves[1].Effect);
         }
 
         // Checks that version 1 save data falls back to factory defaults for fields that were not present yet.
@@ -315,7 +322,7 @@ namespace UnitTest
                     CurrentRoomName = gameState.GameMap.StartRoom.Name,
                     PokemonInventory = new List<PokemonSaveState>
                     {
-                        new() { Id = 1, Name = "UMBREON", Health = 12 }
+                        new() { Id = 1, Name = "UMBREON", CurrentHealth = 12 }
                     }
                 }
             };
@@ -325,14 +332,14 @@ namespace UnitTest
             Animal template = GameData.CreateAnimals().Single(animal => animal.Id == 1);
             Animal restoredAnimal = gameState.MainPlayer.AnimalInventory[0];
             Assert.Equal("Blue", gameState.MainPlayer.Name);
-            Assert.Equal(12, restoredAnimal.Health);
+            Assert.Equal(12, restoredAnimal.CurrentHealth);
             Assert.Equal(template.Level, restoredAnimal.Level);
             Assert.Equal(template.BaseHealth, restoredAnimal.BaseHealth);
             Assert.Equal(template.Speed, restoredAnimal.Speed);
             Assert.Equal(template.Moves.Select(move => move.Name), restoredAnimal.Moves.Select(move => move.Name));
         }
 
-        // Checks that applying save data with out-of-range health values throws a validation error.
+        // Checks that applying save data with out-of-range currentHealth values throws a validation error.
         [Theory]
         [InlineData(-1)]
         [InlineData(76)]
@@ -347,7 +354,7 @@ namespace UnitTest
                     CurrentRoomName = gameState.GameMap.StartRoom.Name,
                     PokemonInventory = new List<PokemonSaveState>
                     {
-                        new() { Id = 1, Name = "UMBREON", Health = savedHealth, BaseHealth = 75 }
+                        new() { Id = 1, Name = "UMBREON", CurrentHealth = savedHealth, BaseHealth = 75 }
                     }
                 }
             };
@@ -355,13 +362,13 @@ namespace UnitTest
             Assert.Throws<InvalidOperationException>(() => GameStateMapper.Apply(gameState, saveState));
         }
 
-        // Checks that the load service reports failure when persisted creature health exceeds the allowed range.
+        // Checks that the load service reports failure when persisted creature currentHealth exceeds the allowed range.
         [Fact]
         public void Service_LoadPokemonSaveWithInvalidHealth_ReturnsFailure()
         {
             GameState gameState = CreateGameState("Red");
             GameSaveState saveState = GameStateMapper.Capture(gameState);
-            saveState.Player.PokemonInventory[0].Health = saveState.Player.PokemonInventory[0].BaseHealth + 1;
+            saveState.Player.PokemonInventory[0].CurrentHealth = saveState.Player.PokemonInventory[0].BaseHealth + 1;
             string saveJson = GameSaveSerializer.Serialize(saveState);
             GameSaveService saveService = new(new FakeGameSaveRepository(saveJson));
 
@@ -458,27 +465,49 @@ namespace UnitTest
             Arcadia_v2.Map.Map gameMap = new();
 
             Player mainPlayer = new(playerName, gameMap.StartRoom);
-            mainPlayer.AddAnimal(mainAnimals[1]);
-            mainPlayer.AddAnimal(mainAnimals[2]);
+            mainPlayer.AddAnimal(GameData.FindAnimal(mainAnimals, AnimalElement.Nature, "Lion"));
+            mainPlayer.AddAnimal(GameData.FindAnimal(mainAnimals, AnimalElement.Nature, "Dog"));
 
             CompPlayer gymLeader1 = new("Mrs. Mcmann", gameMap.GymLeader1Room);
-            gymLeader1.SetBattleTeam(new[] { gymAnimals[3], gymAnimals[14] });
+            gymLeader1.SetBattleTeam(new[]
+            {
+                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Wolf"),
+                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Serpent")
+            });
             gymLeader1.AddBadge("Grass Badge");
 
             CompPlayer gymLeader2 = new("Minofo", gameMap.GymLeader2Room);
-            gymLeader2.SetBattleTeam(new[] { gymAnimals[5], gymAnimals[9] });
+            gymLeader2.SetBattleTeam(new[]
+            {
+                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Stallion"),
+                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Eagle")
+            });
             gymLeader2.AddBadge("Water Badge");
 
             CompPlayer gymLeader3 = new("Golden", gameMap.GymLeader3Room);
-            gymLeader3.SetBattleTeam(new[] { gymAnimals[10], gymAnimals[16] });
+            gymLeader3.SetBattleTeam(new[]
+            {
+                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Ant"),
+                GameData.FindAnimal(gymAnimals, AnimalElement.Mystic, "Cat")
+            });
             gymLeader3.AddBadge("Rock Badge");
 
             CompPlayer gymLeader4 = new("Wiggins", gameMap.GymLeader4Room);
-            gymLeader4.SetBattleTeam(new[] { gymAnimals[13], gymAnimals[17] });
+            gymLeader4.SetBattleTeam(new[]
+            {
+                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Bear"),
+                GameData.FindAnimal(gymAnimals, AnimalElement.Mystic, "Lion")
+            });
             gymLeader4.AddBadge("Dragon Badge");
 
             CompPlayer arcadiaChampion = new("Adam", gameMap.ChampionRoom);
-            arcadiaChampion.SetBattleTeam(new[] { gymAnimals[4], gymAnimals[8], gymAnimals[6], gymAnimals[18] });
+            arcadiaChampion.SetBattleTeam(new[]
+            {
+                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Horse"),
+                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Bird"),
+                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Turtle"),
+                GameData.FindAnimal(gymAnimals, AnimalElement.Mystic, "Dog")
+            });
             arcadiaChampion.AddBadge("Champion Badge");
 
             return new GameState(
