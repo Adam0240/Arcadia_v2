@@ -45,8 +45,8 @@ public class ProgramFlowTests
     public void SwapAnimals_WithTwoAnimals_AutoSwapsPartyPositions()
     {
         Player player = new Player("Trainer", new Map().StartRoom);
-        player.AddAnimal(new Animal(id: 1, name: "UMBREON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, currentHealth: 10, level: 1, moves: new[] { MoveData.Bite }));
-        player.AddAnimal(new Animal(id: 2, name: "ESPEON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, currentHealth: 10, level: 1, moves: new[] { MoveData.Psychic }));
+        player.AddAnimal(new Animal(id: 1, name: "UMBREON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Bite }));
+        player.AddAnimal(new Animal(id: 2, name: "ESPEON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Psychic }));
         FakeGameIO io = new();
 
         PartyFlow.SwapAnimals(player, io);
@@ -91,10 +91,10 @@ public class ProgramFlowTests
     private static Player CreateFourPokemonPlayer()
     {
         Player player = new Player("Trainer", new Map().StartRoom);
-        player.AddAnimal(new Animal(id: 1, name: "UMBREON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, currentHealth: 10, level: 1, moves: new[] { MoveData.Bite }));
-        player.AddAnimal(new Animal(id: 2, name: "ESPEON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, currentHealth: 10, level: 1, moves: new[] { MoveData.Psychic }));
-        player.AddAnimal(new Animal(id: 3, name: "JOLTEON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, currentHealth: 10, level: 1, moves: new[] { MoveData.Thunderbolt }));
-        player.AddAnimal(new Animal(id: 4, name: "FLAREON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, currentHealth: 10, level: 1, moves: new[] { MoveData.Ember }));
+        player.AddAnimal(new Animal(id: 1, name: "UMBREON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Bite }));
+        player.AddAnimal(new Animal(id: 2, name: "ESPEON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Psychic }));
+        player.AddAnimal(new Animal(id: 3, name: "JOLTEON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Thunderbolt }));
+        player.AddAnimal(new Animal(id: 4, name: "FLAREON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Ember }));
         return player;
     }
 

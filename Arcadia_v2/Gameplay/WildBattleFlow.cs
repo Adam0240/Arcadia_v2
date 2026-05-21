@@ -1,7 +1,5 @@
 #nullable enable
 
-using System;
-
 namespace Arcadia_v2
 {
     // Handles wild animal battles, including player moves, wild animal moves,
@@ -55,7 +53,7 @@ namespace Arcadia_v2
             FinishWildBattle(io, mainPlayer, battleState);
         }
 
-        // Prints the current currentHealth for the player's active animal and the wild animal.
+        // Prints the current health for the player's active animal and the wild animal.
         private static void PrintBattleStatus(IGameIO io, BattleState battleState)
         {
             BattleHelpers.PrintBattleStatus(io, "wild", battleState.PlayerAnimal, battleState.OpponentAnimal);
@@ -191,7 +189,7 @@ namespace Arcadia_v2
         {
             foreach (Animal animal in mainPlayer.AnimalInventory)
             {
-                if (string.Equals(animal.Name, animalName, StringComparison.OrdinalIgnoreCase))
+                if (animal.Name == animalName)
                 {
                     return animal;
                 }

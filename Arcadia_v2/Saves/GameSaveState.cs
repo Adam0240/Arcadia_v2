@@ -40,7 +40,7 @@ namespace Arcadia_v2.Saves
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public int Level { get; set; }
-        public int CurrentHealth { get; set; }
+        public int Health { get; set; }
         public int BaseHealth { get; set; }
         public int Speed { get; set; }
         public List<MoveSaveState> Moves { get; set; } = new();
@@ -51,6 +51,5 @@ namespace Arcadia_v2.Saves
         public string Name { get; set; } = string.Empty;
         public MoveType Type { get; set; }
         public int Power { get; set; }
-        public MoveEffect Effect { get; set; }
     }
 }

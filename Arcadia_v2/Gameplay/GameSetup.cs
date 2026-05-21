@@ -39,49 +39,27 @@ namespace Arcadia_v2
             Player mainPlayer = new Player(playerName, gameMap.StartRoom);
 
             CompPlayer gymLeader1 = new CompPlayer("Mrs. Mcmann", gameMap.GymLeader1Room);
-            gymLeader1.SetBattleTeam(new[]
-            {
-                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Dog"),
-                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Bear")
-            });
+            gymLeader1.SetBattleTeam(new[] { gymAnimals[3], gymAnimals[14] });
             gymLeader1.AddBadge("Grass Badge");
 
             CompPlayer gymLeader2 = new CompPlayer("Minofo", gameMap.GymLeader2Room);
-            gymLeader2.SetBattleTeam(new[]
-            {
-                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Horse"),
-                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Bird")
-            });
+            gymLeader2.SetBattleTeam(new[] { gymAnimals[5], gymAnimals[9] });
             gymLeader2.AddBadge("Water Badge");
 
             CompPlayer gymLeader3 = new CompPlayer("Golden", gameMap.GymLeader3Room);
-            gymLeader3.SetBattleTeam(new[]
-            {
-                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Eagle"),
-                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Dragon")
-            });
+            gymLeader3.SetBattleTeam(new[] { gymAnimals[10], gymAnimals[16] });
             gymLeader3.AddBadge("Rock Badge");
 
             CompPlayer gymLeader4 = new CompPlayer("Wiggins", gameMap.GymLeader4Room);
-            gymLeader4.SetBattleTeam(new[]
-            {
-                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Cub"),
-                GameData.FindAnimal(gymAnimals, AnimalElement.Mystic, "Cat")
-            });
+            gymLeader4.SetBattleTeam(new[] { gymAnimals[13], gymAnimals[17] });
             gymLeader4.AddBadge("Dragon Badge");
 
             CompPlayer arcadiaChampion = new CompPlayer("Adam", gameMap.ChampionRoom);
-            arcadiaChampion.SetBattleTeam(new[]
-            {
-                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Wolf"),
-                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Tortoise"),
-                GameData.FindAnimal(gymAnimals, AnimalElement.Nature, "Stallion"),
-                GameData.FindAnimal(gymAnimals, AnimalElement.Mystic, "Lion")
-            });
+            arcadiaChampion.SetBattleTeam(new[] { gymAnimals[4], gymAnimals[8], gymAnimals[6], gymAnimals[18] });
             arcadiaChampion.AddBadge("Champion Badge");
 
-            mainPlayer.AddAnimal(GameData.FindAnimal(mainAnimals, AnimalElement.Nature, "Cat"));
-            mainPlayer.AddAnimal(GameData.FindAnimal(mainAnimals, AnimalElement.Nature, "Lion"));
+            mainPlayer.AddAnimal(mainAnimals[1]);
+            mainPlayer.AddAnimal(mainAnimals[2]);
 
             return new GameState(
                 gameMap,

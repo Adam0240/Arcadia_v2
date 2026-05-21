@@ -10,8 +10,8 @@ public class WildBattleFlowTests
     {
         GameState gameState = CreateRoadOneWildBattle();
         Animal wildAnimal = gameState.MainPlayer.CurrentRoom.EncounterAnimals[0];
-        wildAnimal.CurrentHealth = 1;
-        FakeGameIO io = new("nature's fury", "yes");
+        wildAnimal.Health = 1;
+        FakeGameIO io = new("tackle", "yes");
 
         WildBattleFlow.HandleWildBattle(io, gameState);
 
@@ -28,9 +28,9 @@ public class WildBattleFlowTests
         AddAnimalsUntilPartyIsFull(gameState.MainPlayer);
 
         Animal wildAnimal = gameState.MainPlayer.CurrentRoom.EncounterAnimals[0];
-        wildAnimal.CurrentHealth = 1;
+        wildAnimal.Health = 1;
 
-        FakeGameIO io = new("nature's fury", "yes", "maybe", "no");
+        FakeGameIO io = new("tackle", "yes", "maybe", "no");
 
         WildBattleFlow.HandleWildBattle(io, gameState);
 
@@ -49,8 +49,8 @@ public class WildBattleFlowTests
         AddAnimalsUntilPartyIsFull(gameState.MainPlayer);
         Animal releasedAnimal = gameState.MainPlayer.AnimalInventory[0];
         Animal wildAnimal = gameState.MainPlayer.CurrentRoom.EncounterAnimals[0];
-        wildAnimal.CurrentHealth = 1;
-        FakeGameIO io = new("nature's fury", "yes", "yes", releasedAnimal.Name);
+        wildAnimal.Health = 1;
+        FakeGameIO io = new("tackle", "yes", "yes", releasedAnimal.Name);
 
         WildBattleFlow.HandleWildBattle(io, gameState);
 
@@ -58,7 +58,7 @@ public class WildBattleFlowTests
         Assert.Contains(wildAnimal, gameState.MainPlayer.AnimalInventory);
         Assert.Contains(releasedAnimal, gameState.MainPlayer.CurrentRoom.EncounterAnimals);
         Assert.DoesNotContain(wildAnimal, gameState.MainPlayer.CurrentRoom.EncounterAnimals);
-        Assert.Equal(releasedAnimal.BaseHealth, releasedAnimal.CurrentHealth);
+        Assert.Equal(releasedAnimal.BaseHealth, releasedAnimal.Health);
         Assert.Contains($"You caught {wildAnimal.Name}!", io.OutputText);
     }
 
@@ -68,8 +68,8 @@ public class WildBattleFlowTests
     {
         GameState gameState = CreateRoadOneWildBattle();
         Animal wildAnimal = gameState.MainPlayer.CurrentRoom.EncounterAnimals[0];
-        wildAnimal.CurrentHealth = 1;
-        FakeGameIO io = new("nature's fury", "no");
+        wildAnimal.Health = 1;
+        FakeGameIO io = new("tackle", "no");
 
         WildBattleFlow.HandleWildBattle(io, gameState);
 
@@ -85,7 +85,7 @@ public class WildBattleFlowTests
         GameState gameState = CreateRoadOneWildBattle();
         foreach (Animal animal in gameState.MainPlayer.AnimalInventory)
         {
-            animal.CurrentHealth = 0;
+            animal.Health = 0;
         }
 
         FakeGameIO io = new();

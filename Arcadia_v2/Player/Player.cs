@@ -69,7 +69,7 @@ namespace Arcadia_v2
 
             foreach (Animal animal in mAnimalInventory)
             {
-                inventoryLines.Add($"{animal.Name} Health: {animal.CurrentHealth}");
+                inventoryLines.Add($"{animal.Name} Health: {animal.Health}");
             }
 
             return string.Join("\n", inventoryLines);

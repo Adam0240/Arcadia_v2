@@ -1,7 +1,5 @@
 #nullable enable
 
-using System;
-
 namespace Arcadia_v2
 {
     // Handles party-order interactions such as swapping active animal positions.
@@ -67,7 +65,7 @@ namespace Arcadia_v2
         {
             for (int i = 0; i < main.AnimalInventory.Count; ++i)
             {
-                if (string.Equals(main.AnimalInventory[i].Name, animalName, StringComparison.OrdinalIgnoreCase))
+                if (main.AnimalInventory[i].Name == animalName)
                 {
                     return i;
                 }

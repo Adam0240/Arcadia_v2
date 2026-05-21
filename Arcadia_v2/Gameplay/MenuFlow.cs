@@ -24,7 +24,7 @@ namespace Arcadia_v2
                     {
                         foreach (Animal partyAnimal in mainPlayer.AnimalInventory)
                         {
-                            partyAnimal.CurrentHealth = partyAnimal.BaseHealth;
+                            partyAnimal.Health = partyAnimal.BaseHealth;
                         }
 
                         io.WriteLine("\nAll your animals have been fully restored!\n");

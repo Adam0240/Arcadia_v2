@@ -5,19 +5,19 @@ namespace UnitTest;
 
 public class MenuFlowTests
 {
-    // Checks that using the heal menu option in a town restores the active party to full currentHealth.
+    // Checks that using the heal menu option in a town restores the active party to full health.
     [Fact]
     public void HandleMenu_HealInTown_RestoresPartyHealth()
     {
         GameState gameState = GameSetup.CreateForLoad();
         gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Ikena"));
         Animal firstAnimal = gameState.MainPlayer.AnimalInventory[0];
-        firstAnimal.CurrentHealth = 1;
+        firstAnimal.Health = 1;
         FakeGameIO io = new("heal");
 
         MenuFlow.HandleMenu(io, gameState, new GameSaveService(new FakeGameSaveRepository()));
 
-        Assert.Equal(firstAnimal.BaseHealth, firstAnimal.CurrentHealth);
+        Assert.Equal(firstAnimal.BaseHealth, firstAnimal.Health);
         Assert.Contains("All your animals have been fully restored!", io.OutputText);
     }
 
@@ -58,9 +58,9 @@ public class MenuFlowTests
 
         MenuFlow.HandleMenu(io, gameState, new GameSaveService(new FakeGameSaveRepository()));
 
-        Assert.Equal("Nature Lion", gameState.MainPlayer.AnimalInventory[0].Name);
-        Assert.Equal("Nature Cat", gameState.MainPlayer.AnimalInventory[1].Name);
-        Assert.Contains("You are swapping: Nature Cat and Nature Lion .", io.OutputText);
+        Assert.Equal("LION", gameState.MainPlayer.AnimalInventory[0].Name);
+        Assert.Equal("CAT", gameState.MainPlayer.AnimalInventory[1].Name);
+        Assert.Contains("You are swapping: CAT and LION .", io.OutputText);
     }
 
     // Checks that the gym menu option dispatches to the gym interaction flow.

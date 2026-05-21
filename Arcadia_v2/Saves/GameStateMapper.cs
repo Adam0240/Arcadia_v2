@@ -73,7 +73,7 @@ namespace Arcadia_v2.Saves
                     Id = animal.Id,
                     Name = animal.Name,
                     Level = animal.Level,
-                    CurrentHealth = animal.CurrentHealth,
+                    Health = animal.Health,
                     BaseHealth = animal.BaseHealth,
                     Speed = animal.Speed,
                     Moves = animal.Moves
@@ -81,8 +81,7 @@ namespace Arcadia_v2.Saves
                         {
                             Name = move.Name,
                             Type = move.Type,
-                            Power = move.Power,
-                            Effect = move.Effect
+                            Power = move.Power
                         })
                         .ToList()
                 })
@@ -168,9 +167,9 @@ namespace Arcadia_v2.Saves
             int speed = pokemonState.Speed > 0
                 ? pokemonState.Speed
                 : template.Speed;
-            int currentHealth = ValidateHealth(pokemonState.CurrentHealth, baseHealth, name);
+            int health = ValidateHealth(pokemonState.Health, baseHealth, name);
             IEnumerable<Move> moves = pokemonState.Moves is { Count: > 0 }
-                ? pokemonState.Moves.Select(moveState => new Move(moveState.Name, moveState.Type, moveState.Power, moveState.Effect))
+                ? pokemonState.Moves.Select(moveState => new Move(moveState.Name, moveState.Type, moveState.Power))
                 : template.Moves;
 
             return new Animal(
@@ -179,20 +178,20 @@ namespace Arcadia_v2.Saves
                 element: template.Element,
                 speed: speed,
                 baseHealth: baseHealth,
-                currentHealth: currentHealth,
+                health: health,
                 level: level,
                 moves: moves);
         }
 
-        private static int ValidateHealth(int currentHealth, int baseHealth, string pokemonName)
+        private static int ValidateHealth(int health, int baseHealth, string pokemonName)
         {
-            if (currentHealth < 0 || currentHealth > baseHealth)
+            if (health < 0 || health > baseHealth)
             {
                 throw new InvalidOperationException(
-                    $"Invalid current health for {pokemonName} in save data: {currentHealth}. Expected a value from 0 to {baseHealth}.");
+                    $"Invalid health for {pokemonName} in save data: {health}. Expected a value from 0 to {baseHealth}.");
             }
 
-            return currentHealth;
+            return health;
         }
 
         private static IReadOnlyList<CompPlayer> GetTrainers(GameState gameState)
