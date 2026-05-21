@@ -1,5 +1,6 @@
 #nullable enable
 
+using Arcadia_v2.Creatures;
 using System.Collections.Generic;
 
 namespace Arcadia_v2.Saves
@@ -49,7 +50,7 @@ namespace Arcadia_v2.Saves
     public sealed class MoveSaveState
     {
         public string Name { get; set; } = string.Empty;
-        public MoveType Type { get; set; }
+        public ElementType Type { get; set; }
         public int Power { get; set; }
     }
 }

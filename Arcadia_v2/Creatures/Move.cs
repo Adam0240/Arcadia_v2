@@ -1,34 +1,32 @@
 #nullable enable
 
-namespace Arcadia_v2
+using Arcadia_v2;
+
+namespace Arcadia_v2.Creatures
 {
-    public enum MoveType
+    public enum ElementType
     {
-        Normal,
-        Fire,
-        Water,
-        Grass,
-        Bug,
-        Ground,
-        Flying,
-        Fighting,
-        Psychic,
-        Dark,
-        Electric
+        Base,
+        Nature,
+        Mystic,
+        Thunder,
+        Draconic,
+        Cosmic,
+        Nuclear
     }
 
     // Represents one battle move and its immutable combat values.
     public class Move
     {
         public string Name { get; }
-        public MoveType Type { get; }
+        public ElementType Type { get; }
         public int Power { get; }
 
         // Compatibility aliases for callers that use move-specific member names.
         public string MoveName => Name;
         public int MovePower => Power;
 
-        public Move(string name, MoveType type, int power)
+        public Move(string name, ElementType type, int power)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -49,75 +47,75 @@ namespace Arcadia_v2
     // Shared predefined moves used by Pokemon factory data and tests.
     public static class MoveData
     {
-        // Normal Moves
-        public static readonly Move Tackle = new Move("TACKLE", MoveType.Normal, 5);
-        public static readonly Move QuickAttack = new Move("QUICKATTACK", MoveType.Normal, 5);
-        public static readonly Move Growl = new Move("GROWL", MoveType.Normal, 0);
-        public static readonly Move Leer = new Move("LEER", MoveType.Normal, 0);
+        // Base Moves
 
-        // Fire Moves
-        public static readonly Move Ember = new Move("EMBER", MoveType.Fire, 7);
-        public static readonly Move FireFang = new Move("FIREFANG", MoveType.Fire, 8);
-        public static readonly Move Flamethrower = new Move("FLAMETHROWER", MoveType.Fire, 10);
-        public static readonly Move FireBlitz = new Move("FIREBLITZ", MoveType.Fire, 12);
-        public static readonly Move FlameWheel = new Move("FLAMEWHEEL", MoveType.Fire, 8);
+        //Cat
+        public static readonly Move POUNCE = new Move("Pounce", ElementType.Base, 5);
+        public static readonly Move FELINE_REFLEX = new Move("Feline Reflex", ElementType.Base, 3);
 
-        // Water Moves
-        public static readonly Move WaterGun = new Move("WATERGUN", MoveType.Water, 6);
-        public static readonly Move WaterPulse = new Move("WATERPULSE", MoveType.Water, 7);
-        public static readonly Move AquaTail = new Move("AQUATAIL", MoveType.Water, 8);
-        public static readonly Move HydroPump = new Move("HYDROPUMP", MoveType.Water, 12);
-        public static readonly Move Surf = new Move("SURF", MoveType.Water, 10);
-        public static readonly Move Splash = new Move("SPLASH", MoveType.Water, 0);
+        //Dog
+        public static readonly Move LOYAL_RUSH = new Move("Loyal Rush", ElementType.Base, 5);
+        public static readonly Move WILD_CHASE = new Move("Wild Chase", ElementType.Base, 3);
 
-        // Grass Moves
-        public static readonly Move VineWhip = new Move("VINEWHIP", MoveType.Grass, 7);
-        public static readonly Move RazerLeaf = new Move("RAZERLEAF", MoveType.Grass, 10);
-        public static readonly Move SeedBomb = new Move("SEEDBOMB", MoveType.Grass, 12);
-        public static readonly Move PetalBlizzard = new Move("PETALBLIZZARD", MoveType.Grass, 14);
-        public static readonly Move Synthesis = new Move("SYNTHESIS", MoveType.Grass, 5);
-        public static readonly Move SolarBeam = new Move("SOLARBEAM", MoveType.Grass, 12);
+        //Horse
+        public static readonly Move HOOF_KICK = new Move("Hoof Kick", ElementType.Base, 5);
+        public static readonly Move STAMPEDE = new Move("Stampede", ElementType.Base, 4);
 
-        // Bug Moves
-        public static readonly Move StringShot = new Move("STRINGSHOT", MoveType.Bug, 2);
-        public static readonly Move BugBuzz = new Move("BUGBUZZ", MoveType.Bug, 2);
-        public static readonly Move FuryCutter = new Move("FURYCUTTER", MoveType.Bug, 7);
-        public static readonly Move Harden = new Move("HARDEN", MoveType.Bug, 2);
+        //Turtle
+        public static readonly Move HEAD_BASH = new Move("Head Bash", ElementType.Base, 0);
+        public static readonly Move DEEP_RETREAT = new Move("Deep Retreat", ElementType.Base, 0);
 
-        // Ground Moves
-        public static readonly Move RockSmash = new Move("ROCKSMASH", MoveType.Ground, 7);
-        public static readonly Move RollOut = new Move("ROLLOUT", MoveType.Ground, 7);
-        public static readonly Move Earthquake = new Move("EARTHQUAKE", MoveType.Ground, 12);
+        //Bird
+        public static readonly Move BEAK_STRIKE = new Move("Beak Strike", ElementType.Base, 0);
+        public static readonly Move QUICK_TALON = new Move("Quick Talon", ElementType.Base, 0);
 
-        // Flying Moves
-        public static readonly Move Peck = new Move("PECK", MoveType.Flying, 5);
-        public static readonly Move WingAttack = new Move("WINGATTACK", MoveType.Flying, 7);
-        public static readonly Move Gust = new Move("GUST", MoveType.Flying, 7);
-        public static readonly Move Hurricane = new Move("HURRICANE", MoveType.Flying, 10);
-        public static readonly Move Roost = new Move("ROOST", MoveType.Flying, 5);
-        public static readonly Move Bounce = new Move("BOUNCE", MoveType.Flying, 10);
+        //Ant
+        public static readonly Move MANDIBLE_BITE = new Move("Mandible Bite", ElementType.Base, 0);
+        public static readonly Move COLONY_RUSH = new Move("LEER", ElementType.Base, 0);
 
-        // Fighting Moves
-        public static readonly Move LowSweep = new Move("LOWSWEEP", MoveType.Fighting, 8);
-        public static readonly Move BulkUp = new Move("BULKUP", MoveType.Fighting, 5);
-        public static readonly Move DynamicPunch = new Move("DYNAMICPUNCH", MoveType.Fighting, 5);
-        public static readonly Move KarateChop = new Move("KARATECHOP", MoveType.Fighting, 5);
-        public static readonly Move Revenge = new Move("REVENGE", MoveType.Fighting, 5);
+        //Cub
+        public static readonly Move PLAY_SWIPE = new Move("Play Swipe", ElementType.Base, 0);
+        public static readonly Move TUMBLE_RUSH = new Move("Tumble Rush", ElementType.Base, 0);
 
-        // Psychic Moves
-        public static readonly Move Confusion = new Move("CONFUSION", MoveType.Psychic, 7);
-        public static readonly Move Psychic = new Move("PSYCHIC", MoveType.Psychic, 8);
-        public static readonly Move Moonblast = new Move("MOONBLAST", MoveType.Psychic, 10);
-        public static readonly Move Moonlight = new Move("MOONLIGHT", MoveType.Psychic, 10);
-        public static readonly Move Sunlight = new Move("SUNLIGHT", MoveType.Psychic, 10);
+        //Serpent
+        public static readonly Move VENOM_FANG = new Move("Venom Fang", ElementType.Base, 0);
+        public static readonly Move SHADOW_FANG = new Move("Shadow Fang", ElementType.Base, 0);
 
-        // Dark Moves
-        public static readonly Move DarkPulse = new Move("DARKPULSE", MoveType.Dark, 10);
-        public static readonly Move Bite = new Move("BITE", MoveType.Dark, 8);
 
-        // Electric Moves
-        public static readonly Move Spark = new Move("SPARK", MoveType.Electric, 7);
-        public static readonly Move Thunderbolt = new Move("THUNDERBOLT", MoveType.Electric, 10);
-        public static readonly Move Thunder = new Move("THUNDER", MoveType.Electric, 12);
+        // Nature Moves
+        public static readonly Move THORNWRAP = new Move("Thorn Wrap", ElementType.Nature, 7);
+        public static readonly Move VERDANT_SURGE = new Move("Verdant Surge", ElementType.Nature, 8);
+        public static readonly Move BLOOM = new Move("Bloom", ElementType.Nature, 10);
+        public static readonly Move NATURES_WRATH = new Move("Nature's Wrath", ElementType.Nature, 12);
+
+        // Mystic Moves
+        public static readonly Move CURRENT_RUSH = new Move("Current Rush", ElementType.Mystic, 6);
+        public static readonly Move OCEON_PULSE = new Move("Oceon's Pulse", ElementType.Mystic, 7);
+        public static readonly Move DEEPSEA_RUPTURE = new Move("Deepsea Rupture", ElementType.Mystic, 8);
+        public static readonly Move TIDAL_BREAK = new Move("Tital Break", ElementType.Mystic, 12);
+
+        // Thunder Moves
+        public static readonly Move STATIC_CLAW = new Move("Static Claw", ElementType.Thunder, 7);
+        public static readonly Move VOLT_JAB = new Move("Volt Jab", ElementType.Thunder, 10);
+        public static readonly Move ARC_PULSE = new Move("Arc Pulse", ElementType.Thunder, 12);
+        public static readonly Move THUNDER_RIFT = new Move("Thunder Rift", ElementType.Thunder, 14);
+
+        // Draconic Moves
+        public static readonly Move EMBER_BITE = new Move("Ember Bite", ElementType.Draconic, 2);
+        public static readonly Move INFERNO_ROAR = new Move("Inferno Roar", ElementType.Draconic, 2);
+        public static readonly Move RAGE_PULSE = new Move("Rage Pulse", ElementType.Draconic, 7);
+        public static readonly Move DRAGON_FALL = new Move("Dragon's Fall", ElementType.Draconic, 2);
+
+        // Cosmic Moves
+        public static readonly Move STAR_FLICK = new Move("Star Flick", ElementType.Cosmic, 7);
+        public static readonly Move LUNAR_PULSE = new Move("Lunar Pulse", ElementType.Cosmic, 7);
+        public static readonly Move COMET_STRIKE = new Move("Comet Strike", ElementType.Cosmic, 12);
+        public static readonly Move SUPERNOVA = new Move("Supernova", ElementType.Cosmic, 12);
+
+        // Nuclear Moves
+        public static readonly Move RAD_BURST = new Move("Rad Burst", ElementType.Nuclear, 5);
+        public static readonly Move FALLOUT_BITE = new Move("Fallout Bite", ElementType.Nuclear, 7);
+        public static readonly Move CONTAMINATE = new Move("Contaminate", ElementType.Nuclear, 7);
+        public static readonly Move CORE_DETONATION = new Move("Core Detonation", ElementType.Nuclear, 10);
     }
 }

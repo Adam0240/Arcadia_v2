@@ -1,5 +1,6 @@
 #nullable enable
 
+using Arcadia_v2.Creatures;
 using System;
 
 namespace Arcadia_v2
@@ -17,21 +18,21 @@ namespace Arcadia_v2
         {
             for (int i = 0; i < animal.Moves.Count; ++i)
             {
-                io.Write($"{getMoveName(animal.Moves[i])} -- ");
+                io.Write($"{i + 1}. {getMoveName(animal.Moves[i])} -- ");
             }
         }
 
-        public static Move? FindMoveByName(Animal animal, string moveName, Func<Move, string> getMoveName)
+        public static Move? FindMoveByNumber(Animal animal, string moveNumber)
         {
-            foreach (Move move in animal.Moves)
+            if (!int.TryParse(moveNumber, out int selectedMoveNumber))
             {
-                if (getMoveName(move) == moveName)
-                {
-                    return move;
-                }
+                return null;
             }
 
-            return null;
+            int selectedMoveIndex = selectedMoveNumber - 1;
+            return selectedMoveIndex >= 0 && selectedMoveIndex < animal.Moves.Count
+                ? animal.Moves[selectedMoveIndex]
+                : null;
         }
 
         public static bool IsHealingMove(string moveName)
@@ -46,10 +47,10 @@ namespace Arcadia_v2
                 io.WriteLine("Your moves.");
                 PrintMoveList(io, playerAnimal, move => move.Name);
 
-                io.WriteLine("\n\nEnter your move.");
+                io.WriteLine("\n\nEnter your move number.");
                 string attackMove = Program.ReadUpperTrimmedInput(io);
 
-                Move? selectedMove = FindMoveByName(playerAnimal, attackMove, move => move.Name);
+                Move? selectedMove = FindMoveByNumber(playerAnimal, attackMove);
 
                 if (selectedMove == null)
                 {

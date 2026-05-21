@@ -1,4 +1,5 @@
 using Arcadia_v2;
+using Arcadia_v2.Creatures;
 using Arcadia_v2.Map;
 
 namespace UnitTest;
@@ -9,7 +10,7 @@ public class BattleStateTests
     [Fact]
     public void ApplyDamage_ReducesHealthWithoutGoingNegative()
     {
-        Animal target = new Animal(id: 99, name: "TESTMON", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: 5, level: 1, moves: new[] { MoveData.Tackle });
+        Animal target = new Animal(id: 99, name: "N_CAT", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: 5, level: 1, moves: new[] { MoveData.POUNCE });
 
         Program.ApplyDamage(target, 10);
 
@@ -20,7 +21,7 @@ public class BattleStateTests
     [Fact]
     public void ApplyDamage_NegativeDamage_ThrowsArgumentOutOfRangeException()
     {
-        Animal target = new Animal(id: 99, name: "TESTMON", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: 5, level: 1, moves: new[] { MoveData.Tackle });
+        Animal target = new Animal(id: 99, name: "N_CAT", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: 5, level: 1, moves: new[] { MoveData.POUNCE });
 
         Assert.Throws<ArgumentOutOfRangeException>(() => Program.ApplyDamage(target, -1));
     }
@@ -29,10 +30,10 @@ public class BattleStateTests
     [Fact]
     public void BattleEngine_UseAttackMove_AppliesDamageAndClampsHealthAtZero()
     {
-        Animal attacker = new Animal(id: 98, name: "ATTACKMON", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: 20, level: 1, moves: new[] { MoveData.Tackle });
-        Animal defender = new Animal(id: 99, name: "DEFENDMON", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: 3, level: 1, moves: new[] { MoveData.Tackle });
+        Animal attacker = new Animal(id: 98, name: "N_DOG", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: 20, level: 1, moves: new[] { MoveData.POUNCE });
+        Animal defender = new Animal(id: 99, name: "N_CAT", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: 3, level: 1, moves: new[] { MoveData.POUNCE });
 
-        BattleMoveResult result = BattleEngine.UseMove(attacker, defender, new Move("STRONGHIT", MoveType.Normal, 10));
+        BattleMoveResult result = BattleEngine.UseMove(attacker, defender, new Move("STRONGHIT", ElementType.Base, 10));
 
         Assert.Equal(BattleMoveResultType.Damage, result.ResultType);
         Assert.Equal("STRONGHIT", result.MoveName);
@@ -45,53 +46,114 @@ public class BattleStateTests
     [Fact]
     public void HealingMoves_UseSelectedMovePower()
     {
-        Animal pokemon = new Animal(
+        Move moonlight = new Move("MOONLIGHT", ElementType.Mystic, 10);
+        Animal animal = new Animal(
             id: 99,
-            name: "HEALMON",
+            name: "M_CAT",
             element: AnimalElement.Nature,
             speed: 7,
             baseHealth: 75,
             health: 50,
             level: 1,
-            moves: new[] { MoveData.Tackle, MoveData.Moonlight });
+            moves: new[] { MoveData.POUNCE, moonlight });
 
-        Move selectedMove = pokemon.Moves[1];
+        Move selectedMove = animal.Moves[1];
 
-        BattleMoveResult result = BattleEngine.UseMove(pokemon, pokemon, selectedMove);
+        BattleMoveResult result = BattleEngine.UseMove(animal, animal, selectedMove);
 
         Assert.Equal(BattleMoveResultType.Healing, result.ResultType);
         Assert.Equal("MOONLIGHT", result.MoveName);
         Assert.Equal(10, result.Amount);
-        Assert.Equal(60, pokemon.Health);
+        Assert.Equal(60, animal.Health);
     }
 
     // Verifies that healing moves at full health return the no-effect result without changing health.
     [Fact]
     public void BattleEngine_UseHealingMoveAtFullHealth_ReturnsNoEffect()
     {
-        Animal pokemon = new Animal(id: 99, name: "HEALMON", element: AnimalElement.Nature, speed: 7, baseHealth: 30, health: 30, level: 1, moves: new[] { MoveData.Moonlight });
+        Move moonlight = new Move("MOONLIGHT", ElementType.Mystic, 10);
+        Animal animal = new Animal(id: 99, name: "M_CAT", element: AnimalElement.Nature, speed: 7, baseHealth: 30, health: 30, level: 1, moves: new[] { moonlight });
 
-        BattleMoveResult result = BattleEngine.UseMove(pokemon, pokemon, MoveData.Moonlight);
+        BattleMoveResult result = BattleEngine.UseMove(animal, animal, moonlight);
 
         Assert.Equal(BattleMoveResultType.NoEffect, result.ResultType);
         Assert.Equal("MOONLIGHT", result.MoveName);
         Assert.Equal(0, result.Amount);
         Assert.Equal(30, result.TargetHealth);
-        Assert.Equal(30, pokemon.Health);
+        Assert.Equal(30, animal.Health);
     }
 
     // Verifies that healing by the exact missing amount reaches full health and reports restoration text.
     [Fact]
     public void HealingMoves_ExactAmountToFull_RestoresHealth()
     {
-        Animal pokemon = new Animal(id: 99, name: "HEALMON", element: AnimalElement.Nature, speed: 7, baseHealth: 30, health: 25, level: 1, moves: new[] { MoveData.Moonlight });
+        Move moonlight = new Move("MOONLIGHT", ElementType.Mystic, 10);
+        Animal animal = new Animal(id: 99, name: "M_CAT", element: AnimalElement.Nature, speed: 7, baseHealth: 30, health: 25, level: 1, moves: new[] { moonlight });
         FakeGameIO io = new();
 
-        BattleHelpers.UseHealingMove(io, pokemon, 5);
+        BattleHelpers.UseHealingMove(io, animal, 5);
 
-        Assert.Equal(30, pokemon.Health);
+        Assert.Equal(30, animal.Health);
         Assert.Contains("Health Restored", io.OutputText);
         Assert.DoesNotContain("Nothing happened", io.OutputText);
+    }
+
+    // Verifies that player battle input chooses the fourth move from a 1-based numbered move list.
+    [Fact]
+    public void HandlePlayerTurn_SelectsMoveByNumber()
+    {
+        Animal player = new Animal(
+            id: 1,
+            name: "N_CAT",
+            element: AnimalElement.Nature,
+            speed: 7,
+            baseHealth: 20,
+            health: 20,
+            level: 1,
+            moves: new[]
+            {
+                new Move("FIRST", ElementType.Base, 1),
+                new Move("SECOND", ElementType.Base, 2),
+                new Move("THIRD", ElementType.Base, 3),
+                new Move("FOURTH", ElementType.Base, 9)
+            });
+        Animal opponent = new Animal(id: 2, name: "N_LION", element: AnimalElement.Nature, speed: 7, baseHealth: 20, health: 20, level: 1, moves: new[] { MoveData.POUNCE });
+        FakeGameIO io = new("4");
+
+        BattleHelpers.HandlePlayerTurn(io, player, opponent, string.Empty);
+
+        Assert.Equal(11, opponent.Health);
+        Assert.Contains("4. FOURTH", io.OutputText);
+        Assert.Contains("You used FOURTH", io.OutputText);
+    }
+
+    // Verifies that an out-of-range move number uses the existing invalid move message and re-prompts.
+    [Fact]
+    public void HandlePlayerTurn_InvalidNumber_RePromptsForMoveNumber()
+    {
+        Animal player = new Animal(
+            id: 1,
+            name: "N_CAT",
+            element: AnimalElement.Nature,
+            speed: 7,
+            baseHealth: 20,
+            health: 20,
+            level: 1,
+            moves: new[]
+            {
+                new Move("FIRST", ElementType.Base, 1),
+                new Move("SECOND", ElementType.Base, 7)
+            });
+        Animal opponent = new Animal(id: 2, name: "N_LION", element: AnimalElement.Nature, speed: 7, baseHealth: 20, health: 20, level: 1, moves: new[] { MoveData.POUNCE });
+        FakeGameIO io = new("5", "2");
+
+        BattleHelpers.HandlePlayerTurn(io, player, opponent, string.Empty);
+
+        int promptCount = io.OutputText.Split("Enter your move number.").Length - 1;
+        Assert.Equal(2, promptCount);
+        Assert.Contains("5 is an invalid move.", io.OutputText);
+        Assert.Equal(13, opponent.Health);
+        Assert.Contains("You used SECOND", io.OutputText);
     }
 
     // Verifies that an invalid then no response re-prompts and leaves the party order unchanged.
@@ -107,8 +169,8 @@ public class BattleStateTests
         int promptCount = io.OutputText.Split("Would you like to switch animals?").Length - 1;
         Assert.Equal(2, promptCount);
         Assert.Contains("Invalid input.", io.OutputText);
-        Assert.Equal("CAT", player.AnimalInventory[0].Name);
-        Assert.Equal("LION", player.AnimalInventory[1].Name);
+        Assert.Equal("N_CAT", player.AnimalInventory[0].Name);
+        Assert.Equal("N_LION", player.AnimalInventory[1].Name);
     }
 
     // Verifies that an invalid then yes response re-prompts and swaps the selected party creatures.
@@ -117,15 +179,15 @@ public class BattleStateTests
     {
         Player player = CreateThreeAnimalPlayer();
         player.AnimalInventory[0].Health = 0;
-        FakeGameIO io = new("maybe", "yes", "cat", "lion");
+        FakeGameIO io = new("maybe", "yes", "n_cat", "n_lion");
 
         BattleHelpers.HandlePlayerFaintedAnimal(io, player, "Would you like to switch animals?");
 
         int promptCount = io.OutputText.Split("Would you like to switch animals?").Length - 1;
         Assert.Equal(2, promptCount);
         Assert.Contains("Invalid input.", io.OutputText);
-        Assert.Equal("LION", player.AnimalInventory[0].Name);
-        Assert.Equal("CAT", player.AnimalInventory[1].Name);
+        Assert.Equal("N_LION", player.AnimalInventory[0].Name);
+        Assert.Equal("N_CAT", player.AnimalInventory[1].Name);
     }
 
     // Verifies that a two-creature party auto-switches to the healthy backup without prompting.
@@ -139,8 +201,8 @@ public class BattleStateTests
         bool switched = BattleHelpers.HandlePlayerFaintedAnimal(io, player, "Would you like to switch animals?");
 
         Assert.True(switched);
-        Assert.Equal("LION", player.AnimalInventory[0].Name);
-        Assert.Equal("CAT", player.AnimalInventory[1].Name);
+        Assert.Equal("N_LION", player.AnimalInventory[0].Name);
+        Assert.Equal("N_CAT", player.AnimalInventory[1].Name);
         Assert.DoesNotContain("Would you like to switch animals?", io.OutputText);
     }
 
@@ -156,8 +218,8 @@ public class BattleStateTests
         bool switched = BattleHelpers.HandlePlayerFaintedAnimal(io, player, "Would you like to switch animals?");
 
         Assert.False(switched);
-        Assert.Equal("CAT", player.AnimalInventory[0].Name);
-        Assert.Equal("LION", player.AnimalInventory[1].Name);
+        Assert.Equal("N_CAT", player.AnimalInventory[0].Name);
+        Assert.Equal("N_LION", player.AnimalInventory[1].Name);
         Assert.DoesNotContain("Would you like to switch animals?", io.OutputText);
     }
 
@@ -165,9 +227,9 @@ public class BattleStateTests
     [Fact]
     public void BattleEngine_IsFainted_ReturnsTrueForZeroHealth()
     {
-        Animal pokemon = new Animal(id: 99, name: "TESTMON", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: 0, level: 1, moves: new[] { MoveData.Tackle });
+        Animal animal = new Animal(id: 99, name: "N_CAT", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: 0, level: 1, moves: new[] { MoveData.POUNCE });
 
-        Assert.True(BattleEngine.IsFainted(pokemon));
+        Assert.True(BattleEngine.IsFainted(animal));
     }
 
     // Verifies that the engine reports no usable party creatures when all health values are zero or below.
@@ -187,7 +249,7 @@ public class BattleStateTests
     public void BattleEngine_GetNextHealthyAnimalIndex_ReturnsFirstHealthyAnimalAtOrAfterStartIndex()
     {
         Player player = CreateTwoAnimalPlayer();
-        player.AddAnimal(new Animal(id: 3, name: "DOG", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Ember }));
+        player.AddAnimal(new Animal(id: 3, name: "N_DOG", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.THORNWRAP }));
         player.AnimalInventory[0].Health = 0;
         player.AnimalInventory[1].Health = 0;
 
@@ -225,8 +287,8 @@ public class BattleStateTests
         bool switched = BattleEngine.TryAutoSwitchTwoAnimalParty(player, player.AnimalInventory[0]);
 
         Assert.False(switched);
-        Assert.Equal("CAT", player.AnimalInventory[0].Name);
-        Assert.Equal("LION", player.AnimalInventory[1].Name);
+        Assert.Equal("N_CAT", player.AnimalInventory[0].Name);
+        Assert.Equal("N_LION", player.AnimalInventory[1].Name);
     }
 
     // Verifies that catching a wild creature adds it to the party and removes it from the room encounter list.
@@ -234,7 +296,7 @@ public class BattleStateTests
     public void BattleEngine_TryCatchWildAnimal_AddsAnimalToPartyAndRemovesEncounter()
     {
         Player player = CreateTwoAnimalPlayer();
-        Animal wildAnimal = new Animal(id: 3, name: "PIDGEY", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 0, level: 1, moves: new[] { MoveData.Peck });
+        Animal wildAnimal = new Animal(id: 3, name: "N_BIRD", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 0, level: 1, moves: new[] { MoveData.RAD_BURST });
         player.CurrentRoom.AddEncounterAnimal(wildAnimal);
 
         bool caught = BattleEngine.TryCatchWildAnimal(player, wildAnimal);
@@ -249,7 +311,7 @@ public class BattleStateTests
     public void BattleEngine_TryCatchWildAnimal_ReturnsFalseWhenPartyIsFull()
     {
         Player player = CreateFullAnimalPartyPlayer();
-        Animal wildAnimal = new Animal(id: 7, name: "PIDGEY", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 0, level: 1, moves: new[] { MoveData.Peck });
+        Animal wildAnimal = new Animal(id: 7, name: "N_BIRD", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 0, level: 1, moves: new[] { MoveData.RAD_BURST });
         player.CurrentRoom.AddEncounterAnimal(wildAnimal);
 
         bool caught = BattleEngine.TryCatchWildAnimal(player, wildAnimal);
@@ -265,7 +327,7 @@ public class BattleStateTests
     {
         Player player = CreateFullAnimalPartyPlayer();
         Animal animalToRelease = player.AnimalInventory[0];
-        Animal wildAnimal = new Animal(id: 7, name: "PIDGEY", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 0, level: 1, moves: new[] { MoveData.Peck });
+        Animal wildAnimal = new Animal(id: 7, name: "N_BIRD", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 0, level: 1, moves: new[] { MoveData.RAD_BURST });
         player.CurrentRoom.AddEncounterAnimal(wildAnimal);
 
         BattleEngine.ReleaseAnimalAndCatchWildAnimal(player, animalToRelease, wildAnimal);
@@ -283,20 +345,20 @@ public class BattleStateTests
     {
         Animal opponent = new Animal(
             id: 1,
-            name: "OPPONENT",
+            name: "N_LION",
             element: AnimalElement.Nature,
             speed: 7,
             baseHealth: 20,
             health: 20,
             level: 1,
-            moves: new[] { new Move("WEAK", MoveType.Normal, 1), new Move("STRONG", MoveType.Normal, 7) });
-        Animal player = new Animal(id: 2, name: "PLAYER", element: AnimalElement.Nature, speed: 7, baseHealth: 20, health: 20, level: 1, moves: new[] { MoveData.Tackle });
+            moves: new[] { new Move("WEAK", ElementType.Base, 1), new Move("STRONG", ElementType.Base, 7) });
+        Animal player = new Animal(id: 2, name: "N_CAT", element: AnimalElement.Nature, speed: 7, baseHealth: 20, health: 20, level: 1, moves: new[] { MoveData.POUNCE });
         FakeGameIO io = new();
 
         BattleHelpers.HandleOpponentTurn(io, opponent, player, "Opponent Move", string.Empty, new FixedMoveSelector(opponent.Moves[1]));
 
         Assert.Equal(13, player.Health);
-        Assert.Contains("OPPONENT used STRONG", io.OutputText);
+        Assert.Contains("N_LION used STRONG", io.OutputText);
     }
 
     // Verifies that letting a wild creature run away removes it from the room encounter list.
@@ -304,7 +366,7 @@ public class BattleStateTests
     public void BattleEngine_LetWildAnimalRunAway_RemovesEncounterAnimal()
     {
         Player player = CreateTwoAnimalPlayer();
-        Animal wildAnimal = new Animal(id: 3, name: "PIDGEY", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 0, level: 1, moves: new[] { MoveData.Peck });
+        Animal wildAnimal = new Animal(id: 3, name: "N_BIRD", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 0, level: 1, moves: new[] { MoveData.RAD_BURST });
         player.CurrentRoom.AddEncounterAnimal(wildAnimal);
 
         BattleEngine.LetWildAnimalRunAway(player, wildAnimal);
@@ -317,12 +379,12 @@ public class BattleStateTests
     public void BattleState_CreateWildBattle_UsesCurrentPlayerLeadAndWildAnimal()
     {
         Player player = CreateTwoAnimalPlayer();
-        Animal wildAnimal = new Animal(id: 3, name: "PIDGEY", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Peck });
+        Animal wildAnimal = new Animal(id: 3, name: "N_BIRD", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.RAD_BURST });
 
         BattleState battleState = BattleState.CreateWildBattle(player, wildAnimal);
 
-        Assert.Equal("CAT", battleState.PlayerAnimal.Name);
-        Assert.Equal("PIDGEY", battleState.OpponentAnimal.Name);
+        Assert.Equal("N_CAT", battleState.PlayerAnimal.Name);
+        Assert.Equal("N_BIRD", battleState.OpponentAnimal.Name);
         Assert.False(battleState.IsOver);
     }
 
@@ -331,15 +393,15 @@ public class BattleStateTests
     public void BattleState_CreateWildBattle_SkipsFaintedPlayerLeadAnimal()
     {
         Player player = CreateTwoAnimalPlayer();
-        player.AddAnimal(new Animal(id: 3, name: "FLAREON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Ember }));
+        player.AddAnimal(new Animal(id: 3, name: "N_DOG", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.THORNWRAP }));
         player.AnimalInventory[0].Health = 0;
         player.AnimalInventory[1].Health = 0;
-        Animal wildAnimal = new Animal(id: 4, name: "PIDGEY", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Peck });
+        Animal wildAnimal = new Animal(id: 4, name: "N_BIRD", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.RAD_BURST });
 
         BattleState battleState = BattleState.CreateWildBattle(player, wildAnimal);
 
         Assert.Equal(2, battleState.PlayerActiveIndex);
-        Assert.Equal("FLAREON", battleState.PlayerAnimal.Name);
+        Assert.Equal("N_DOG", battleState.PlayerAnimal.Name);
         Assert.False(battleState.IsOver);
     }
 
@@ -351,8 +413,8 @@ public class BattleStateTests
         CompPlayer opponent = new("Opponent", new Map().StartRoom);
         opponent.SetBattleTeam(new[]
         {
-            new Animal(id: 3, name: "PIDGEY", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 0, level: 1, moves: new[] { MoveData.Peck }),
-            new Animal(id: 4, name: "PIKACHU", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Spark })
+            new Animal(id: 3, name: "N_BIRD", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 0, level: 1, moves: new[] { MoveData.RAD_BURST }),
+            new Animal(id: 4, name: "T_CAT", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.STATIC_CLAW })
         });
         BattleState battleState = BattleState.CreateTrainerBattle(player, opponent);
 
@@ -360,7 +422,7 @@ public class BattleStateTests
 
         Assert.True(switched);
         Assert.Equal(1, battleState.OpponentActiveIndex);
-        Assert.Equal("PIKACHU", battleState.OpponentAnimal.Name);
+        Assert.Equal("T_CAT", battleState.OpponentAnimal.Name);
     }
 
     // Verifies that cloning creates a separate animal and move list so later mutations do not leak back to the original.
@@ -369,18 +431,18 @@ public class BattleStateTests
     {
         Animal original = new Animal(
             id: 99,
-            name: "CLONEMON",
+            name: "N_CAT",
             element: AnimalElement.Nature,
             speed: 8,
             baseHealth: 30,
             health: 30,
             level: 4,
-            moves: new[] { new Move("TACKLE", MoveType.Normal, 5) });
+            moves: new[] { new Move("TACKLE", ElementType.Base, 5) });
 
         Animal clone = original.Clone();
         clone.Health = 1;
 
-        Assert.Equal("CLONEMON", original.Name);
+        Assert.Equal("N_CAT", original.Name);
         Assert.Equal("TACKLE", original.Moves[0].MoveName);
         Assert.Equal(5, original.Moves[0].MovePower);
         Assert.Equal(30, original.Health);
@@ -409,24 +471,24 @@ public class BattleStateTests
     private static Player CreateTwoAnimalPlayer()
     {
         Player player = new Player("Trainer", new Map().StartRoom);
-        player.AddAnimal(new Animal(id: 1, name: "CAT", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Bite }));
-        player.AddAnimal(new Animal(id: 2, name: "LION", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Psychic }));
+        player.AddAnimal(new Animal(id: 1, name: "N_CAT", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.VENOM_FANG }));
+        player.AddAnimal(new Animal(id: 2, name: "N_LION", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.DEEPSEA_RUPTURE }));
         return player;
     }
 
     private static Player CreateThreeAnimalPlayer()
     {
         Player player = CreateTwoAnimalPlayer();
-        player.AddAnimal(new Animal(id: 3, name: "FLAREON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Ember }));
+        player.AddAnimal(new Animal(id: 3, name: "N_DOG", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.THORNWRAP }));
         return player;
     }
 
     private static Player CreateFullAnimalPartyPlayer()
     {
         Player player = CreateThreeAnimalPlayer();
-        player.AddAnimal(new Animal(id: 4, name: "VAPOREON", element: AnimalElement.Mystic, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.WaterGun }));
-        player.AddAnimal(new Animal(id: 5, name: "LEAFEON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.VineWhip }));
-        player.AddAnimal(new Animal(id: 6, name: "JOLTEON", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.Spark }));
+        player.AddAnimal(new Animal(id: 4, name: "M_TURTLE", element: AnimalElement.Mystic, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.CURRENT_RUSH }));
+        player.AddAnimal(new Animal(id: 5, name: "N_CUB", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.THORNWRAP }));
+        player.AddAnimal(new Animal(id: 6, name: "T_CAT", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.STATIC_CLAW }));
         return player;
     }
 

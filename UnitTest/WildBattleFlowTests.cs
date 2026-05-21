@@ -11,7 +11,7 @@ public class WildBattleFlowTests
         GameState gameState = CreateRoadOneWildBattle();
         Animal wildAnimal = gameState.MainPlayer.CurrentRoom.EncounterAnimals[0];
         wildAnimal.Health = 1;
-        FakeGameIO io = new("tackle", "yes");
+        FakeGameIO io = new("4", "yes");
 
         WildBattleFlow.HandleWildBattle(io, gameState);
 
@@ -30,7 +30,7 @@ public class WildBattleFlowTests
         Animal wildAnimal = gameState.MainPlayer.CurrentRoom.EncounterAnimals[0];
         wildAnimal.Health = 1;
 
-        FakeGameIO io = new("tackle", "yes", "maybe", "no");
+        FakeGameIO io = new("4", "yes", "maybe", "no");
 
         WildBattleFlow.HandleWildBattle(io, gameState);
 
@@ -50,7 +50,7 @@ public class WildBattleFlowTests
         Animal releasedAnimal = gameState.MainPlayer.AnimalInventory[0];
         Animal wildAnimal = gameState.MainPlayer.CurrentRoom.EncounterAnimals[0];
         wildAnimal.Health = 1;
-        FakeGameIO io = new("tackle", "yes", "yes", releasedAnimal.Name);
+        FakeGameIO io = new("4", "yes", "yes", releasedAnimal.Name);
 
         WildBattleFlow.HandleWildBattle(io, gameState);
 
@@ -69,7 +69,7 @@ public class WildBattleFlowTests
         GameState gameState = CreateRoadOneWildBattle();
         Animal wildAnimal = gameState.MainPlayer.CurrentRoom.EncounterAnimals[0];
         wildAnimal.Health = 1;
-        FakeGameIO io = new("tackle", "no");
+        FakeGameIO io = new("4", "no");
 
         WildBattleFlow.HandleWildBattle(io, gameState);
 

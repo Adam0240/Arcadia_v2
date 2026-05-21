@@ -1,4 +1,4 @@
-using Arcadia_v2;
+using Arcadia_v2.Creatures;
 
 namespace UnitTest
 {
@@ -8,7 +8,7 @@ namespace UnitTest
         [Fact]
         public void Constructor_EmptyName_ThrowsArgumentException()
         {
-            ArgumentException exception = Assert.Throws<ArgumentException>(() => new Move("", MoveType.Fire, 7));
+            ArgumentException exception = Assert.Throws<ArgumentException>(() => new Move("", ElementType.Draconic, 7));
             Assert.Equal("name", exception.ParamName);
         }
 
@@ -16,7 +16,7 @@ namespace UnitTest
         [Fact]
         public void Constructor_WhitespaceName_ThrowsArgumentException()
         {
-            ArgumentException exception = Assert.Throws<ArgumentException>(() => new Move("   ", MoveType.Fire, 7));
+            ArgumentException exception = Assert.Throws<ArgumentException>(() => new Move("   ", ElementType.Draconic, 7));
             Assert.Equal("name", exception.ParamName);
         }
 
@@ -24,28 +24,28 @@ namespace UnitTest
         [Fact]
         public void Constructor_NegativePower_ThrowsArgumentOutOfRangeException()
         {
-            ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(() => new Move("EMBER", MoveType.Fire, -1));
+            ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(() => new Move("EMBER", ElementType.Draconic, -1));
             Assert.Equal("power", exception.ParamName);
         }
 
-        // Checks that the predefined psychic move uses the corrected move name and enum type.
+        // Checks that the predefined Mystic move uses the expected name, type, and power.
         [Fact]
-        public void MoveData_Psychic_UsesExpectedNameTypeAndPower()
+        public void MoveData_DeepseaRupture_UsesExpectedNameTypeAndPower()
         {
-            Assert.Equal("PSYCHIC", MoveData.Psychic.Name);
-            Assert.Equal(MoveType.Psychic, MoveData.Psychic.Type);
-            Assert.Equal(8, MoveData.Psychic.Power);
+            Assert.Equal("Deepsea Rupture", MoveData.DEEPSEA_RUPTURE.Name);
+            Assert.Equal(ElementType.Mystic, MoveData.DEEPSEA_RUPTURE.Type);
+            Assert.Equal(8, MoveData.DEEPSEA_RUPTURE.Power);
         }
 
         // Checks that predefined moves use the expected enum values instead of fragile string types.
         [Fact]
         public void MoveData_UsesExpectedEnumTypes()
         {
-            Assert.Equal(MoveType.Normal, MoveData.Tackle.Type);
-            Assert.Equal(MoveType.Water, MoveData.Surf.Type);
-            Assert.Equal(MoveType.Grass, MoveData.SolarBeam.Type);
-            Assert.Equal(MoveType.Dark, MoveData.Bite.Type);
-            Assert.Equal(MoveType.Electric, MoveData.Thunderbolt.Type);
+            Assert.Equal(ElementType.Base, MoveData.POUNCE.Type);
+            Assert.Equal(ElementType.Mystic, MoveData.CURRENT_RUSH.Type);
+            Assert.Equal(ElementType.Nature, MoveData.THORNWRAP.Type);
+            Assert.Equal(ElementType.Nuclear, MoveData.RAD_BURST.Type);
+            Assert.Equal(ElementType.Thunder, MoveData.VOLT_JAB.Type);
         }
     }
 }

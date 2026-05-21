@@ -1,5 +1,6 @@
 #nullable enable
 
+using Arcadia_v2.Creatures;
 using System;
 using System.Collections.Generic;
 using System.Linq;

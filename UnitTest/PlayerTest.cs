@@ -1,4 +1,5 @@
 using Arcadia_v2;
+using Arcadia_v2.Creatures;
 using Arcadia_v2.Map;
 
 namespace UnitTest
@@ -81,28 +82,28 @@ namespace UnitTest
         public void GetAnimalInventoryDisplay_WithAnimals_ReturnsFormattedInventory()
         {
             Player player = new("Red", new Room("Professor's Lab", "Starting room"));
-            Animal pikachu = new(
+            Animal thunderCat = new(
                 id: 25,
-                name: "PIKACHU",
+                name: "T_CAT",
                 element: AnimalElement.Nature,
                 speed: 12,
                 baseHealth: 35,
                 health: 35,
                 level: 5,
-                moves: new[] { MoveData.Thunderbolt });
-            Animal squirtle = new(
+                moves: new[] { MoveData.VOLT_JAB });
+            Animal mysticTurtle = new(
                 id: 7,
-                name: "SQUIRTLE",
+                name: "M_TURTLE",
                 element: AnimalElement.Mystic,
                 speed: 10,
                 baseHealth: 40,
                 health: 30,
                 level: 5,
-                moves: new[] { MoveData.WaterGun });
-            player.AddAnimal(pikachu);
-            player.AddAnimal(squirtle);
+                moves: new[] { MoveData.CURRENT_RUSH });
+            player.AddAnimal(thunderCat);
+            player.AddAnimal(mysticTurtle);
 
-            Assert.Equal("Inventory List:\nPIKACHU Health: 35\nSQUIRTLE Health: 30", player.GetAnimalInventoryDisplay());
+            Assert.Equal("Inventory List:\nT_CAT Health: 35\nM_TURTLE Health: 30", player.GetAnimalInventoryDisplay());
         }
 
         // Checks that setting a computer player's battle team clones the template animals instead of reusing the same instances.
@@ -112,13 +113,13 @@ namespace UnitTest
             CompPlayer compPlayer = new("Blue", new Room("Oak Pass", "Battle room"));
             Animal templateAnimal = new(
                 id: 25,
-                name: "PIKACHU",
+                name: "T_CAT",
                 element: AnimalElement.Nature,
                 speed: 12,
                 baseHealth: 35,
                 health: 35,
                 level: 5,
-                moves: new[] { MoveData.Thunderbolt });
+                moves: new[] { MoveData.VOLT_JAB });
 
             compPlayer.SetBattleTeam(new[] { templateAnimal });
 
@@ -136,13 +137,13 @@ namespace UnitTest
             CompPlayer compPlayer = new("Blue", new Room("Oak Pass", "Battle room"));
             Animal templateAnimal = new(
                 id: 25,
-                name: "PIKACHU",
+                name: "T_CAT",
                 element: AnimalElement.Nature,
                 speed: 12,
                 baseHealth: 35,
                 health: 35,
                 level: 5,
-                moves: new[] { MoveData.Thunderbolt });
+                moves: new[] { MoveData.VOLT_JAB });
             compPlayer.SetBattleTeam(new[] { templateAnimal });
             compPlayer.AnimalInventory[0].Health = 5;
 

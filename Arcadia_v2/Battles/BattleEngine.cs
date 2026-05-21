@@ -1,5 +1,6 @@
 #nullable enable
 
+using Arcadia_v2.Creatures;
 using System;
 
 namespace Arcadia_v2

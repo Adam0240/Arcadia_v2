@@ -1,4 +1,5 @@
 using Arcadia_v2;
+using Arcadia_v2.Creatures;
 using Arcadia_v2.Saves;
 
 namespace UnitTest
@@ -133,14 +134,14 @@ namespace UnitTest
                         new()
                         {
                             Id = 1,
-                            Name = "BULBASAUR",
+                            Name = "N_CUB",
                             Level = 5,
                             Health = 30,
                             BaseHealth = 40,
                             Speed = 7,
                             Moves = new List<MoveSaveState>
                             {
-                                new() { Name = "TACKLE", Type = MoveType.Normal, Power = 5 }
+                                new() { Name = "TACKLE", Type = ElementType.Base, Power = 5 }
                             }
                         }
                     }
@@ -152,7 +153,7 @@ namespace UnitTest
                         Name = "Road 1",
                         EncounterPokemon = new List<PokemonSaveState>
                         {
-                            new() { Id = 3, Name = "PIDGEY", Health = 12 }
+                            new() { Id = 9, Name = "N_BIRD", Health = 12 }
                         }
                     }
                 },
@@ -166,7 +167,7 @@ namespace UnitTest
                         Badges = new List<string> { "Grass Badge" },
                         BattleTeamTemplate = new List<PokemonSaveState>
                         {
-                            new() { Id = 4, Name = "CHARMANDER", Health = 20 }
+                            new() { Id = 3, Name = "N_DOG", Health = 20 }
                         }
                     }
                 }
@@ -226,7 +227,7 @@ namespace UnitTest
             GameState gameState = CreateGameState("Red");
             Animal changedAnimal = new(
                 id: 1,
-                name: "UMBREON",
+                name: "N_CAT",
                 element: AnimalElement.Nature,
                 speed: 21,
                 baseHealth: 101,
@@ -234,8 +235,8 @@ namespace UnitTest
                 level: 7,
                 moves: new[]
                 {
-                    new Move("CUSTOMBITE", MoveType.Dark, 13),
-                    new Move("CUSTOMSPARK", MoveType.Electric, 11)
+                    new Move("CUSTOMBITE", ElementType.Nature, 13),
+                    new Move("CUSTOMSPARK", ElementType.Thunder, 11)
                 });
             gameState.MainPlayer.RestoreAnimalInventory(new[] { changedAnimal });
             gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Road 2"));
@@ -251,13 +252,13 @@ namespace UnitTest
             Assert.Equal("Game saved.", result.Message);
             Assert.Equal("Road 2", savedState.Player.CurrentRoomName);
             Assert.Equal(1, savedState.Player.PokemonInventory[0].Id);
-            Assert.Equal("UMBREON", savedState.Player.PokemonInventory[0].Name);
+            Assert.Equal("N_CAT", savedState.Player.PokemonInventory[0].Name);
             Assert.Equal(21, savedState.Player.PokemonInventory[0].Speed);
             Assert.Equal(101, savedState.Player.PokemonInventory[0].BaseHealth);
             Assert.Equal(88, savedState.Player.PokemonInventory[0].Health);
             Assert.Equal(7, savedState.Player.PokemonInventory[0].Level);
             Assert.Equal("CUSTOMBITE", savedState.Player.PokemonInventory[0].Moves[0].Name);
-            Assert.Equal(MoveType.Dark, savedState.Player.PokemonInventory[0].Moves[0].Type);
+            Assert.Equal(ElementType.Nature, savedState.Player.PokemonInventory[0].Moves[0].Type);
             Assert.Equal(13, savedState.Player.PokemonInventory[0].Moves[0].Power);
             Assert.Equal("CUSTOMSPARK", savedState.Player.PokemonInventory[0].Moves[1].Name);
         }
@@ -269,7 +270,7 @@ namespace UnitTest
             GameState gameState = CreateGameState("Red");
             Animal changedAnimal = new(
                 id: 1,
-                name: "UMBREON",
+                name: "N_CAT",
                 element: AnimalElement.Nature,
                 speed: 21,
                 baseHealth: 101,
@@ -277,8 +278,8 @@ namespace UnitTest
                 level: 7,
                 moves: new[]
                 {
-                    new Move("CUSTOMBITE", MoveType.Dark, 13),
-                    new Move("CUSTOMSPARK", MoveType.Electric, 11)
+                    new Move("CUSTOMBITE", ElementType.Nuclear, 13),
+                    new Move("CUSTOMSPARK", ElementType.Thunder, 11)
                 });
             gameState.MainPlayer.RestoreAnimalInventory(new[] { changedAnimal });
 
@@ -290,20 +291,20 @@ namespace UnitTest
             Animal restoredAnimal = gameState.MainPlayer.AnimalInventory[0];
             Assert.Equal(2, captured.Version);
             Assert.Equal(1, restoredAnimal.Id);
-            Assert.Equal("UMBREON", restoredAnimal.Name);
+            Assert.Equal("N_CAT", restoredAnimal.Name);
             Assert.Equal(21, restoredAnimal.Speed);
             Assert.Equal(101, restoredAnimal.BaseHealth);
             Assert.Equal(88, restoredAnimal.Health);
             Assert.Equal(7, restoredAnimal.Level);
             Assert.Equal("CUSTOMBITE", restoredAnimal.Moves[0].Name);
-            Assert.Equal(MoveType.Dark, restoredAnimal.Moves[0].Type);
+            Assert.Equal(ElementType.Nuclear, restoredAnimal.Moves[0].Type);
             Assert.Equal(13, restoredAnimal.Moves[0].Power);
             Assert.Equal("CUSTOMSPARK", restoredAnimal.Moves[1].Name);
         }
 
         // Checks that version 1 save data falls back to factory defaults for fields that were not present yet.
         [Fact]
-        public void Mapper_ApplyVersion1PokemonSave_FallsBackToFactoryDefaultsForMissingRuntimeFields()
+        public void Mapper_ApplyVersion1AnimalSave_FallsBackToFactoryDefaultsForMissingRuntimeFields()
         {
             GameState gameState = CreateGameState("Red");
             GameSaveState oldSaveState = new()
@@ -315,7 +316,7 @@ namespace UnitTest
                     CurrentRoomName = gameState.GameMap.StartRoom.Name,
                     PokemonInventory = new List<PokemonSaveState>
                     {
-                        new() { Id = 1, Name = "UMBREON", Health = 12 }
+                        new() { Id = 1, Name = "N_CAT", Health = 12 }
                     }
                 }
             };
@@ -336,7 +337,7 @@ namespace UnitTest
         [Theory]
         [InlineData(-1)]
         [InlineData(76)]
-        public void Mapper_ApplyPokemonSaveWithInvalidHealth_ThrowsInvalidOperationException(int savedHealth)
+        public void Mapper_ApplyAnimalSaveWithInvalidHealth_ThrowsInvalidOperationException(int savedHealth)
         {
             GameState gameState = CreateGameState("Red");
             GameSaveState saveState = new()
@@ -347,7 +348,7 @@ namespace UnitTest
                     CurrentRoomName = gameState.GameMap.StartRoom.Name,
                     PokemonInventory = new List<PokemonSaveState>
                     {
-                        new() { Id = 1, Name = "UMBREON", Health = savedHealth, BaseHealth = 75 }
+                        new() { Id = 1, Name = "N_CAT", Health = savedHealth, BaseHealth = 75 }
                     }
                 }
             };
@@ -357,7 +358,7 @@ namespace UnitTest
 
         // Checks that the load service reports failure when persisted creature health exceeds the allowed range.
         [Fact]
-        public void Service_LoadPokemonSaveWithInvalidHealth_ReturnsFailure()
+        public void Service_LoadAnimalSaveWithInvalidHealth_ReturnsFailure()
         {
             GameState gameState = CreateGameState("Red");
             GameSaveState saveState = GameStateMapper.Capture(gameState);
