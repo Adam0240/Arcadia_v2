@@ -3,7 +3,7 @@
 namespace Arcadia_v2
 {
     // Handles wild animal battles, including player moves, wild animal moves,
-    // switching after fainting, and catch/release flow.
+    // switching after defeat, and catch/release flow.
     public static class WildBattleFlow
     {
         public static void HandleWildBattle(IGameIO io, GameState gameState)
@@ -17,7 +17,7 @@ namespace Arcadia_v2
 
             if (!BattleEngine.HasUsableAnimals(mainPlayer))
             {
-                io.WriteLine("All animals in your party are fainted.");
+                io.WriteLine("All animals in your party are defeated.");
                 return;
             }
 
@@ -69,32 +69,44 @@ namespace Arcadia_v2
         private static void HandleWildAnimalTurn(IGameIO io, Player mainPlayer, BattleState battleState, IBattleMoveSelector moveSelector)
         {
             Animal wildAnimal = battleState.OpponentAnimal;
+            Animal playerAnimal = battleState.PlayerAnimal;
 
-            BattleHelpers.HandleOpponentTurn(io, wildAnimal, battleState.PlayerAnimal, $"{wildAnimal.Name} Move", string.Empty, moveSelector);
+            BattleHelpers.HandleOpponentTurn(io, wildAnimal, playerAnimal, $"{wildAnimal.Name} Move", string.Empty, moveSelector);
 
-            if (BattleHelpers.HandlePlayerFaintedAnimal(io, mainPlayer, battleState.PlayerAnimal, "Would you like to switch animals? (YES/NO)"))
+            PlayerDefeatedAnimalResult result = BattleHelpers.HandlePlayerDefeatedAnimal(io, mainPlayer, playerAnimal, "Would you like to switch animals? (YES/NO)");
+
+            if (result != PlayerDefeatedAnimalResult.NotDefeated)
+            {
+                io.WriteLine($"{playerAnimal.Name} defeated.");
+            }
+
+            if (result == PlayerDefeatedAnimalResult.DefeatedNoSwitch && !BattleEngine.HasUsableAnimals(mainPlayer))
+            {
+                io.WriteLine("Battle Lost, all animals in your party are defeated");
+            }
+
+            if (result == PlayerDefeatedAnimalResult.Switched)
             {
                 battleState.UseFirstHealthyPlayerAnimal();
             }
         }
 
-        // Finishes the wild battle after either the player's animal or the wild animal faints.
+        // Finishes the wild battle after either the player's animal or the wild animal is defeated.
         private static void FinishWildBattle(IGameIO io, Player mainPlayer, BattleState battleState)
         {
-            if (BattleEngine.IsFainted(battleState.PlayerAnimal))
+            if (BattleEngine.IsDefeated(battleState.PlayerAnimal))
             {
-                io.WriteLine($"{battleState.PlayerAnimal.Name} fainted.");
                 return;
             }
 
-            if (BattleEngine.IsFainted(battleState.OpponentAnimal))
+            if (BattleEngine.IsDefeated(battleState.OpponentAnimal))
             {
-                io.WriteLine($"{battleState.OpponentAnimal.Name} fainted.");
+                io.WriteLine($"{battleState.OpponentAnimal.Name} defeated.");
                 HandleCatchChoice(io, mainPlayer, battleState.OpponentAnimal);
             }
         }
 
-        // Handles the player's choice to catch or leave the fainted wild animal.
+        // Handles the player's choice to catch or leave the defeated wild animal.
         private static void HandleCatchChoice(IGameIO io, Player mainPlayer, Animal wildAnimal)
         {
             while (true)

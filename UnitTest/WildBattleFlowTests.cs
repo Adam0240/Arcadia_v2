@@ -1,4 +1,5 @@
 using Arcadia_v2;
+using Arcadia_v2.Creatures;
 
 namespace UnitTest;
 
@@ -78,9 +79,9 @@ public class WildBattleFlowTests
         Assert.Contains($"{wildAnimal.Name} ran away!", io.OutputText);
     }
 
-    // Checks that wild battles do not start when every animal in the player's party has fainted.
+    // Checks that wild battles do not start when every animal in the player's party has been defeated.
     [Fact]
-    public void HandleWildBattle_WhenAllPlayerAnimalsAreFainted_PrintsPartyFaintedMessage()
+    public void HandleWildBattle_WhenAllPlayerAnimalsAreDefeated_PrintsPartyDefeatedMessage()
     {
         GameState gameState = CreateRoadOneWildBattle();
         foreach (Animal animal in gameState.MainPlayer.AnimalInventory)
@@ -92,8 +93,34 @@ public class WildBattleFlowTests
 
         WildBattleFlow.HandleWildBattle(io, gameState);
 
-        Assert.Contains("All animals in your party are fainted.", io.OutputText);
+        Assert.Contains("All animals in your party are defeated.", io.OutputText);
         Assert.DoesNotContain("A wild", io.OutputText);
+    }
+
+    // Checks that wild battles print the player's defeated message once when no switch happens.
+    [Fact]
+    public void HandleWildBattle_WhenPlayerAnimalIsDefeatedWithoutSwitch_PrintsDefeatedMessageOnce()
+    {
+        GameState gameState = CreateRoadOneWildBattle();
+        Animal playerAnimal = new(
+            id: 99,
+            name: "N_CAT",
+            element: AnimalElement.Nature,
+            speed: 5,
+            baseHealth: 5,
+            health: 5,
+            level: 1,
+            moves: new[] { new Move("WEAKHIT", ElementType.Base, 1) });
+        gameState.MainPlayer.RestoreAnimalInventory(new[] { playerAnimal });
+        Animal wildAnimal = gameState.MainPlayer.CurrentRoom.EncounterAnimals[0];
+        wildAnimal.Health = 20;
+        FakeGameIO io = new("1", "no");
+
+        WildBattleFlow.HandleWildBattle(io, gameState, new FixedMoveSelector(new Move("STRONG", ElementType.Base, 5)));
+
+        Assert.Equal(0, playerAnimal.Health);
+        Assert.Equal(1, io.OutputText.Split("N_CAT defeated.").Length - 1);
+        Assert.Equal(1, io.OutputText.Split("Battle Lost, all animals in your party are defeated").Length - 1);
     }
 
     private static GameState CreateRoadOneWildBattle()
@@ -110,6 +137,21 @@ public class WildBattleFlowTests
         for (int i = player.AnimalInventory.Count; i < 6; ++i)
         {
             player.AddAnimal(animals[i + 1]);
+        }
+    }
+
+    private sealed class FixedMoveSelector : IBattleMoveSelector
+    {
+        private readonly Move mMove;
+
+        public FixedMoveSelector(Move move)
+        {
+            mMove = move;
+        }
+
+        public Move SelectMove(Animal animal)
+        {
+            return mMove;
         }
     }
 }

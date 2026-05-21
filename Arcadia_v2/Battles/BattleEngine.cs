@@ -69,15 +69,10 @@ namespace Arcadia_v2
         public static bool IsHealingMove(Move move)
         {
             ArgumentNullException.ThrowIfNull(move);
-            return IsHealingMove(move.Name);
+            return move.Effect == MoveEffect.Heal;
         }
 
-        public static bool IsHealingMove(string moveName)
-        {
-            return moveName == "MOONLIGHT" || moveName == "SUNLIGHT";
-        }
-
-        public static bool IsFainted(Animal animal)
+        public static bool IsDefeated(Animal animal)
         {
             ArgumentNullException.ThrowIfNull(animal);
             return animal.Health <= 0;
@@ -85,7 +80,7 @@ namespace Arcadia_v2
 
         public static bool IsBattleOver(Animal firstAnimal, Animal secondAnimal)
         {
-            return IsFainted(firstAnimal) || IsFainted(secondAnimal);
+            return IsDefeated(firstAnimal) || IsDefeated(secondAnimal);
         }
 
         public static bool HasUsableAnimals(GenericPlayer player)
@@ -100,7 +95,7 @@ namespace Arcadia_v2
 
             for (int i = startIndex; i < player.AnimalInventory.Count; ++i)
             {
-                if (!IsFainted(player.AnimalInventory[i]))
+                if (!IsDefeated(player.AnimalInventory[i]))
                 {
                     return i;
                 }
@@ -145,7 +140,7 @@ namespace Arcadia_v2
 
             int otherAnimalIndex = GetOnlyOtherAnimalIndex(player, activeAnimal);
 
-            if (otherAnimalIndex == -1 || IsFainted(player.AnimalInventory[otherAnimalIndex]))
+            if (otherAnimalIndex == -1 || IsDefeated(player.AnimalInventory[otherAnimalIndex]))
             {
                 return false;
             }

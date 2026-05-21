@@ -5,6 +5,13 @@ using System;
 
 namespace Arcadia_v2
 {
+    public enum PlayerDefeatedAnimalResult
+    {
+        NotDefeated,
+        Switched,
+        DefeatedNoSwitch
+    }
+
     // Shared battle utilities used by both wild and trainer battle flows.
     public static class BattleHelpers
     {
@@ -33,11 +40,6 @@ namespace Arcadia_v2
             return selectedMoveIndex >= 0 && selectedMoveIndex < animal.Moves.Count
                 ? animal.Moves[selectedMoveIndex]
                 : null;
-        }
-
-        public static bool IsHealingMove(string moveName)
-        {
-            return BattleEngine.IsHealingMove(moveName);
         }
 
         public static void HandlePlayerTurn(IGameIO io, Animal playerAnimal, Animal opponentAnimal, string defenderLabel)
@@ -91,23 +93,23 @@ namespace Arcadia_v2
             PrintMoveResult(io, string.Empty, opponentAnimal, defenderLabel, playerAnimal, result);
         }
 
-        public static bool HandlePlayerFaintedAnimal(IGameIO io, Player mainPlayer, string prompt)
+        public static PlayerDefeatedAnimalResult HandlePlayerDefeatedAnimal(IGameIO io, Player mainPlayer, string prompt)
         {
-            return HandlePlayerFaintedAnimal(io, mainPlayer, mainPlayer.AnimalInventory[0], prompt);
+            return HandlePlayerDefeatedAnimal(io, mainPlayer, mainPlayer.AnimalInventory[0], prompt);
         }
 
-        public static bool HandlePlayerFaintedAnimal(IGameIO io, Player mainPlayer, Animal playerAnimal, string prompt)
+        public static PlayerDefeatedAnimalResult HandlePlayerDefeatedAnimal(IGameIO io, Player mainPlayer, Animal playerAnimal, string prompt)
         {
-            if (!BattleEngine.IsFainted(playerAnimal))
+            if (!BattleEngine.IsDefeated(playerAnimal))
             {
-                return false;
+                return PlayerDefeatedAnimalResult.NotDefeated;
             }
-
-            io.WriteLine($"{playerAnimal.Name} fainted.");
 
             if (BattleEngine.CanAutoSwapTwoAnimalParty(mainPlayer))
             {
-                return BattleEngine.TryAutoSwitchTwoAnimalParty(mainPlayer, playerAnimal);
+                return BattleEngine.TryAutoSwitchTwoAnimalParty(mainPlayer, playerAnimal)
+                    ? PlayerDefeatedAnimalResult.Switched
+                    : PlayerDefeatedAnimalResult.DefeatedNoSwitch;
             }
 
             while (true)
@@ -118,12 +120,12 @@ namespace Arcadia_v2
                 if (IsYes(answer))
                 {
                     PartyFlow.SwapAnimals(mainPlayer, io);
-                    return true;
+                    return PlayerDefeatedAnimalResult.Switched;
                 }
 
                 if (IsNo(answer))
                 {
-                    return false;
+                    return PlayerDefeatedAnimalResult.DefeatedNoSwitch;
                 }
 
                 io.WriteLine("Invalid input.");
@@ -152,13 +154,14 @@ namespace Arcadia_v2
             Animal defender,
             BattleMoveResult result)
         {
+            io.WriteLine($"{attackerLabel}{attacker.Name} used {result.MoveName}");
+
             if (result.ResultType is BattleMoveResultType.Healing or BattleMoveResultType.NoEffect)
             {
                 PrintHealingResult(io, result);
                 return;
             }
 
-            io.WriteLine($"{attackerLabel}{attacker.Name} used {result.MoveName}");
             io.WriteLine($"{defenderLabel}{defender.Name} took {result.Amount} damage.");
         }
 

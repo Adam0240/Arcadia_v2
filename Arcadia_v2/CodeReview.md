@@ -9,7 +9,7 @@ dotnet build .\Arcadia_v2\Arcadia_v2.csproj /nologo /clp:ErrorsOnly
 dotnet test .\UnitTest\UnitTest.csproj /nologo /clp:ErrorsOnly
 ```
 
-Result: build passed with `0` warnings/errors, and all `152` unit tests passed.
+Result: build passed with `0` warnings/errors, and all `162` unit tests passed.
 
 ## Findings
 
@@ -33,52 +33,58 @@ Resolution: factory names were normalized to uppercase, including `NULL0`, `M_CA
 
 Status: fixed.
 
-### Medium: Healing move behavior is hard-coded to old uppercase names
+### Resolved: Healing move behavior is hard-coded to old uppercase names
 
-`BattleEngine.IsHealingMove` only recognizes exact strings:
+Original finding: `BattleEngine.IsHealingMove` only recognized exact strings:
 
 - `Arcadia_v2/Battles/BattleEngine.cs:75`
 - `Arcadia_v2/Battles/BattleEngine.cs:77`
 
 Current `MoveData` no longer defines `MOONLIGHT` or `SUNLIGHT`, and the new predefined move names use display casing such as `Pounce`, `Current Rush`, and `Deepsea Rupture`.
 
-Impact: healing behavior is disconnected from the actual move catalog. Any future healing move with display casing like `Moonlight`, or a renamed healing move, will be treated as a damage move unless this string check is manually updated.
+Impact: healing behavior was disconnected from the actual move catalog. Any future healing move with display casing like `Moonlight`, or a renamed healing move, would be treated as a damage move unless this string check was manually updated.
 
-Recommended fix: add an explicit move category/effect, such as `MoveEffect.Damage` and `MoveEffect.Heal`, to `Move`. Then `BattleEngine.UseMove` can branch on data instead of move-name strings.
+Resolution: `Move` now has an explicit `MoveEffect`, `Bloom` is marked as `MoveEffect.Heal`, and `BattleEngine.UseMove` branches on `move.Effect` instead of move-name strings. Save capture/restore also persists move effects, with a factory-template fallback for older saves that do not contain the new field.
 
-### Medium: Player faint messages can be printed twice
+Status: fixed.
 
-`BattleHelpers.HandlePlayerFaintedAnimal` prints the faint message immediately:
+### Resolved: Player defeat messages can be printed twice
+
+Original finding: `BattleHelpers.HandlePlayerDefeatedAnimal` printed the defeat message immediately:
 
 - `Arcadia_v2/Battles/BattleHelpers.cs:106`
 
-The battle finalizers can print the same message again after the loop exits:
+The battle finalizers could print the same message again after the loop exited:
 
 - `Arcadia_v2/Battles/TrainerBattleFlow.cs:114`
 - `Arcadia_v2/Gameplay/WildBattleFlow.cs:86`
 
-Impact: when the player's active animal faints and the player cannot or does not switch, the UI can report the same faint event twice.
+Impact: when the player's active animal was defeated and the player could not or did not switch, the UI could report the same defeat event twice.
 
-Recommended fix: return a richer result from `HandlePlayerFaintedAnimal` such as `NotFainted`, `Switched`, `FaintedNoSwitch`, and let one place own the final faint message.
+Resolution: `HandlePlayerDefeatedAnimal` now returns `PlayerDefeatedAnimalResult` (`NotDefeated`, `Switched`, or `DefeatedNoSwitch`) and does not print defeat text. Wild and trainer battle flows print the defeat message once after the opponent turn, and their finalizers no longer repeat it.
 
-### Medium: Final encounter text does not match the actual encounter
+Status: fixed.
 
-The endgame text describes an Arceus-style final challenge:
+### Resolved: Final encounter text does not match the actual encounter
+
+Original finding: the endgame text described an Arceus-style final challenge:
 
 - `Arcadia_v2/Gameplay/GameLoop.cs:141`
 - `Arcadia_v2/Gameplay/GameLoop.cs:143`
 
-But the final room encounter is populated with `mapAnimals[19]`, which is `M_DOG` in the current factory:
+But the final room encounter was populated with `mapAnimals[19]`, which was `M_DOG` in the current factory:
 
 - `Arcadia_v2/Map/Map.cs:201`
 
-Impact: the player is told they are facing a final god/champion encounter, but the actual battle target is a normal roster creature.
+Impact: the player was told they were facing a final god/champion encounter, but the actual battle target was a normal roster creature.
 
-Recommended fix: either add a real final boss creature to the roster and place it in `TheEnd`, or change the story text to match the creature that is actually there.
+Resolution: `TheEnd` now resolves the final encounter by the `NU_DRAGON` creature name instead of the old index.
 
-### Medium: Old Pokemon naming still leaks through production code
+Status: fixed.
 
-Several production types, properties, comments, command labels, and story strings still use Pokemon terminology.
+### Resolved: Old Pokemon naming still leaks through production code
+
+Original finding: several production types, properties, comments, command labels, and story strings still used Pokemon terminology.
 
 Examples:
 
@@ -91,39 +97,45 @@ Examples:
 - `Arcadia_v2/Gameplay/GameSetup.cs:92`
 - `Arcadia_v2/Gameplay/GameSetup.cs:118`
 
-Impact: this creates a split domain model where code now talks about animals/creatures in most places but still serializes and displays Pokemon language elsewhere. It makes future changes more error-prone because contributors have to remember which old names are still intentional.
+Impact: this created a split domain model where code talked about animals/creatures in most places but still serialized and displayed Pokemon language elsewhere. It made future changes more error-prone because contributors had to remember which old names were still intentional.
 
-Recommended fix: decide whether save compatibility requires the JSON property names to remain `Pokemon*`. If compatibility matters, keep the serialized names with attributes but rename the C# types/properties to `AnimalSaveState`, `AnimalInventory`, and `EncounterAnimals`. If compatibility does not matter, rename both the C# model and JSON shape.
+Resolution: save compatibility was not required, so both the C# save model and JSON shape were renamed to animal terminology. `PokemonSaveState`, `PokemonInventory`, and `EncounterPokemon` are now `AnimalSaveState`, `AnimalInventory`, and `EncounterAnimals`. The action command enum/display name now uses `AnimalInventory`, the command aliases are `animalinventory`, `animals`, and `ai`, and the remaining production story/map text now refers to creatures or Arcadia-specific names.
 
-### Low: Move catalog has mismatched names and likely typos
+Status: fixed.
 
-Current move constants include display names that do not match the constant or appear misspelled:
+### Resolved: Move catalog has mismatched names and likely typos
+
+Original finding: current move constants included display names that did not match the constant or appeared misspelled:
 
 - `Arcadia_v2/Creatures/Move.cs:74` has `COLONY_RUSH = new Move("LEER", ...)`
 - `Arcadia_v2/Creatures/Move.cs:93` has `OCEON_PULSE`
 - `Arcadia_v2/Creatures/Move.cs:95` has `"Tital Break"`
 
-Impact: UI output and saved move data can show names that look accidental or left over from old move data.
+Impact: UI output and saved move data could show names that looked accidental or left over from old move data.
 
-Recommended fix: correct the display names and add a focused unit test that asserts all predefined move display names are intentional.
+Resolution: `COLONY_RUSH` now displays `Colony Rush`, `OCEON_PULSE` was renamed to `OCEAN_PULSE` with display name `Ocean Pulse`, and `Tital Break` was corrected to `Tidal Break`. A focused unit test now verifies every predefined `MoveData` display name against an explicit expected list.
 
-### Low: Movement requirements are split between unused room properties and map rules
+Status: fixed.
 
-`Room` exposes requirement-like properties:
+### Resolved: Movement requirements are split between unused room properties and map rules
+
+Original finding: `Room` exposed requirement-like properties:
 
 - `Arcadia_v2/Map/Room.cs:39`
 - `Arcadia_v2/Map/Room.cs:40`
 
-But movement actually uses the `Map` requirement dictionary:
+But movement actually used the `Map` requirement dictionary:
 
 - `Arcadia_v2/Map/Map.cs:150`
 - `Arcadia_v2/Gameplay/MovementFlow.cs:66`
 
-`TheEnd` sets `RequiresChampionDefeatToEnter = true`, but that property is not what gates movement. The real gate is separately added in `AddMovementRequirements`.
+`TheEnd` set `RequiresChampionDefeatToEnter = true`, but that property was not what gated movement. The real gate was separately added in `AddMovementRequirements`.
 
-Impact: future changes may update the room property and assume movement is gated, while the game still relies on the dictionary entry.
+Impact: future changes could update the room property and assume movement was gated, while the game still relied on the dictionary entry.
 
-Recommended fix: remove the unused requirement properties from `Room`, or make `MovementFlow` read requirements from room data instead of duplicating them in `Map`.
+Resolution: the unused room-level requirement properties were removed. Directional movement requirements now live only in `Map`, where `MovementFlow` already reads them.
+
+Status: fixed.
 
 ### Low: Roster construction is hard to audit and easy to break
 
@@ -142,7 +154,7 @@ Recommended fix: represent species and element move pairs as small data records,
 The current test suite is passing, but it does not yet cover several real user flows:
 
 - The uppercase roster-name invariant beyond the new factory-name test in `AnimalTest`.
-- Player fainting without switching and ensuring the faint message is printed once.
+- Player defeat without switching and ensuring the defeat message is printed once.
 - The identity of the final `The End` room encounter.
 - The predefined move catalog's display names and spelling.
 - Null or partially missing save JSON lists, which could still escape the current save-load failure handling.

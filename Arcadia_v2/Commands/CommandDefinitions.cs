@@ -25,7 +25,7 @@ namespace Arcadia_v2.Commands
         public static readonly CommandOption<ActionCommandType>[] ActionCommands =
         {
             new(ActionCommandType.Battle, "Battle", "battle", "b"),
-            new(ActionCommandType.PokeInventory, "PokeInventory", "pokeinventory", "pi"),
+            new(ActionCommandType.AnimalInventory, "AnimalInventory", "animalinventory", "animals", "ai"),
             new(ActionCommandType.Menu, "Menu", "menu", "m")
         };
 

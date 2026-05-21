@@ -21,7 +21,7 @@ namespace Arcadia_v2.Saves
                     .Select(room => new RoomSaveState
                     {
                         Name = room.Name,
-                        EncounterPokemon = CaptureAnimalList(room.EncounterAnimals)
+                        EncounterAnimals = CaptureAnimalList(room.EncounterAnimals)
                     })
                     .ToList(),
                 Trainers = GetTrainers(gameState)
@@ -50,7 +50,7 @@ namespace Arcadia_v2.Saves
                 Name = player.Name,
                 CurrentRoomName = player.CurrentRoom.Name,
                 Badges = player.Badges.ToList(),
-                PokemonInventory = CaptureAnimalList(player.AnimalInventory)
+                AnimalInventory = CaptureAnimalList(player.AnimalInventory)
             };
         }
 
@@ -66,10 +66,10 @@ namespace Arcadia_v2.Saves
             };
         }
 
-        private static List<PokemonSaveState> CaptureAnimalList(IReadOnlyList<Animal> animalList)
+        private static List<AnimalSaveState> CaptureAnimalList(IReadOnlyList<Animal> animalList)
         {
             return animalList
-                .Select(animal => new PokemonSaveState
+                .Select(animal => new AnimalSaveState
                 {
                     Id = animal.Id,
                     Name = animal.Name,
@@ -82,7 +82,8 @@ namespace Arcadia_v2.Saves
                         {
                             Name = move.Name,
                             Type = move.Type,
-                            Power = move.Power
+                            Power = move.Power,
+                            Effect = move.Effect
                         })
                         .ToList()
                 })
@@ -97,7 +98,7 @@ namespace Arcadia_v2.Saves
             gameState.MainPlayer.RestoreName(playerState.Name);
             gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom(playerState.CurrentRoomName));
             gameState.MainPlayer.RestoreBadges(playerState.Badges);
-            gameState.MainPlayer.RestoreAnimalInventory(CreateAnimals(playerState.PokemonInventory, animalsById));
+            gameState.MainPlayer.RestoreAnimalInventory(CreateAnimals(playerState.AnimalInventory, animalsById));
         }
 
         private static void ApplyRooms(
@@ -107,7 +108,7 @@ namespace Arcadia_v2.Saves
         {
             foreach (RoomSaveState roomState in rooms)
             {
-                gameState.GameMap.GetRoom(roomState.Name).RestoreEncounterAnimals(CreateAnimals(roomState.EncounterPokemon, animalsById));
+                gameState.GameMap.GetRoom(roomState.Name).RestoreEncounterAnimals(CreateAnimals(roomState.EncounterAnimals, animalsById));
             }
         }
 
@@ -135,46 +136,46 @@ namespace Arcadia_v2.Saves
         }
 
         private static List<Animal> CreateAnimals(
-            IEnumerable<PokemonSaveState> savedPokemon,
+            IEnumerable<AnimalSaveState> savedAnimals,
             IReadOnlyDictionary<int, Animal> animalsById)
         {
             List<Animal> restoredAnimals = new();
 
-            foreach (PokemonSaveState pokemonState in savedPokemon)
+            foreach (AnimalSaveState animalState in savedAnimals)
             {
-                if (!animalsById.TryGetValue(pokemonState.Id, out Animal? template))
+                if (!animalsById.TryGetValue(animalState.Id, out Animal? template))
                 {
-                    throw new InvalidOperationException($"Unknown Pokemon id in save data: {pokemonState.Id}");
+                    throw new InvalidOperationException($"Unknown animal id in save data: {animalState.Id}");
                 }
 
-                Animal animal = CreateAnimalFromSaveState(pokemonState, template);
+                Animal animal = CreateAnimalFromSaveState(animalState, template);
                 restoredAnimals.Add(animal);
             }
 
             return restoredAnimals;
         }
 
-        private static Animal CreateAnimalFromSaveState(PokemonSaveState pokemonState, Animal template)
+        private static Animal CreateAnimalFromSaveState(AnimalSaveState animalState, Animal template)
         {
-            string name = string.IsNullOrWhiteSpace(pokemonState.Name)
+            string name = string.IsNullOrWhiteSpace(animalState.Name)
                 ? template.Name
-                : pokemonState.Name;
-            int level = pokemonState.Level > 0
-                ? pokemonState.Level
+                : animalState.Name;
+            int level = animalState.Level > 0
+                ? animalState.Level
                 : template.Level;
-            int baseHealth = pokemonState.BaseHealth > 0
-                ? pokemonState.BaseHealth
+            int baseHealth = animalState.BaseHealth > 0
+                ? animalState.BaseHealth
                 : template.BaseHealth;
-            int speed = pokemonState.Speed > 0
-                ? pokemonState.Speed
+            int speed = animalState.Speed > 0
+                ? animalState.Speed
                 : template.Speed;
-            int health = ValidateHealth(pokemonState.Health, baseHealth, name);
-            IEnumerable<Move> moves = pokemonState.Moves is { Count: > 0 }
-                ? pokemonState.Moves.Select(moveState => new Move(moveState.Name, moveState.Type, moveState.Power))
+            int health = ValidateHealth(animalState.Health, baseHealth, name);
+            IEnumerable<Move> moves = animalState.Moves is { Count: > 0 }
+                ? animalState.Moves.Select(moveState => CreateMoveFromSaveState(moveState, template))
                 : template.Moves;
 
             return new Animal(
-                id: pokemonState.Id,
+                id: animalState.Id,
                 name: name,
                 element: template.Element,
                 speed: speed,
@@ -184,12 +185,31 @@ namespace Arcadia_v2.Saves
                 moves: moves);
         }
 
-        private static int ValidateHealth(int health, int baseHealth, string pokemonName)
+        private static Move CreateMoveFromSaveState(MoveSaveState moveState, Animal template)
+        {
+            MoveEffect effect = moveState.Effect == MoveEffect.Unspecified
+                ? GetTemplateMoveEffect(moveState, template)
+                : moveState.Effect;
+
+            return new Move(moveState.Name, moveState.Type, moveState.Power, effect);
+        }
+
+        private static MoveEffect GetTemplateMoveEffect(MoveSaveState moveState, Animal template)
+        {
+            Move? templateMove = template.Moves.FirstOrDefault(move =>
+                move.Name == moveState.Name &&
+                move.Type == moveState.Type &&
+                move.Power == moveState.Power);
+
+            return templateMove?.Effect ?? MoveEffect.Damage;
+        }
+
+        private static int ValidateHealth(int health, int baseHealth, string animalName)
         {
             if (health < 0 || health > baseHealth)
             {
                 throw new InvalidOperationException(
-                    $"Invalid health for {pokemonName} in save data: {health}. Expected a value from 0 to {baseHealth}.");
+                    $"Invalid health for {animalName} in save data: {health}. Expected a value from 0 to {baseHealth}.");
             }
 
             return health;

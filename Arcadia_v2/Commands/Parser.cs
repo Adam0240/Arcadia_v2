@@ -23,7 +23,7 @@ namespace Arcadia_v2.Commands
     {
         Invalid = 0,
         Battle = 1,
-        PokeInventory = 2,
+        AnimalInventory = 2,
         Menu = 3
     }
 

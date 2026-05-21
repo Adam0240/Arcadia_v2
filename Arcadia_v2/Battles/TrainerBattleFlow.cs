@@ -31,7 +31,7 @@ namespace Arcadia_v2
         {
             if (!BattleEngine.HasUsableAnimals(main))
             {
-                io.WriteLine("All animals in your party are fainted.");
+                io.WriteLine("All animals in your party are defeated.");
                 return;
             }
 
@@ -52,7 +52,7 @@ namespace Arcadia_v2
                 if (isPlayerTurn)
                 {
                     HandlePlayerTurn(io, battleState);
-                    HandleOpponentFaintedAnimal(io, battleState, opponent);
+                    HandleOpponentDefeatedAnimal(io, battleState, opponent);
                 }
                 else
                 {
@@ -81,19 +81,32 @@ namespace Arcadia_v2
         private static void HandleOpponentTurn(IGameIO io, BattleState battleState, Player main, IBattleMoveSelector moveSelector)
         {
             Animal opponentAnimal = battleState.OpponentAnimal;
+            Animal playerAnimal = battleState.PlayerAnimal;
 
-            BattleHelpers.HandleOpponentTurn(io, opponentAnimal, battleState.PlayerAnimal, $"{opponentAnimal.Name} Move", string.Empty, moveSelector);
+            BattleHelpers.HandleOpponentTurn(io, opponentAnimal, playerAnimal, $"{opponentAnimal.Name} Move", string.Empty, moveSelector);
 
-            if (BattleHelpers.HandlePlayerFaintedAnimal(io, main, battleState.PlayerAnimal, "Would you like to switch animals?"))
+            PlayerDefeatedAnimalResult result = BattleHelpers.HandlePlayerDefeatedAnimal(io, main, playerAnimal, "Would you like to switch animals?");
+
+            if (result != PlayerDefeatedAnimalResult.NotDefeated)
+            {
+                io.WriteLine($"{playerAnimal.Name} defeated.");
+            }
+
+            if (result == PlayerDefeatedAnimalResult.DefeatedNoSwitch && !BattleEngine.HasUsableAnimals(main))
+            {
+                io.WriteLine("Battle Lost, all animals in your party are defeated");
+            }
+
+            if (result == PlayerDefeatedAnimalResult.Switched)
             {
                 battleState.UseFirstHealthyPlayerAnimal();
             }
         }
 
-        // Handles the opponent sending out another animal after the active one faints.
-        private static void HandleOpponentFaintedAnimal(IGameIO io, BattleState battleState, CompPlayer opponent)
+        // Handles the opponent sending out another animal after the active one is defeated.
+        private static void HandleOpponentDefeatedAnimal(IGameIO io, BattleState battleState, CompPlayer opponent)
         {
-            if (!BattleEngine.IsFainted(battleState.OpponentAnimal))
+            if (!BattleEngine.IsDefeated(battleState.OpponentAnimal))
             {
                 return;
             }
@@ -109,13 +122,12 @@ namespace Arcadia_v2
         // Handles the final result of the trainer battle.
         private static void FinishTrainerBattle(IGameIO io, BattleState battleState, Player main, CompPlayer opponent)
         {
-            if (BattleEngine.IsFainted(battleState.PlayerAnimal))
+            if (BattleEngine.IsDefeated(battleState.PlayerAnimal))
             {
-                io.WriteLine($"{battleState.PlayerAnimal.Name} fainted.");
                 return;
             }
 
-            if (BattleEngine.IsFainted(battleState.OpponentAnimal))
+            if (BattleEngine.IsDefeated(battleState.OpponentAnimal))
             {
                 io.WriteLine($"{opponent.Name} defeated.");
                 io.WriteLine("Congratulations! You defeated me. Please take this badge to honor your victory.");

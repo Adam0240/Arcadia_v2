@@ -46,7 +46,6 @@ public class BattleStateTests
     [Fact]
     public void HealingMoves_UseSelectedMovePower()
     {
-        Move moonlight = new Move("MOONLIGHT", ElementType.Mystic, 10);
         Animal animal = new Animal(
             id: 99,
             name: "M_CAT",
@@ -55,14 +54,14 @@ public class BattleStateTests
             baseHealth: 75,
             health: 50,
             level: 1,
-            moves: new[] { MoveData.POUNCE, moonlight });
+            moves: new[] { MoveData.POUNCE, MoveData.BLOOM });
 
         Move selectedMove = animal.Moves[1];
 
         BattleMoveResult result = BattleEngine.UseMove(animal, animal, selectedMove);
 
         Assert.Equal(BattleMoveResultType.Healing, result.ResultType);
-        Assert.Equal("MOONLIGHT", result.MoveName);
+        Assert.Equal("Bloom", result.MoveName);
         Assert.Equal(10, result.Amount);
         Assert.Equal(60, animal.Health);
     }
@@ -71,13 +70,12 @@ public class BattleStateTests
     [Fact]
     public void BattleEngine_UseHealingMoveAtFullHealth_ReturnsNoEffect()
     {
-        Move moonlight = new Move("MOONLIGHT", ElementType.Mystic, 10);
-        Animal animal = new Animal(id: 99, name: "M_CAT", element: AnimalElement.Nature, speed: 7, baseHealth: 30, health: 30, level: 1, moves: new[] { moonlight });
+        Animal animal = new Animal(id: 99, name: "M_CAT", element: AnimalElement.Nature, speed: 7, baseHealth: 30, health: 30, level: 1, moves: new[] { MoveData.BLOOM });
 
-        BattleMoveResult result = BattleEngine.UseMove(animal, animal, moonlight);
+        BattleMoveResult result = BattleEngine.UseMove(animal, animal, MoveData.BLOOM);
 
         Assert.Equal(BattleMoveResultType.NoEffect, result.ResultType);
-        Assert.Equal("MOONLIGHT", result.MoveName);
+        Assert.Equal("Bloom", result.MoveName);
         Assert.Equal(0, result.Amount);
         Assert.Equal(30, result.TargetHealth);
         Assert.Equal(30, animal.Health);
@@ -87,15 +85,30 @@ public class BattleStateTests
     [Fact]
     public void HealingMoves_ExactAmountToFull_RestoresHealth()
     {
-        Move moonlight = new Move("MOONLIGHT", ElementType.Mystic, 10);
-        Animal animal = new Animal(id: 99, name: "M_CAT", element: AnimalElement.Nature, speed: 7, baseHealth: 30, health: 25, level: 1, moves: new[] { moonlight });
+        Animal animal = new Animal(id: 99, name: "M_CAT", element: AnimalElement.Nature, speed: 7, baseHealth: 30, health: 25, level: 1, moves: new[] { MoveData.BLOOM });
         FakeGameIO io = new();
 
-        BattleHelpers.UseHealingMove(io, animal, 5);
+        BattleHelpers.UseHealingMove(io, animal, MoveData.BLOOM.Power);
 
         Assert.Equal(30, animal.Health);
         Assert.Contains("Health Restored", io.OutputText);
         Assert.DoesNotContain("Nothing happened", io.OutputText);
+    }
+
+    // Verifies that player healing move output includes the move used.
+    [Fact]
+    public void HandlePlayerTurn_HealingMove_PrintsMoveUsed()
+    {
+        Animal player = new Animal(id: 1, name: "N_CAT", element: AnimalElement.Nature, speed: 7, baseHealth: 20, health: 10, level: 1, moves: new[] { MoveData.BLOOM });
+        Animal opponent = new Animal(id: 2, name: "N_LION", element: AnimalElement.Nature, speed: 7, baseHealth: 20, health: 20, level: 1, moves: new[] { MoveData.POUNCE });
+        FakeGameIO io = new("1");
+
+        BattleHelpers.HandlePlayerTurn(io, player, opponent, string.Empty);
+
+        Assert.Equal(20, player.Health);
+        Assert.Contains("You used Bloom", io.OutputText);
+        Assert.Contains("N_CAT used Bloom", io.OutputText);
+        Assert.Contains("Health Restored", io.OutputText);
     }
 
     // Verifies that player battle input chooses the fourth move from a 1-based numbered move list.
@@ -158,78 +171,97 @@ public class BattleStateTests
 
     // Verifies that an invalid then no response re-prompts and leaves the party order unchanged.
     [Fact]
-    public void HandlePlayerFaintedAnimal_InvalidThenNo_RePromptsWithoutSwapping()
+    public void HandlePlayerDefeatedAnimal_InvalidThenNo_RePromptsWithoutSwapping()
     {
         Player player = CreateThreeAnimalPlayer();
         player.AnimalInventory[0].Health = 0;
         FakeGameIO io = new("maybe", "no");
 
-        BattleHelpers.HandlePlayerFaintedAnimal(io, player, "Would you like to switch animals?");
+        PlayerDefeatedAnimalResult result = BattleHelpers.HandlePlayerDefeatedAnimal(io, player, "Would you like to switch animals?");
 
         int promptCount = io.OutputText.Split("Would you like to switch animals?").Length - 1;
+        Assert.Equal(PlayerDefeatedAnimalResult.DefeatedNoSwitch, result);
         Assert.Equal(2, promptCount);
         Assert.Contains("Invalid input.", io.OutputText);
+        Assert.DoesNotContain("defeated.", io.OutputText);
         Assert.Equal("N_CAT", player.AnimalInventory[0].Name);
         Assert.Equal("N_LION", player.AnimalInventory[1].Name);
     }
 
     // Verifies that an invalid then yes response re-prompts and swaps the selected party creatures.
     [Fact]
-    public void HandlePlayerFaintedAnimal_InvalidThenYes_RePromptsAndSwapsAnimals()
+    public void HandlePlayerDefeatedAnimal_InvalidThenYes_RePromptsAndSwapsAnimals()
     {
         Player player = CreateThreeAnimalPlayer();
         player.AnimalInventory[0].Health = 0;
         FakeGameIO io = new("maybe", "yes", "n_cat", "n_lion");
 
-        BattleHelpers.HandlePlayerFaintedAnimal(io, player, "Would you like to switch animals?");
+        PlayerDefeatedAnimalResult result = BattleHelpers.HandlePlayerDefeatedAnimal(io, player, "Would you like to switch animals?");
 
         int promptCount = io.OutputText.Split("Would you like to switch animals?").Length - 1;
+        Assert.Equal(PlayerDefeatedAnimalResult.Switched, result);
         Assert.Equal(2, promptCount);
         Assert.Contains("Invalid input.", io.OutputText);
+        Assert.DoesNotContain("defeated.", io.OutputText);
         Assert.Equal("N_LION", player.AnimalInventory[0].Name);
         Assert.Equal("N_CAT", player.AnimalInventory[1].Name);
     }
 
     // Verifies that a two-creature party auto-switches to the healthy backup without prompting.
     [Fact]
-    public void HandlePlayerFaintedAnimal_WithTwoAnimals_AutoSwitchesToHealthyAnimalWithoutPrompting()
+    public void HandlePlayerDefeatedAnimal_WithTwoAnimals_AutoSwitchesToHealthyAnimalWithoutPrompting()
     {
         Player player = CreateTwoAnimalPlayer();
         player.AnimalInventory[0].Health = 0;
         FakeGameIO io = new();
 
-        bool switched = BattleHelpers.HandlePlayerFaintedAnimal(io, player, "Would you like to switch animals?");
+        PlayerDefeatedAnimalResult result = BattleHelpers.HandlePlayerDefeatedAnimal(io, player, "Would you like to switch animals?");
 
-        Assert.True(switched);
+        Assert.Equal(PlayerDefeatedAnimalResult.Switched, result);
         Assert.Equal("N_LION", player.AnimalInventory[0].Name);
         Assert.Equal("N_CAT", player.AnimalInventory[1].Name);
+        Assert.DoesNotContain("defeated.", io.OutputText);
         Assert.DoesNotContain("Would you like to switch animals?", io.OutputText);
     }
 
-    // Verifies that a two-creature party does not auto-switch when both creatures have fainted.
+    // Verifies that a two-creature party does not auto-switch when both creatures have been defeated.
     [Fact]
-    public void HandlePlayerFaintedAnimal_WithTwoFaintedAnimals_DoesNotAutoSwitch()
+    public void HandlePlayerDefeatedAnimal_WithTwoDefeatedAnimals_DoesNotAutoSwitch()
     {
         Player player = CreateTwoAnimalPlayer();
         player.AnimalInventory[0].Health = 0;
         player.AnimalInventory[1].Health = 0;
         FakeGameIO io = new();
 
-        bool switched = BattleHelpers.HandlePlayerFaintedAnimal(io, player, "Would you like to switch animals?");
+        PlayerDefeatedAnimalResult result = BattleHelpers.HandlePlayerDefeatedAnimal(io, player, "Would you like to switch animals?");
 
-        Assert.False(switched);
+        Assert.Equal(PlayerDefeatedAnimalResult.DefeatedNoSwitch, result);
         Assert.Equal("N_CAT", player.AnimalInventory[0].Name);
         Assert.Equal("N_LION", player.AnimalInventory[1].Name);
+        Assert.DoesNotContain("defeated.", io.OutputText);
         Assert.DoesNotContain("Would you like to switch animals?", io.OutputText);
     }
 
-    // Verifies that faint detection returns true for zero health.
+    // Verifies that the defeat handler reports no action when the active creature is still healthy.
     [Fact]
-    public void BattleEngine_IsFainted_ReturnsTrueForZeroHealth()
+    public void HandlePlayerDefeatedAnimal_WhenAnimalIsHealthy_ReturnsNotDefeated()
+    {
+        Player player = CreateTwoAnimalPlayer();
+        FakeGameIO io = new();
+
+        PlayerDefeatedAnimalResult result = BattleHelpers.HandlePlayerDefeatedAnimal(io, player, "Would you like to switch animals?");
+
+        Assert.Equal(PlayerDefeatedAnimalResult.NotDefeated, result);
+        Assert.Equal(string.Empty, io.OutputText);
+    }
+
+    // Verifies that defeat detection returns true for zero health.
+    [Fact]
+    public void BattleEngine_IsDefeated_ReturnsTrueForZeroHealth()
     {
         Animal animal = new Animal(id: 99, name: "N_CAT", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: 0, level: 1, moves: new[] { MoveData.POUNCE });
 
-        Assert.True(BattleEngine.IsFainted(animal));
+        Assert.True(BattleEngine.IsDefeated(animal));
     }
 
     // Verifies that the engine reports no usable party creatures when all health values are zero or below.
@@ -276,9 +308,9 @@ public class BattleStateTests
         Assert.Equal(0, BattleEngine.GetOnlyOtherAnimalIndex(player, player.AnimalInventory[1]));
     }
 
-    // Verifies that auto-switching fails when the only replacement creature has also fainted.
+    // Verifies that auto-switching fails when the only replacement creature has also been defeated.
     [Fact]
-    public void BattleEngine_TryAutoSwitchTwoAnimalParty_ReturnsFalseWhenReplacementIsFainted()
+    public void BattleEngine_TryAutoSwitchTwoAnimalParty_ReturnsFalseWhenReplacementIsDefeated()
     {
         Player player = CreateTwoAnimalPlayer();
         player.AnimalInventory[0].Health = 0;
@@ -361,6 +393,29 @@ public class BattleStateTests
         Assert.Contains("N_LION used STRONG", io.OutputText);
     }
 
+    // Verifies that opponent healing move output includes the move used.
+    [Fact]
+    public void HandleOpponentTurn_HealingMove_PrintsMoveUsed()
+    {
+        Animal opponent = new Animal(
+            id: 1,
+            name: "N_LION",
+            element: AnimalElement.Nature,
+            speed: 7,
+            baseHealth: 20,
+            health: 10,
+            level: 1,
+            moves: new[] { MoveData.BLOOM });
+        Animal player = new Animal(id: 2, name: "N_CAT", element: AnimalElement.Nature, speed: 7, baseHealth: 20, health: 20, level: 1, moves: new[] { MoveData.POUNCE });
+        FakeGameIO io = new();
+
+        BattleHelpers.HandleOpponentTurn(io, opponent, player, "Opponent Move", string.Empty, new FixedMoveSelector(MoveData.BLOOM));
+
+        Assert.Equal(20, opponent.Health);
+        Assert.Contains("N_LION used Bloom", io.OutputText);
+        Assert.Contains("Health Restored", io.OutputText);
+    }
+
     // Verifies that letting a wild creature run away removes it from the room encounter list.
     [Fact]
     public void BattleEngine_LetWildAnimalRunAway_RemovesEncounterAnimal()
@@ -388,9 +443,9 @@ public class BattleStateTests
         Assert.False(battleState.IsOver);
     }
 
-    // Verifies that creating a wild battle skips fainted lead creatures and starts with the next healthy one.
+    // Verifies that creating a wild battle skips defeated lead creatures and starts with the next healthy one.
     [Fact]
-    public void BattleState_CreateWildBattle_SkipsFaintedPlayerLeadAnimal()
+    public void BattleState_CreateWildBattle_SkipsDefeatedPlayerLeadAnimal()
     {
         Player player = CreateTwoAnimalPlayer();
         player.AddAnimal(new Animal(id: 3, name: "N_DOG", element: AnimalElement.Nature, speed: 7, baseHealth: 10, health: 10, level: 1, moves: new[] { MoveData.THORNWRAP }));

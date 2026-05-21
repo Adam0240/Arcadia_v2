@@ -79,12 +79,13 @@ namespace UnitTest
                 Assert.Equal("Red", persistedState.Player.Name);
                 Assert.Equal("Road 2", persistedState.Player.CurrentRoomName);
                 Assert.Contains("Grass Badge", persistedState.Player.Badges);
-                Assert.Equal(leadAnimal.Id, persistedState.Player.PokemonInventory[0].Id);
-                Assert.Equal(7, persistedState.Player.PokemonInventory[0].Health);
-                Assert.Equal(leadAnimal.BaseHealth, persistedState.Player.PokemonInventory[0].BaseHealth);
-                Assert.Equal(leadAnimal.Speed, persistedState.Player.PokemonInventory[0].Speed);
-                Assert.Equal(leadAnimal.Moves[0].Name, persistedState.Player.PokemonInventory[0].Moves[0].Name);
-                Assert.Equal(4, persistedState.Rooms.Single(room => room.Name == "Road 1").EncounterPokemon[0].Id);
+                Assert.Equal(leadAnimal.Id, persistedState.Player.AnimalInventory[0].Id);
+                Assert.Equal(7, persistedState.Player.AnimalInventory[0].Health);
+                Assert.Equal(leadAnimal.BaseHealth, persistedState.Player.AnimalInventory[0].BaseHealth);
+                Assert.Equal(leadAnimal.Speed, persistedState.Player.AnimalInventory[0].Speed);
+                Assert.Equal(leadAnimal.Moves[0].Name, persistedState.Player.AnimalInventory[0].Moves[0].Name);
+                Assert.Equal(leadAnimal.Moves[0].Effect, persistedState.Player.AnimalInventory[0].Moves[0].Effect);
+                Assert.Equal(4, persistedState.Rooms.Single(room => room.Name == "Road 1").EncounterAnimals[0].Id);
                 Assert.True(persistedState.Trainers.Single(trainer => trainer.Name == "Mrs. Mcmann").Defeated);
             }
             finally
@@ -129,7 +130,7 @@ namespace UnitTest
                     Name = "Red",
                     CurrentRoomName = "Ikena",
                     Badges = new List<string> { "Grass Badge" },
-                    PokemonInventory = new List<PokemonSaveState>
+                    AnimalInventory = new List<AnimalSaveState>
                     {
                         new()
                         {
@@ -141,7 +142,7 @@ namespace UnitTest
                             Speed = 7,
                             Moves = new List<MoveSaveState>
                             {
-                                new() { Name = "TACKLE", Type = ElementType.Base, Power = 5 }
+                                new() { Name = "TACKLE", Type = ElementType.Base, Power = 5, Effect = MoveEffect.Damage }
                             }
                         }
                     }
@@ -151,7 +152,7 @@ namespace UnitTest
                     new()
                     {
                         Name = "Road 1",
-                        EncounterPokemon = new List<PokemonSaveState>
+                        EncounterAnimals = new List<AnimalSaveState>
                         {
                             new() { Id = 9, Name = "N_BIRD", Health = 12 }
                         }
@@ -165,7 +166,7 @@ namespace UnitTest
                         CurrentRoomName = "Oak Pass",
                         Defeated = true,
                         Badges = new List<string> { "Grass Badge" },
-                        BattleTeamTemplate = new List<PokemonSaveState>
+                        BattleTeamTemplate = new List<AnimalSaveState>
                         {
                             new() { Id = 3, Name = "N_DOG", Health = 20 }
                         }
@@ -181,10 +182,11 @@ namespace UnitTest
             Assert.Single(restored.Player.Badges);
             Assert.Single(restored.Rooms);
             Assert.True(restored.Trainers[0].Defeated);
-            Assert.Equal(5, restored.Player.PokemonInventory[0].Level);
-            Assert.Equal(40, restored.Player.PokemonInventory[0].BaseHealth);
-            Assert.Equal(7, restored.Player.PokemonInventory[0].Speed);
-            Assert.Equal("TACKLE", restored.Player.PokemonInventory[0].Moves[0].Name);
+            Assert.Equal(5, restored.Player.AnimalInventory[0].Level);
+            Assert.Equal(40, restored.Player.AnimalInventory[0].BaseHealth);
+            Assert.Equal(7, restored.Player.AnimalInventory[0].Speed);
+            Assert.Equal("TACKLE", restored.Player.AnimalInventory[0].Moves[0].Name);
+            Assert.Equal(MoveEffect.Damage, restored.Player.AnimalInventory[0].Moves[0].Effect);
         }
 
         // Checks that capturing and reapplying save data restores the main runtime state of the game.
@@ -251,16 +253,17 @@ namespace UnitTest
             Assert.True(result.Succeeded);
             Assert.Equal("Game saved.", result.Message);
             Assert.Equal("Road 2", savedState.Player.CurrentRoomName);
-            Assert.Equal(1, savedState.Player.PokemonInventory[0].Id);
-            Assert.Equal("N_CAT", savedState.Player.PokemonInventory[0].Name);
-            Assert.Equal(21, savedState.Player.PokemonInventory[0].Speed);
-            Assert.Equal(101, savedState.Player.PokemonInventory[0].BaseHealth);
-            Assert.Equal(88, savedState.Player.PokemonInventory[0].Health);
-            Assert.Equal(7, savedState.Player.PokemonInventory[0].Level);
-            Assert.Equal("CUSTOMBITE", savedState.Player.PokemonInventory[0].Moves[0].Name);
-            Assert.Equal(ElementType.Nature, savedState.Player.PokemonInventory[0].Moves[0].Type);
-            Assert.Equal(13, savedState.Player.PokemonInventory[0].Moves[0].Power);
-            Assert.Equal("CUSTOMSPARK", savedState.Player.PokemonInventory[0].Moves[1].Name);
+            Assert.Equal(1, savedState.Player.AnimalInventory[0].Id);
+            Assert.Equal("N_CAT", savedState.Player.AnimalInventory[0].Name);
+            Assert.Equal(21, savedState.Player.AnimalInventory[0].Speed);
+            Assert.Equal(101, savedState.Player.AnimalInventory[0].BaseHealth);
+            Assert.Equal(88, savedState.Player.AnimalInventory[0].Health);
+            Assert.Equal(7, savedState.Player.AnimalInventory[0].Level);
+            Assert.Equal("CUSTOMBITE", savedState.Player.AnimalInventory[0].Moves[0].Name);
+            Assert.Equal(ElementType.Nature, savedState.Player.AnimalInventory[0].Moves[0].Type);
+            Assert.Equal(13, savedState.Player.AnimalInventory[0].Moves[0].Power);
+            Assert.Equal(MoveEffect.Damage, savedState.Player.AnimalInventory[0].Moves[0].Effect);
+            Assert.Equal("CUSTOMSPARK", savedState.Player.AnimalInventory[0].Moves[1].Name);
         }
 
         // Checks that capturing and reapplying save data restores modified runtime stats and custom moves.
@@ -278,7 +281,7 @@ namespace UnitTest
                 level: 7,
                 moves: new[]
                 {
-                    new Move("CUSTOMBITE", ElementType.Nuclear, 13),
+                    new Move("CUSTOMHEAL", ElementType.Nuclear, 13, MoveEffect.Heal),
                     new Move("CUSTOMSPARK", ElementType.Thunder, 11)
                 });
             gameState.MainPlayer.RestoreAnimalInventory(new[] { changedAnimal });
@@ -296,9 +299,10 @@ namespace UnitTest
             Assert.Equal(101, restoredAnimal.BaseHealth);
             Assert.Equal(88, restoredAnimal.Health);
             Assert.Equal(7, restoredAnimal.Level);
-            Assert.Equal("CUSTOMBITE", restoredAnimal.Moves[0].Name);
+            Assert.Equal("CUSTOMHEAL", restoredAnimal.Moves[0].Name);
             Assert.Equal(ElementType.Nuclear, restoredAnimal.Moves[0].Type);
             Assert.Equal(13, restoredAnimal.Moves[0].Power);
+            Assert.Equal(MoveEffect.Heal, restoredAnimal.Moves[0].Effect);
             Assert.Equal("CUSTOMSPARK", restoredAnimal.Moves[1].Name);
         }
 
@@ -314,7 +318,7 @@ namespace UnitTest
                 {
                     Name = "Blue",
                     CurrentRoomName = gameState.GameMap.StartRoom.Name,
-                    PokemonInventory = new List<PokemonSaveState>
+                    AnimalInventory = new List<AnimalSaveState>
                     {
                         new() { Id = 1, Name = "N_CAT", Health = 12 }
                     }
@@ -333,6 +337,43 @@ namespace UnitTest
             Assert.Equal(template.Moves.Select(move => move.Name), restoredAnimal.Moves.Select(move => move.Name));
         }
 
+        // Checks that save data written before move effects existed can still restore Bloom as a healing move.
+        [Fact]
+        public void Mapper_ApplySaveWithoutMoveEffect_UsesFactoryMoveEffect()
+        {
+            GameState gameState = CreateGameState("Red");
+            GameSaveState saveState = new()
+            {
+                Player = new PlayerSaveState
+                {
+                    Name = "Blue",
+                    CurrentRoomName = gameState.GameMap.StartRoom.Name,
+                    AnimalInventory = new List<AnimalSaveState>
+                    {
+                        new()
+                        {
+                            Id = 2,
+                            Name = "N_LION",
+                            Health = 40,
+                            BaseHealth = 75,
+                            Speed = 7,
+                            Level = 1,
+                            Moves = new List<MoveSaveState>
+                            {
+                                new() { Name = "Bloom", Type = ElementType.Nature, Power = 10 }
+                            }
+                        }
+                    }
+                }
+            };
+
+            GameStateMapper.Apply(gameState, saveState);
+
+            Move restoredMove = gameState.MainPlayer.AnimalInventory[0].Moves[0];
+            Assert.Equal("Bloom", restoredMove.Name);
+            Assert.Equal(MoveEffect.Heal, restoredMove.Effect);
+        }
+
         // Checks that applying save data with out-of-range health values throws a validation error.
         [Theory]
         [InlineData(-1)]
@@ -346,7 +387,7 @@ namespace UnitTest
                 {
                     Name = "Blue",
                     CurrentRoomName = gameState.GameMap.StartRoom.Name,
-                    PokemonInventory = new List<PokemonSaveState>
+                    AnimalInventory = new List<AnimalSaveState>
                     {
                         new() { Id = 1, Name = "N_CAT", Health = savedHealth, BaseHealth = 75 }
                     }
@@ -362,7 +403,7 @@ namespace UnitTest
         {
             GameState gameState = CreateGameState("Red");
             GameSaveState saveState = GameStateMapper.Capture(gameState);
-            saveState.Player.PokemonInventory[0].Health = saveState.Player.PokemonInventory[0].BaseHealth + 1;
+            saveState.Player.AnimalInventory[0].Health = saveState.Player.AnimalInventory[0].BaseHealth + 1;
             string saveJson = GameSaveSerializer.Serialize(saveState);
             GameSaveService saveService = new(new FakeGameSaveRepository(saveJson));
 
@@ -511,3 +552,4 @@ namespace UnitTest
         }
     }
 }
+

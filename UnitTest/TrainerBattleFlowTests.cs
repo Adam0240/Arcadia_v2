@@ -6,9 +6,9 @@ namespace UnitTest;
 
 public class TrainerBattleFlowTests
 {
-    // Checks that trainer battles send out the next healthy opponent creature after the active one faints.
+    // Checks that trainer battles send out the next healthy opponent creature after the active one is defeated.
     [Fact]
-    public void Run_WhenOpponentAnimalFaints_SendsOutNextHealthyAnimal()
+    public void Run_WhenOpponentAnimalIsDefeated_SendsOutNextHealthyAnimal()
     {
         Player player = CreatePlayer();
         CompPlayer opponent = CreateOpponent();
@@ -21,7 +21,7 @@ public class TrainerBattleFlowTests
 
     // Checks that defeating an entire opponent team marks the trainer defeated and awards the badge.
     [Fact]
-    public void Run_WhenOpponentTeamFaints_CompletesBattleAndAwardsBadge()
+    public void Run_WhenOpponentTeamIsDefeated_CompletesBattleAndAwardsBadge()
     {
         Player player = CreatePlayer();
         CompPlayer opponent = CreateOpponent();
@@ -48,9 +48,9 @@ public class TrainerBattleFlowTests
         Assert.Contains("The opponents N_DOG's health is at: 5", io.OutputText);
     }
 
-    // Checks that trainer battles start with the next healthy player creature when the lead has fainted.
+    // Checks that trainer battles start with the next healthy player creature when the lead has been defeated.
     [Fact]
-    public void Run_WhenPlayerLeadIsFainted_StartsWithNextHealthyAnimal()
+    public void Run_WhenPlayerLeadIsDefeated_StartsWithNextHealthyAnimal()
     {
         Player player = CreatePlayer();
         player.AnimalInventory[0].Health = 0;
@@ -62,9 +62,9 @@ public class TrainerBattleFlowTests
         Assert.Contains("You sent out N_LION", io.OutputText);
     }
 
-    // Checks that trainer battles stop immediately with the party-fainted message when no usable player creatures remain.
+    // Checks that trainer battles stop immediately with the party-defeated message when no usable player creatures remain.
     [Fact]
-    public void Run_WhenAllPlayerAnimalsAreFainted_PrintsPartyFaintedMessage()
+    public void Run_WhenAllPlayerAnimalsAreDefeated_PrintsPartyDefeatedMessage()
     {
         Player player = CreatePlayer();
         player.AnimalInventory[0].Health = 0;
@@ -74,7 +74,7 @@ public class TrainerBattleFlowTests
 
         TrainerBattleFlow.Run(io, player, opponent);
 
-        Assert.Contains("All animals in your party are fainted.", io.OutputText);
+        Assert.Contains("All animals in your party are defeated.", io.OutputText);
         Assert.DoesNotContain("You sent out", io.OutputText);
     }
 
@@ -96,6 +96,8 @@ public class TrainerBattleFlowTests
 
         Assert.Equal(0, player.AnimalInventory[0].Health);
         Assert.Contains("N_DOG used STRONG", io.OutputText);
+        Assert.Equal(1, io.OutputText.Split("N_CAT defeated.").Length - 1);
+        Assert.Equal(1, io.OutputText.Split("Battle Lost, all animals in your party are defeated").Length - 1);
     }
 
     private static Player CreatePlayer()

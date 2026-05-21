@@ -32,7 +32,7 @@ namespace Arcadia_v2.Map
 
             ConnectRooms();
             AddMovementRequirements();
-            PopulateWildPokemon();
+            PopulateWildAnimals();
         }
 
         // Creates all rooms first so connections can be added in one dedicated step.
@@ -40,11 +40,11 @@ namespace Arcadia_v2.Map
         {
             return new Dictionary<RoomId, Room>
             {
-                [RoomId.MaiaStable] = new Room(RoomId.MaiaStable, "Maia's Stable", "Where new trainers obtain their first pokemon!"),
+                [RoomId.MaiaStable] = new Room(RoomId.MaiaStable, "Maia's Stable", "Where new trainers obtain their first creature!"),
                 [RoomId.Ikena] = new Room(RoomId.Ikena, "Ikena", "Small peaceful town where hero's are born") { IsTown = true },
-                [RoomId.Road1] = new Room(RoomId.Road1, "Road 1", "Where you make your first step into your Pokemon Journey!"),
+                [RoomId.Road1] = new Room(RoomId.Road1, "Road 1", "Where you make your first step into your Arcadia journey!"),
                 [RoomId.Road2] = new Room(RoomId.Road2, "Road 2", ""),
-                [RoomId.OakPass] = new Room(RoomId.OakPass, "Oak Pass", "Town surrounded by trees and forest Pokemon") { IsTown = true },
+                [RoomId.OakPass] = new Room(RoomId.OakPass, "Oak Pass", "Town surrounded by trees and forest creatures") { IsTown = true },
                 [RoomId.Road3] = new Room(RoomId.Road3, "Road 3", ""),
                 [RoomId.Road4] = new Room(RoomId.Road4, "Road 4", "Tunnel"),
                 [RoomId.NewNucleon] = new Room(RoomId.NewNucleon, "New Nucleon", "Founded after Nucleon incident") { IsTown = true },
@@ -58,7 +58,7 @@ namespace Arcadia_v2.Map
                 [RoomId.FinalTrials] = new Room(RoomId.FinalTrials, "Final Trials", "Expert trainers and future champions all travel through here"),
                 [RoomId.GuardiansTower] = new Room(RoomId.GuardiansTower, "Guardian's Tower", "Where you find out if you're the best!"),
                 [RoomId.Road8] = new Room(RoomId.Road8, "Road 8", ""),
-                [RoomId.TheEnd] = new Room(RoomId.TheEnd, "The End", "Decide where you wish to stay") { IsFinalRoom = true, RequiresChampionDefeatToEnter = true }
+                [RoomId.TheEnd] = new Room(RoomId.TheEnd, "The End", "Decide where you wish to stay") { IsFinalRoom = true }
             };
         }
 
@@ -181,7 +181,7 @@ namespace Arcadia_v2.Map
         }
 
         // Populates wild animal room assignments while cloning each entry for isolated encounter state.
-        private void PopulateWildPokemon()
+        private void PopulateWildAnimals()
         {
             IReadOnlyList<Arcadia_v2.Animal> mapAnimals = Arcadia_v2.GameData.CreateAnimals();
 
@@ -198,7 +198,7 @@ namespace Arcadia_v2.Map
             AddAnimalToRoom(RoomId.Mountains, mapAnimals[8]);
             AddAnimalToRoom(RoomId.RadioactiveWay, mapAnimals[6]);
             AddAnimalToRoom(RoomId.FinalTrials, mapAnimals[17]);
-            AddAnimalToRoom(RoomId.TheEnd, mapAnimals[19]);
+            AddAnimalToRoom(RoomId.TheEnd, mapAnimals.Single(animal => animal.Name == "NU_DRAGON"));
         }
 
         // Places one wild animal into a room.

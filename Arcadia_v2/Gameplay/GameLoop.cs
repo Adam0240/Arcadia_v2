@@ -98,7 +98,7 @@ namespace Arcadia_v2
                         gameState);
                     break;
 
-                case ActionCommandType.PokeInventory:
+                case ActionCommandType.AnimalInventory:
                     io.WriteLine(gameState.MainPlayer.GetAnimalInventoryDisplay());
                     break;
 

@@ -36,8 +36,6 @@ namespace Arcadia_v2.Map
         public string Description { get; }
         public bool IsTown { get; init; }
         public bool IsFinalRoom { get; init; }
-        public int RequiredBadgesToEnter { get; init; }
-        public bool RequiresChampionDefeatToEnter { get; init; }
 
         // Stores references to adjacent rooms so movement can happen by direction.
         public Room? North { get; set; }

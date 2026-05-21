@@ -15,18 +15,31 @@ namespace Arcadia_v2.Creatures
         Nuclear
     }
 
+    public enum MoveEffect
+    {
+        Unspecified,
+        Damage,
+        Heal
+    }
+
     // Represents one battle move and its immutable combat values.
     public class Move
     {
         public string Name { get; }
         public ElementType Type { get; }
         public int Power { get; }
+        public MoveEffect Effect { get; }
 
         // Compatibility aliases for callers that use move-specific member names.
         public string MoveName => Name;
         public int MovePower => Power;
 
         public Move(string name, ElementType type, int power)
+            : this(name, type, power, MoveEffect.Damage)
+        {
+        }
+
+        public Move(string name, ElementType type, int power, MoveEffect effect)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -38,13 +51,19 @@ namespace Arcadia_v2.Creatures
                 throw new ArgumentOutOfRangeException(nameof(power), "Move power cannot be negative.");
             }
 
+            if (effect == MoveEffect.Unspecified)
+            {
+                throw new ArgumentException("Move effect must be specified.", nameof(effect));
+            }
+
             Name = name;
             Type = type;
             Power = power;
+            Effect = effect;
         }
     }
 
-    // Shared predefined moves used by Pokemon factory data and tests.
+    // Shared predefined moves used by animal factory data and tests.
     public static class MoveData
     {
         // Base Moves
@@ -71,7 +90,7 @@ namespace Arcadia_v2.Creatures
 
         //Ant
         public static readonly Move MANDIBLE_BITE = new Move("Mandible Bite", ElementType.Base, 0);
-        public static readonly Move COLONY_RUSH = new Move("LEER", ElementType.Base, 0);
+        public static readonly Move COLONY_RUSH = new Move("Colony Rush", ElementType.Base, 0);
 
         //Cub
         public static readonly Move PLAY_SWIPE = new Move("Play Swipe", ElementType.Base, 0);
@@ -85,14 +104,14 @@ namespace Arcadia_v2.Creatures
         // Nature Moves
         public static readonly Move THORNWRAP = new Move("Thorn Wrap", ElementType.Nature, 7);
         public static readonly Move VERDANT_SURGE = new Move("Verdant Surge", ElementType.Nature, 8);
-        public static readonly Move BLOOM = new Move("Bloom", ElementType.Nature, 10);
+        public static readonly Move BLOOM = new Move("Bloom", ElementType.Nature, 10, MoveEffect.Heal);
         public static readonly Move NATURES_WRATH = new Move("Nature's Wrath", ElementType.Nature, 12);
 
         // Mystic Moves
         public static readonly Move CURRENT_RUSH = new Move("Current Rush", ElementType.Mystic, 6);
-        public static readonly Move OCEON_PULSE = new Move("Oceon's Pulse", ElementType.Mystic, 7);
+        public static readonly Move OCEAN_PULSE = new Move("Ocean Pulse", ElementType.Mystic, 7);
         public static readonly Move DEEPSEA_RUPTURE = new Move("Deepsea Rupture", ElementType.Mystic, 8);
-        public static readonly Move TIDAL_BREAK = new Move("Tital Break", ElementType.Mystic, 12);
+        public static readonly Move TIDAL_BREAK = new Move("Tidal Break", ElementType.Mystic, 12);
 
         // Thunder Moves
         public static readonly Move STATIC_CLAW = new Move("Static Claw", ElementType.Thunder, 7);

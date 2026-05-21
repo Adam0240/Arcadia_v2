@@ -205,7 +205,7 @@ namespace Arcadia_v2.Creatures
                     baseHealth: 75,
                     health: 75,
                     level: 0,
-                    moves: new[] { MoveData.POUNCE, MoveData.FELINE_REFLEX, MoveData.CURRENT_RUSH, MoveData.OCEON_PULSE }),
+                    moves: new[] { MoveData.POUNCE, MoveData.FELINE_REFLEX, MoveData.CURRENT_RUSH, MoveData.OCEAN_PULSE }),
 
                 CreateAnimalEntry(
                     id: 18,
@@ -225,7 +225,7 @@ namespace Arcadia_v2.Creatures
                     baseHealth: 45,
                     health: 45,
                     level: 0,
-                    moves: new[] { MoveData.LOYAL_RUSH, MoveData.WILD_CHASE, MoveData.CURRENT_RUSH, MoveData.OCEON_PULSE }),
+                    moves: new[] { MoveData.LOYAL_RUSH, MoveData.WILD_CHASE, MoveData.CURRENT_RUSH, MoveData.OCEAN_PULSE }),
 
                 CreateAnimalEntry(
                     id: 20,
@@ -245,7 +245,7 @@ namespace Arcadia_v2.Creatures
                     baseHealth: 80,
                     health: 80,
                     level: 0,
-                    moves: new[] { MoveData.HOOF_KICK, MoveData.STAMPEDE, MoveData.CURRENT_RUSH, MoveData.OCEON_PULSE }),
+                    moves: new[] { MoveData.HOOF_KICK, MoveData.STAMPEDE, MoveData.CURRENT_RUSH, MoveData.OCEAN_PULSE }),
 
                 CreateAnimalEntry(
                     id: 22,
@@ -265,7 +265,7 @@ namespace Arcadia_v2.Creatures
                     baseHealth: 80,
                     health: 80,
                     level: 0,
-                    moves: new[] { MoveData.HEAD_BASH, MoveData.DEEP_RETREAT, MoveData.CURRENT_RUSH, MoveData.OCEON_PULSE }),
+                    moves: new[] { MoveData.HEAD_BASH, MoveData.DEEP_RETREAT, MoveData.CURRENT_RUSH, MoveData.OCEAN_PULSE }),
 
                 CreateAnimalEntry(
                     id: 24,
@@ -285,7 +285,7 @@ namespace Arcadia_v2.Creatures
                     baseHealth: 80,
                     health: 80,
                     level: 0,
-                    moves: new[] { MoveData.BEAK_STRIKE, MoveData.QUICK_TALON, MoveData.CURRENT_RUSH, MoveData.OCEON_PULSE }),
+                    moves: new[] { MoveData.BEAK_STRIKE, MoveData.QUICK_TALON, MoveData.CURRENT_RUSH, MoveData.OCEAN_PULSE }),
 
                 CreateAnimalEntry(
                     id: 26,
@@ -305,7 +305,7 @@ namespace Arcadia_v2.Creatures
                     baseHealth: 65,
                     health: 65,
                     level: 0,
-                    moves: new[] { MoveData.MANDIBLE_BITE, MoveData.COLONY_RUSH, MoveData.CURRENT_RUSH, MoveData.OCEON_PULSE }),
+                    moves: new[] { MoveData.MANDIBLE_BITE, MoveData.COLONY_RUSH, MoveData.CURRENT_RUSH, MoveData.OCEAN_PULSE }),
 
                 CreateAnimalEntry(
                     id: 28,
@@ -325,7 +325,7 @@ namespace Arcadia_v2.Creatures
                     baseHealth: 70,
                     health: 70,
                     level: 0,
-                    moves: new[] { MoveData.PLAY_SWIPE, MoveData.TUMBLE_RUSH, MoveData.CURRENT_RUSH, MoveData.OCEON_PULSE }),
+                    moves: new[] { MoveData.PLAY_SWIPE, MoveData.TUMBLE_RUSH, MoveData.CURRENT_RUSH, MoveData.OCEAN_PULSE }),
 
                 CreateAnimalEntry(
                     id: 30,
@@ -345,7 +345,7 @@ namespace Arcadia_v2.Creatures
                     baseHealth: 75,
                     health: 75,
                     level: 0,
-                    moves: new[] { MoveData.VENOM_FANG, MoveData.SHADOW_FANG, MoveData.CURRENT_RUSH, MoveData.OCEON_PULSE }),
+                    moves: new[] { MoveData.VENOM_FANG, MoveData.SHADOW_FANG, MoveData.CURRENT_RUSH, MoveData.OCEAN_PULSE }),
 
                 CreateAnimalEntry(
                     id: 32,

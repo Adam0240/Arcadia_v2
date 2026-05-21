@@ -131,7 +131,6 @@ namespace UnitTest
         [Fact]
         public void Clone_CreatesIndependentAnimalCopy()
         {
-            Move moonlight = new Move("MOONLIGHT", ElementType.Mystic, 10);
             Animal original = new(
                 id: 1,
                 name: "N_CAT",
@@ -140,7 +139,7 @@ namespace UnitTest
                 baseHealth: 75,
                 health: 75,
                 level: 4,
-                moves: new[] { MoveData.VENOM_FANG, moonlight });
+                moves: new[] { MoveData.VENOM_FANG, MoveData.BLOOM });
 
             Animal clone = original.Clone();
             clone.Health = 10;
