@@ -129,5 +129,17 @@ namespace UnitTest
             Assert.True(map.Rooms.ContainsKey("Guardian's Tower"));
             Assert.True(map.Rooms.ContainsKey("The End"));
         }
+
+        // Checks that the final encounter room contains the intended final creature.
+        [Fact]
+        public void Constructor_PopulatesTheEndWithNuclearDragon()
+        {
+            Map map = new();
+            Room theEnd = map.GetRoom(RoomId.TheEnd);
+
+            Animal finalEncounter = Assert.Single(theEnd.EncounterAnimals);
+            Assert.Equal("NU_DRAGON", finalEncounter.Name);
+            Assert.Equal(96, finalEncounter.Id);
+        }
     }
 }

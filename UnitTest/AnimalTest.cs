@@ -161,6 +161,27 @@ namespace UnitTest
             Assert.Equal(97, animals.Count);
         }
 
+        // Checks that factory ids stay contiguous and preserve NU_DRAGON as the final roster creature.
+        [Fact]
+        public void AnimalFactory_CreateAnimals_UsesContiguousIdsEndingAtNuclearDragon()
+        {
+            IReadOnlyList<Animal> animals = AnimalFactory.CreateAnimals();
+
+            Assert.Equal(Enumerable.Range(0, 97), animals.Select(animal => animal.Id));
+            Assert.Equal(96, animals[^1].Id);
+            Assert.Equal("NU_DRAGON", animals[^1].Name);
+        }
+
+        // Checks that factory ids and names are unique across the generated roster.
+        [Fact]
+        public void AnimalFactory_CreateAnimals_UsesUniqueIdsAndNames()
+        {
+            IReadOnlyList<Animal> animals = AnimalFactory.CreateAnimals();
+
+            Assert.Equal(animals.Count, animals.Select(animal => animal.Id).Distinct().Count());
+            Assert.Equal(animals.Count, animals.Select(animal => animal.Name).Distinct().Count());
+        }
+
         // Checks that factory creature names stay compatible with uppercased player input.
         [Fact]
         public void AnimalFactory_CreateAnimals_UsesUppercaseNames()
@@ -168,6 +189,30 @@ namespace UnitTest
             IReadOnlyList<Animal> animals = AnimalFactory.CreateAnimals();
 
             Assert.All(animals, animal => Assert.Equal(animal.Name.ToUpperInvariant(), animal.Name));
+        }
+
+        // Checks that every generated animal keeps the expected four-move roster shape.
+        [Fact]
+        public void AnimalFactory_CreateAnimals_EachCreatureHasFourMoves()
+        {
+            IReadOnlyList<Animal> animals = AnimalFactory.CreateAnimals();
+
+            Assert.All(animals, animal => Assert.Equal(4, animal.Moves.Count));
+        }
+
+        // Checks that generated move slots keep two base moves followed by two element moves.
+        [Fact]
+        public void AnimalFactory_CreateAnimals_EachCreatureHasTwoBaseAndTwoElementMoves()
+        {
+            IReadOnlyList<Animal> animals = AnimalFactory.CreateAnimals();
+
+            foreach (Animal animal in animals)
+            {
+                Assert.Equal(ElementType.Base, animal.Moves[0].Type);
+                Assert.Equal(ElementType.Base, animal.Moves[1].Type);
+                Assert.Equal(ToElementType(animal.Element), animal.Moves[2].Type);
+                Assert.Equal(ToElementType(animal.Element), animal.Moves[3].Type);
+            }
         }
 
         // Checks that all creatures that used to be water-based now map to the Mystic element.
@@ -195,6 +240,7 @@ namespace UnitTest
             IReadOnlyList<Animal> animals = AnimalFactory.CreateAnimals();
             Animal cat = animals.Single(animal => animal.Name == "N_CAT");
             Animal lion = animals.Single(animal => animal.Name == "N_LION");
+            Animal nuclearDragon = animals.Single(animal => animal.Name == "NU_DRAGON");
 
             Assert.Contains(MoveData.POUNCE, cat.Moves);
             Assert.Contains(MoveData.FELINE_REFLEX, cat.Moves);
@@ -204,6 +250,24 @@ namespace UnitTest
             Assert.Contains(MoveData.FELINE_REFLEX, lion.Moves);
             Assert.Contains(MoveData.BLOOM, lion.Moves);
             Assert.Contains(MoveData.NATURES_WRATH, lion.Moves);
+            Assert.Contains(MoveData.VENOM_FANG, nuclearDragon.Moves);
+            Assert.Contains(MoveData.SHADOW_FANG, nuclearDragon.Moves);
+            Assert.Contains(MoveData.CONTAMINATE, nuclearDragon.Moves);
+            Assert.Contains(MoveData.CORE_DETONATION, nuclearDragon.Moves);
+        }
+
+        private static ElementType ToElementType(AnimalElement element)
+        {
+            return element switch
+            {
+                AnimalElement.Nature => ElementType.Nature,
+                AnimalElement.Mystic => ElementType.Mystic,
+                AnimalElement.Thunder => ElementType.Thunder,
+                AnimalElement.Draconic => ElementType.Draconic,
+                AnimalElement.Cosmic => ElementType.Cosmic,
+                AnimalElement.Nuclear => ElementType.Nuclear,
+                _ => throw new ArgumentOutOfRangeException(nameof(element), element, null)
+            };
         }
     }
 }

@@ -1,164 +1,131 @@
 # Code Review
 
-Review target: current working tree in `Arcadia_v2`.
+## Pokemon-Likeness / IP Terminology Review
 
-Validation run:
+Scope: searched production code and tests for explicit Pokemon names, Pokemon terminology, Pokemon-like progression terms, and story/gameplay language that could read too close to Pokemon. This is an engineering/product-risk review, not legal advice.
 
-```powershell
-dotnet build .\Arcadia_v2\Arcadia_v2.csproj /nologo /clp:ErrorsOnly
-dotnet test .\UnitTest\UnitTest.csproj /nologo /clp:ErrorsOnly
-```
+External reference points used for context:
 
-Result: build passed with `0` warnings/errors, and all `162` unit tests passed.
+- Official Pokemon site for `Pokemon Legends: Arceus`, which identifies `Arceus` as a Pokemon: https://legends.arceus.pokemon.com/en-us/pokemon/arceus/
+- Official Pokemon Sword/Shield site describing Gym Leaders, Gyms, Trainers, and the Champion challenge structure: https://swordshield.pokemon.com/en-us/people-galar-region/gym-leaders/
+- Official Pokemon Legends: Arceus gameplay page describing wild Pokemon encounters, battles, catching, Pokeballs, and six-Pokemon party limits: https://legends.arceus.pokemon.com/en-us/gameplay/
 
-## Findings
+### High: Explicit Pokemon character name remains in production story text
 
-### Resolved: Mixed-case creature names cannot be selected by player input
-
-Original finding: `AnimalFactory` defined the first Mystic creatures as `M_Cat`, `M_Lion`, and `M_Dog` while most other roster names were uppercase, for example `M_TURTLE`, `N_CAT`, and `T_CAT`.
+`GameLoop` still uses `Arceus`, which is an actual Pokemon name and part of an official Pokemon game title.
 
 Relevant code:
 
-- `Arcadia_v2/Creatures/AnimalFactory.cs:202`
-- `Arcadia_v2/Creatures/AnimalFactory.cs:212`
-- `Arcadia_v2/Creatures/AnimalFactory.cs:222`
-- `Arcadia_v2/Battles/PartyFlow.cs:51`
-- `Arcadia_v2/Battles/PartyFlow.cs:64`
-- `Arcadia_v2/Gameplay/WildBattleFlow.cs:174`
-- `Arcadia_v2/Gameplay/WildBattleFlow.cs:188`
-
-The player input path uppercases names with `Program.ReadUpperTrimmedInput`, then compares the result to `animal.Name` using exact equality. That meant a player typing `m_cat` or `M_Cat` became `M_CAT`, which did not match the stored `M_Cat`.
-
-Resolution: factory names were normalized to uppercase, including `NULL0`, `M_CAT`, `M_LION`, and `M_DOG`, and a regression test now asserts that all factory creature names are uppercase.
-
-Status: fixed.
-
-### Resolved: Healing move behavior is hard-coded to old uppercase names
-
-Original finding: `BattleEngine.IsHealingMove` only recognized exact strings:
-
-- `Arcadia_v2/Battles/BattleEngine.cs:75`
-- `Arcadia_v2/Battles/BattleEngine.cs:77`
-
-Current `MoveData` no longer defines `MOONLIGHT` or `SUNLIGHT`, and the new predefined move names use display casing such as `Pounce`, `Current Rush`, and `Deepsea Rupture`.
-
-Impact: healing behavior was disconnected from the actual move catalog. Any future healing move with display casing like `Moonlight`, or a renamed healing move, would be treated as a damage move unless this string check was manually updated.
-
-Resolution: `Move` now has an explicit `MoveEffect`, `Bloom` is marked as `MoveEffect.Heal`, and `BattleEngine.UseMove` branches on `move.Effect` instead of move-name strings. Save capture/restore also persists move effects, with a factory-template fallback for older saves that do not contain the new field.
-
-Status: fixed.
-
-### Resolved: Player defeat messages can be printed twice
-
-Original finding: `BattleHelpers.HandlePlayerDefeatedAnimal` printed the defeat message immediately:
-
-- `Arcadia_v2/Battles/BattleHelpers.cs:106`
-
-The battle finalizers could print the same message again after the loop exited:
-
-- `Arcadia_v2/Battles/TrainerBattleFlow.cs:114`
-- `Arcadia_v2/Gameplay/WildBattleFlow.cs:86`
-
-Impact: when the player's active animal was defeated and the player could not or did not switch, the UI could report the same defeat event twice.
-
-Resolution: `HandlePlayerDefeatedAnimal` now returns `PlayerDefeatedAnimalResult` (`NotDefeated`, `Switched`, or `DefeatedNoSwitch`) and does not print defeat text. Wild and trainer battle flows print the defeat message once after the opponent turn, and their finalizers no longer repeat it.
-
-Status: fixed.
-
-### Resolved: Final encounter text does not match the actual encounter
-
-Original finding: the endgame text described an Arceus-style final challenge:
-
+- `Arcadia_v2/Gameplay/GameLoop.cs:133`
+- `Arcadia_v2/Gameplay/GameLoop.cs:140`
 - `Arcadia_v2/Gameplay/GameLoop.cs:141`
 - `Arcadia_v2/Gameplay/GameLoop.cs:143`
 
-But the final room encounter was populated with `mapAnimals[19]`, which was `M_DOG` in the current factory:
-
-- `Arcadia_v2/Map/Map.cs:201`
-
-Impact: the player was told they were facing a final god/champion encounter, but the actual battle target was a normal roster creature.
-
-Resolution: `TheEnd` now resolves the final encounter by the `NU_DRAGON` creature name instead of the old index.
-
-Status: fixed.
-
-### Resolved: Old Pokemon naming still leaks through production code
-
-Original finding: several production types, properties, comments, command labels, and story strings still used Pokemon terminology.
-
 Examples:
 
-- `Arcadia_v2/Saves/GameSaveState.cs:21`
-- `Arcadia_v2/Saves/GameSaveState.cs:27`
-- `Arcadia_v2/Saves/GameSaveState.cs:39`
-- `Arcadia_v2/Saves/GameStateMapper.cs:147`
-- `Arcadia_v2/Commands/CommandDefinitions.cs:24`
-- `Arcadia_v2/Gameplay/GameSetup.cs:91`
-- `Arcadia_v2/Gameplay/GameSetup.cs:92`
-- `Arcadia_v2/Gameplay/GameSetup.cs:118`
+- `PrintArceusChallenge`
+- `// Prints the final challenge text before the Arceus encounter.`
+- `Arceus Voice: I knew you would eventually find your way here.`
 
-Impact: this created a split domain model where code talked about animals/creatures in most places but still serialized and displayed Pokemon language elsewhere. It made future changes more error-prone because contributors had to remember which old names were still intentional.
+Impact: this is the clearest remaining direct Pokemon IP issue because it uses a named Pokemon in user-facing production text.
 
-Resolution: save compatibility was not required, so both the C# save model and JSON shape were renamed to animal terminology. `PokemonSaveState`, `PokemonInventory`, and `EncounterPokemon` are now `AnimalSaveState`, `AnimalInventory`, and `EncounterAnimals`. The action command enum/display name now uses `AnimalInventory`, the command aliases are `animalinventory`, `animals`, and `ai`, and the remaining production story/map text now refers to creatures or Arcadia-specific names.
+Recommended fix: replace `Arceus` with an original Arcadia-specific final entity name, and rename the method/comment accordingly. For example, use `Arcadia Voice`, `The Origin`, `The First Guardian`, or tie it directly to the final creature with `NU_DRAGON`.
 
-Status: fixed.
+### Medium: Core progression still strongly resembles Pokemon's Gym / Badge / Champion loop
 
-### Resolved: Move catalog has mismatched names and likely typos
+The game still uses a cluster of Pokemon-associated progression terms: `Gym`, `GymLeader`, `Badge`, `Champion`, `trainer`, `region champion`, and "defeat the 4 gyms ... challenge the region champion."
 
-Original finding: current move constants included display names that did not match the constant or appeared misspelled:
+Relevant code:
 
-- `Arcadia_v2/Creatures/Move.cs:74` has `COLONY_RUSH = new Move("LEER", ...)`
-- `Arcadia_v2/Creatures/Move.cs:93` has `OCEON_PULSE`
-- `Arcadia_v2/Creatures/Move.cs:95` has `"Tital Break"`
+- `Arcadia_v2/Gameplay/GameState.cs`
+- `Arcadia_v2/Gameplay/GameSetup.cs`
+- `Arcadia_v2/Gameplay/GymFlow.cs`
+- `Arcadia_v2/Gameplay/MovementFlow.cs`
+- `Arcadia_v2/Gameplay/MenuFlow.cs`
+- `Arcadia_v2/Saves/GameSaveState.cs`
+- `Arcadia_v2/Saves/GameStateMapper.cs`
 
-Impact: UI output and saved move data could show names that looked accidental or left over from old move data.
+Impact: none of these words alone is as direct as `Arceus`, but the combined structure is very close to Pokemon's well-known loop: trainers defeat Gym Leaders, earn badges, and challenge a Champion.
 
-Resolution: `COLONY_RUSH` now displays `Colony Rush`, `OCEON_PULSE` was renamed to `OCEAN_PULSE` with display name `Ocean Pulse`, and `Tital Break` was corrected to `Tidal Break`. A focused unit test now verifies every predefined `MoveData` display name against an explicit expected list.
+Recommended fix: rebrand the progression vocabulary as an Arcadia-original system. For example:
 
-Status: fixed.
+- `Gym` -> `Trial`, `Sanctuary`, `Arena`, or `Challenge Hall`
+- `GymLeader` -> `Warden`, `Keeper`, `Master`, or `Guardian`
+- `Badge` -> `Sigil`, `Seal`, `Mark`, or `Crest`
+- `Champion` -> `High Guardian`, `Arcadia Regent`, or `Grandmaster`
+- `trainer` -> `handler`, `ranger`, `traveler`, or `guardian`
 
-### Resolved: Movement requirements are split between unused room properties and map rules
+### Medium: Wild battle / catch / release / six-creature party loop is Pokemon-like
 
-Original finding: `Room` exposed requirement-like properties:
+The wild encounter flow still uses Pokemon-like gameplay language and structure: wild creature attacks, the player defeats it, then chooses whether to catch it; if the party is full, the player can release one creature; party size is capped at six.
 
-- `Arcadia_v2/Map/Room.cs:39`
-- `Arcadia_v2/Map/Room.cs:40`
+Relevant code:
 
-But movement actually used the `Map` requirement dictionary:
+- `Arcadia_v2/Gameplay/WildBattleFlow.cs`
+- `Arcadia_v2/Battles/BattleEngine.cs`
 
-- `Arcadia_v2/Map/Map.cs:150`
-- `Arcadia_v2/Gameplay/MovementFlow.cs:66`
+Impact: this does not contain direct Pokemon names, but the combination of wild encounters, battling, catching after defeat, releasing party creatures, and a six-creature limit is recognizably Pokemon-like.
 
-`TheEnd` set `RequiresChampionDefeatToEnter = true`, but that property was not what gated movement. The real gate was separately added in `AddMovementRequirements`.
+Recommended fix: decide whether the mechanic should be rebranded or redesigned. A low-risk terminology pass would replace `catch` with `befriend`, `recruit`, `rescue`, or `bond`, and replace `release` with `send home`, `return to habitat`, or `dismiss`. A stronger gameplay distinction would avoid "defeat then catch" and instead use a trust/bonding choice, quest reward, or sanctuary rescue system.
 
-Impact: future changes could update the room property and assume movement was gated, while the game still relied on the dictionary entry.
+### Low: `Nucleon` is not Pokemon-owned, but it reads risky in this context
 
-Resolution: the unused room-level requirement properties were removed. Directional movement requirements now live only in `Map`, where `MovementFlow` already reads them.
+`Nucleon` is a normal science term, but in this creature-battling/nuclear-element game it may be read as Pokemon-adjacent because `Nucleon` is also associated with monster-collector fan-game terminology.
 
-Status: fixed.
+Relevant code:
 
-### Low: Roster construction is hard to audit and easy to break
+- `Arcadia_v2/Gameplay/GameSetup.cs:90`
+- `Arcadia_v2/Map/Room.cs:14`
+- `Arcadia_v2/Map/Room.cs:21`
+- `Arcadia_v2/Map/Map.cs:50`
+- `Arcadia_v2/Map/Map.cs:57`
+- `Arcadia_v2/Map/Map.cs:153`
 
-`AnimalFactory.CreateAnimals` is a large hand-written list with repeated structure for every element/species combination.
+Impact: this is lower risk than `Arceus` because it is a generic word, but the surrounding genre context makes it worth reconsidering.
 
-Relevant file:
+Recommended fix: rename the towns/region references to a more original Arcadia-specific nuclear name, such as `Radion`, `Isotope Crossing`, `Corefall`, `Ashen Core`, or `New Radia`.
 
-- `Arcadia_v2/Creatures/AnimalFactory.cs`
+### Low: Test-only fixtures still include Pokemon-adjacent names and exact Pokemon badge text
 
-Impact: this makes simple changes risky. The current mixed-case Mystic names and move-name typos are examples of issues that are easy to introduce in this format.
+Most of these are not production-facing, but they still exist in the repository and could leak through screenshots, docs, or public source.
 
-Recommended fix: represent species and element move pairs as small data records, then generate the roster from those records. Add tests for contiguous IDs, final ID `96`, unique IDs, normalized names, four moves per creature, and expected element/move pairings.
+Relevant examples:
+
+- `UnitTest/PlayerTest.cs:13` uses `Professor's Lab`
+- `UnitTest/PlayerTest.cs:31` uses player name `Red`
+- `UnitTest/PlayerTest.cs:41` uses player name `Red`
+- `UnitTest/PlayerTest.cs:43` uses `Boulder Badge`
+- `UnitTest/SaveSystemTests.cs:129` uses player name `Red`
+- `UnitTest/SaveSystemTests.cs:318` uses player name `Blue`
+- `UnitTest/SaveSystemTests.cs:145` uses move name `TACKLE`
+
+Impact: `Red`, `Blue`, `Professor's Lab`, and `TACKLE` are individually generic, but in this repo context they read Pokemon-adjacent. `Boulder Badge` is especially worth replacing because it is an exact Pokemon badge name.
+
+Recommended fix: rename test fixtures to Arcadia-neutral names and terms, such as `Riley`, `Morgan`, `Maia's Stable`, `Stone Sigil`, and `Pounce`.
+
+### Low: Historical review text itself still contains Pokemon terms
+
+`CodeReview.md` intentionally preserves earlier findings that mention Pokemon terminology and examples. That is useful internally, but if this repository is published or shown externally, the review file itself still contains the words being audited.
+
+Relevant code:
+
+- `Arcadia_v2/CodeReview.md`
+
+Impact: low for runtime behavior, but nonzero for public repository hygiene.
+
+Recommended fix: if this repository will be public, either remove historical Pokemon wording after the cleanup is complete or move the review history into a private/internal note.
+
+### Clean Areas
+
+No remaining production matches were found for these direct Pokemon terms outside of the findings above: `Pokemon`, `Poke`, `pokeball`, `Pikachu`, `Charmander`, `Bulbasaur`, `Squirtle`, `Charizard`, `Mewtwo`, `Mew`, `Eevee`, or `Team Rocket`.
 
 ## Test Gaps
 
 The current test suite is passing, but it does not yet cover several real user flows:
 
-- The uppercase roster-name invariant beyond the new factory-name test in `AnimalTest`.
-- Player defeat without switching and ensuring the defeat message is printed once.
-- The identity of the final `The End` room encounter.
-- The predefined move catalog's display names and spelling.
+- Broader gameplay coverage for roster changes beyond the factory and map invariant tests.
 - Null or partially missing save JSON lists, which could still escape the current save-load failure handling.
 
 ## Overall Result
 
-The codebase is in a working state and the current tests pass. The biggest risk is not compilation; it is inconsistent domain data and string-based matching. Normalizing creature names, replacing move-name effect checks with explicit move metadata, and tightening save/domain naming would reduce the most likely bugs going forward.
+The codebase is in a working state and the current tests pass. The main remaining risk is malformed or partially missing save JSON, which has less coverage than the core battle, movement, roster, and command flows. From the IP terminology pass, the highest priority cleanup is removing the explicit `Arceus` reference, followed by rebranding the Gym/Badge/Champion progression loop and the catch/release wild-creature language.
