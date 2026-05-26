@@ -79,6 +79,51 @@ public class WildBattleFlowTests
         Assert.Contains($"{wildAnimal.Name} ran away!", io.OutputText);
     }
 
+    // Checks that defeating a wild animal does not add bond until the matching star fragment has been earned.
+    [Fact]
+    public void HandleWildBattle_DefeatWildAnimalWithoutFragment_DoesNotAddBond()
+    {
+        GameState gameState = CreateRoadOneWildBattle();
+        Animal wildAnimal = gameState.MainPlayer.CurrentRoom.EncounterAnimals[0];
+        wildAnimal.Health = 1;
+        FakeGameIO io = new("4", "no");
+
+        WildBattleFlow.HandleWildBattle(io, gameState);
+
+        Assert.Equal(0, gameState.MainPlayer.GetBond(wildAnimal.Element));
+    }
+
+    // Checks that defeating a wild animal adds fifty bond when the matching star fragment has been earned.
+    [Fact]
+    public void HandleWildBattle_DefeatWildAnimalWithFragment_AddsFiftyBond()
+    {
+        GameState gameState = CreateRoadOneWildBattle();
+        Animal wildAnimal = gameState.MainPlayer.CurrentRoom.EncounterAnimals[0];
+        wildAnimal.Health = 1;
+        gameState.MainPlayer.AddStarFragment("Nature Star Fragment");
+        FakeGameIO io = new("4", "no");
+
+        WildBattleFlow.HandleWildBattle(io, gameState);
+
+        Assert.Equal(50, gameState.MainPlayer.GetBond(AnimalElement.Nature));
+    }
+
+    // Checks that defeating the nuclear dragon awards the nuclear fragment and nuclear bond.
+    [Fact]
+    public void HandleWildBattle_DefeatNuclearDragon_AwardsNuclearFragmentAndBond()
+    {
+        GameState gameState = GameSetup.CreateForLoad();
+        gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("The End"));
+        Animal nuclearDragon = gameState.MainPlayer.CurrentRoom.EncounterAnimals[0];
+        nuclearDragon.Health = 1;
+        FakeGameIO io = new("4", "no");
+
+        WildBattleFlow.HandleWildBattle(io, gameState);
+
+        Assert.Contains("Nuclear Star Fragment", gameState.MainPlayer.StarFragments);
+        Assert.Equal(50, gameState.MainPlayer.GetBond(AnimalElement.Nuclear));
+    }
+
     // Checks that wild battles do not start when every animal in the player's party has been defeated.
     [Fact]
     public void HandleWildBattle_WhenAllPlayerAnimalsAreDefeated_PrintsPartyDefeatedMessage()

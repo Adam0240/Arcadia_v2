@@ -509,18 +509,18 @@ public class BattleStateTests
     {
         List<Animal> animals = GameData.CreateAnimals();
         Room startingRoom = new Map().StartRoom;
-        CompPlayer gymLeader = new CompPlayer("Trainer", startingRoom);
-        gymLeader.SetBattleTeam(new[] { animals[3], animals[14] });
+        CompPlayer guardian = new CompPlayer("Trainer", startingRoom);
+        guardian.SetBattleTeam(new[] { animals[3], animals[14] });
 
-        gymLeader.AnimalInventory[0].Health = 1;
-        gymLeader.AnimalInventory[1].Health = 2;
-        Animal firstBattleLead = gymLeader.AnimalInventory[0];
+        guardian.AnimalInventory[0].Health = 1;
+        guardian.AnimalInventory[1].Health = 2;
+        Animal firstBattleLead = guardian.AnimalInventory[0];
 
-        gymLeader.PrepareForBattle();
+        guardian.PrepareForBattle();
 
-        Assert.Equal(gymLeader.BattleTeamTemplate[0].BaseHealth, gymLeader.AnimalInventory[0].Health);
-        Assert.Equal(gymLeader.BattleTeamTemplate[1].BaseHealth, gymLeader.AnimalInventory[1].Health);
-        Assert.NotSame(firstBattleLead, gymLeader.AnimalInventory[0]);
+        Assert.Equal(guardian.BattleTeamTemplate[0].BaseHealth, guardian.AnimalInventory[0].Health);
+        Assert.Equal(guardian.BattleTeamTemplate[1].BaseHealth, guardian.AnimalInventory[1].Health);
+        Assert.NotSame(firstBattleLead, guardian.AnimalInventory[0]);
     }
 
     private static Player CreateTwoAnimalPlayer()

@@ -2,6 +2,7 @@
 
 using Arcadia_v2.Map;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Arcadia_v2
 {
@@ -9,14 +10,16 @@ namespace Arcadia_v2
     // Players store their own state and receive a starting room from the map.
     public abstract class GenericPlayer
     {
-        private readonly List<string> mBadges = new();
+        private readonly List<string> mStarFragments = new();
         private readonly List<Animal> mAnimalInventory = new();
+        private readonly Dictionary<AnimalElement, int> mBondByElement = CreateEmptyBondMap();
         private Room mCurrentRoom;
 
         public string Name { get; private set; }
         public Room CurrentRoom => mCurrentRoom;
-        public IReadOnlyList<string> Badges => mBadges;
+        public IReadOnlyList<string> StarFragments => mStarFragments;
         public IReadOnlyList<Animal> AnimalInventory => mAnimalInventory;
+        public IReadOnlyDictionary<AnimalElement, int> BondByElement => mBondByElement;
 
         // Creates a player with a valid name and required starting room.
         protected GenericPlayer(string name, Room startingRoom)
@@ -32,29 +35,61 @@ namespace Arcadia_v2
             mCurrentRoom = startingRoom;
         }
 
-        // Adds a badge once and rejects invalid badge names.
-        public void AddBadge(string badge)
+        // Adds a star fragment once and rejects invalid star fragment names.
+        public void AddStarFragment(string starFragment)
         {
-            if (string.IsNullOrWhiteSpace(badge))
+            if (string.IsNullOrWhiteSpace(starFragment))
             {
-                throw new ArgumentException("Badge name cannot be empty.", nameof(badge));
+                throw new ArgumentException("Star fragment name cannot be empty.", nameof(starFragment));
             }
 
-            if (!mBadges.Contains(badge))
+            if (!mStarFragments.Contains(starFragment))
             {
-                mBadges.Add(badge);
+                mStarFragments.Add(starFragment);
             }
         }
 
         // Returns a display string so presentation can happen outside the player model.
-        public string GetBadgeDisplay()
+        public string GetStarFragmentDisplay()
         {
-            if (mBadges.Count == 0)
+            if (mStarFragments.Count == 0)
             {
-                return "You have no badges!";
+                return "You have no star fragments!";
             }
 
-            return "Badges:\n" + string.Join("\n", mBadges);
+            return "Star Fragments:\n" + string.Join("\n", mStarFragments);
+        }
+
+        public void AddBond(AnimalElement element, int amount)
+        {
+            if (amount < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(amount), "Bond amount cannot be negative.");
+            }
+
+            mBondByElement[element] = Math.Min(100, mBondByElement[element] + amount);
+        }
+
+        public int GetBond(AnimalElement element)
+        {
+            return mBondByElement[element];
+        }
+
+        public void ResetBond(AnimalElement element)
+        {
+            mBondByElement[element] = 0;
+        }
+
+        public string GetBondDisplay()
+        {
+            List<string> bondLines = new() { "Bond:" };
+
+            foreach (AnimalElement element in GetOrderedElements())
+            {
+                bondLines.Add($"{element} {mBondByElement[element]}%/100%");
+            }
+
+            return string.Join("\n", bondLines);
         }
 
         // Displays every animal in the player's inventory along with each animal's current health.
@@ -103,22 +138,28 @@ namespace Arcadia_v2
             mAnimalInventory[secondIndex] = temp;
         }
 
+        public void ReplaceAnimalAt(int index, Animal replacement)
+        {
+            ArgumentNullException.ThrowIfNull(replacement);
+            mAnimalInventory[index] = replacement;
+        }
+
         // Clears the current animal inventory before replacing it.
         protected void ClearAnimalInventory()
         {
             mAnimalInventory.Clear();
         }
 
-        // Replaces badges from persisted state while preserving normal validation and uniqueness rules.
-        public void RestoreBadges(IEnumerable<string> badges)
+        // Replaces star fragments from persisted state while preserving normal validation and uniqueness rules.
+        public void RestoreStarFragments(IEnumerable<string> starFragments)
         {
-            ArgumentNullException.ThrowIfNull(badges);
+            ArgumentNullException.ThrowIfNull(starFragments);
 
-            mBadges.Clear();
+            mStarFragments.Clear();
 
-            foreach (string badge in badges)
+            foreach (string starFragment in starFragments)
             {
-                AddBadge(badge);
+                AddStarFragment(starFragment);
             }
         }
 
@@ -146,11 +187,43 @@ namespace Arcadia_v2
             }
         }
 
+        public void RestoreBond(IReadOnlyDictionary<AnimalElement, int> bondByElement)
+        {
+            ArgumentNullException.ThrowIfNull(bondByElement);
+
+            foreach (AnimalElement element in GetOrderedElements())
+            {
+                int bond = bondByElement.TryGetValue(element, out int savedBond)
+                    ? savedBond
+                    : 0;
+
+                mBondByElement[element] = Math.Clamp(bond, 0, 100);
+            }
+        }
+
         // Moves the player to a new room while ensuring the destination is valid.
         public void MoveTo(Room room)
         {
             ArgumentNullException.ThrowIfNull(room);
             mCurrentRoom = room;
+        }
+
+        private static Dictionary<AnimalElement, int> CreateEmptyBondMap()
+        {
+            return GetOrderedElements().ToDictionary(element => element, _ => 0);
+        }
+
+        private static IReadOnlyList<AnimalElement> GetOrderedElements()
+        {
+            return new[]
+            {
+                AnimalElement.Nature,
+                AnimalElement.Mystic,
+                AnimalElement.Thunder,
+                AnimalElement.Draconic,
+                AnimalElement.Cosmic,
+                AnimalElement.Nuclear
+            };
         }
     }
 

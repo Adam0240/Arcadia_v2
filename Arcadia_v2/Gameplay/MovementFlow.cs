@@ -6,13 +6,13 @@ using Arcadia_v2.Commands;
 
 namespace Arcadia_v2
 {
-    // Handles player movement, including direction validation, room changes, and badge/champion gates.
+    // Handles player movement, including direction validation, room changes, and star fragment/Elemental Titan gates.
     public static class MovementFlow
     {
         public static void HandleMovement(IGameIO io, GameState gameState, DirectionCommandType directionCommand, string direction)
         {
             Player mainPlayer = gameState.MainPlayer;
-            CompPlayer arcadiaChampion = gameState.ArcadiaChampion;
+            CompPlayer elementalTitan = gameState.ElementalTitan;
             Room? destination = GetDestinationRoom(mainPlayer, directionCommand);
 
             if (directionCommand == DirectionCommandType.Quit)
@@ -33,12 +33,13 @@ namespace Arcadia_v2
                 return;
             }
 
-            if (!CanEnterRoom(io, gameState.GameMap, mainPlayer, arcadiaChampion, mainPlayer.CurrentRoom, destination))
+            if (!CanEnterRoom(io, gameState.GameMap, mainPlayer, elementalTitan, mainPlayer.CurrentRoom, destination))
             {
                 return;
             }
 
             MovePlayerToRoom(io, mainPlayer, destination);
+            TryAwardElementalStar(io, gameState, destination);
         }
 
         // Returns the room in the selected direction, or null if that direction has no room.
@@ -59,13 +60,13 @@ namespace Arcadia_v2
             IGameIO io,
             Map.Map gameMap,
             Player mainPlayer,
-            CompPlayer arcadiaChampion,
+            CompPlayer elementalTitan,
             Room currentRoom,
             Room destination)
         {
             MovementRequirement requirement = gameMap.GetMovementRequirement(currentRoom, destination);
 
-            if (IsBadgeLocked(io, mainPlayer, requirement))
+            if (IsStarFragmentLocked(io, mainPlayer, requirement))
             {
                 return false;
             }
@@ -75,32 +76,32 @@ namespace Arcadia_v2
                 return false;
             }
 
-            if (requirement.RequiresChampionDefeat && !arcadiaChampion.Defeated)
+            if (requirement.RequiresElementalTitanDefeat && !elementalTitan.Defeated)
             {
-                io.WriteLine("Your not ready to go here yet. You must become the Champion of the region to proceed.");
+                io.WriteLine("Your not ready to go here yet. You must defeat the Elemental Titan to proceed.");
                 return false;
             }
 
             return true;
         }
 
-        // Checks whether a destination room is locked behind a badge requirement.
-        private static bool IsBadgeLocked(IGameIO io, Player mainPlayer, MovementRequirement requirement)
+        // Checks whether a destination room is locked behind a star fragment requirement.
+        private static bool IsStarFragmentLocked(IGameIO io, Player mainPlayer, MovementRequirement requirement)
         {
-            int requiredBadges = requirement.RequiredBadges;
+            int requiredStarFragments = requirement.RequiredStarFragments;
 
-            if (requiredBadges <= 0)
+            if (requiredStarFragments <= 0)
             {
                 return false;
             }
 
-            if (mainPlayer.Badges.Count >= requiredBadges)
+            if (mainPlayer.StarFragments.Count >= requiredStarFragments)
             {
                 return false;
             }
 
-            io.WriteLine($"You need to obtain {requiredBadges} badge(s) before this way unlocks!");
-            io.WriteLine($"You currently have {mainPlayer.Badges.Count} total badges.");
+            io.WriteLine($"You need to obtain {requiredStarFragments} star fragment(s) before this way unlocks!");
+            io.WriteLine($"You currently have {mainPlayer.StarFragments.Count} total star fragments.");
 
             return true;
         }
@@ -127,6 +128,22 @@ namespace Arcadia_v2
             mainPlayer.MoveTo(destination);
             io.WriteLine();
             RoomDisplay.Print(io, mainPlayer.CurrentRoom);
+        }
+
+        private static void TryAwardElementalStar(IGameIO io, GameState gameState, Room destination)
+        {
+            Player mainPlayer = gameState.MainPlayer;
+
+            if (destination != gameState.GameMap.StartRoom ||
+                !gameState.ElementalTitan.Defeated ||
+                !mainPlayer.StarFragments.Contains("Cosmic Star Fragment") ||
+                mainPlayer.StarFragments.Contains("Elemental Star"))
+            {
+                return;
+            }
+
+            io.WriteLine("Returning to the town where your journey you check your bag. Noticing something glowing you realized your star fragments have merged into a full star. An elemental star");
+            mainPlayer.AddStarFragment("Elemental Star");
         }
     }
 }

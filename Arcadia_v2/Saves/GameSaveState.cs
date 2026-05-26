@@ -17,7 +17,8 @@ namespace Arcadia_v2.Saves
     {
         public string Name { get; set; } = string.Empty;
         public string CurrentRoomName { get; set; } = string.Empty;
-        public List<string> Badges { get; set; } = new();
+        public List<string> StarFragments { get; set; } = new();
+        public List<BondSaveState> Bond { get; set; } = new();
         public List<AnimalSaveState> AnimalInventory { get; set; } = new();
     }
 
@@ -32,7 +33,7 @@ namespace Arcadia_v2.Saves
         public string Name { get; set; } = string.Empty;
         public string CurrentRoomName { get; set; } = string.Empty;
         public bool Defeated { get; set; }
-        public List<string> Badges { get; set; } = new();
+        public List<string> StarFragments { get; set; } = new();
         public List<AnimalSaveState> BattleTeamTemplate { get; set; } = new();
     }
 
@@ -45,6 +46,12 @@ namespace Arcadia_v2.Saves
         public int BaseHealth { get; set; }
         public int Speed { get; set; }
         public List<MoveSaveState> Moves { get; set; } = new();
+    }
+
+    public sealed class BondSaveState
+    {
+        public AnimalElement Element { get; set; }
+        public int Percent { get; set; }
     }
 
     public sealed class MoveSaveState

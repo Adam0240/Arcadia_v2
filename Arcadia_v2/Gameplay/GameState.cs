@@ -11,33 +11,33 @@ namespace Arcadia_v2
         public GameState(
             Map.Map gameMap,
             List<Animal> mainAnimals,
-            List<Animal> gymAnimals,
+            List<Animal> guardianAnimals,
             Player mainPlayer,
-            CompPlayer gymLeader1,
-            CompPlayer gymLeader2,
-            CompPlayer gymLeader3,
-            CompPlayer gymLeader4,
-            CompPlayer arcadiaChampion)
+            CompPlayer guardian1,
+            CompPlayer guardian2,
+            CompPlayer guardian3,
+            CompPlayer guardian4,
+            CompPlayer elementalTitan)
         {
             GameMap = gameMap;
             MainAnimals = mainAnimals;
-            GymAnimals = gymAnimals;
+            GuardianAnimals = guardianAnimals;
             MainPlayer = mainPlayer;
-            GymLeader1 = gymLeader1;
-            GymLeader2 = gymLeader2;
-            GymLeader3 = gymLeader3;
-            GymLeader4 = gymLeader4;
-            ArcadiaChampion = arcadiaChampion;
+            Guardian1 = guardian1;
+            Guardian2 = guardian2;
+            Guardian3 = guardian3;
+            Guardian4 = guardian4;
+            ElementalTitan = elementalTitan;
         }
 
         public Map.Map GameMap { get; }
         public List<Animal> MainAnimals { get; }
-        public List<Animal> GymAnimals { get; }
+        public List<Animal> GuardianAnimals { get; }
         public Player MainPlayer { get; }
-        public CompPlayer GymLeader1 { get; }
-        public CompPlayer GymLeader2 { get; }
-        public CompPlayer GymLeader3 { get; }
-        public CompPlayer GymLeader4 { get; }
-        public CompPlayer ArcadiaChampion { get; }
+        public CompPlayer Guardian1 { get; }
+        public CompPlayer Guardian2 { get; }
+        public CompPlayer Guardian3 { get; }
+        public CompPlayer Guardian4 { get; }
+        public CompPlayer ElementalTitan { get; }
     }
 }

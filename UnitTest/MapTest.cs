@@ -14,9 +14,9 @@ namespace UnitTest
             Assert.Equal("Maia's Stable", map.StartRoom.Name);
         }
 
-        // Checks that the start room connects north to Ikena.
+        // Checks that the start room connects north to Thunder Sanctuary.
         [Fact]
-        public void Constructor_LinksStartRoomNorthToIkena()
+        public void Constructor_LinksStartRoomNorthToThunderSanctuary()
         {
             Map map = new();
 
@@ -26,12 +26,21 @@ namespace UnitTest
 
         // Checks that the starting room follows the one-way opening from the map spec.
         [Fact]
-        public void Constructor_DoesNotLinkIkenaBackToStartRoom()
+        public void Constructor_DoesNotLinkThunderSanctuaryBackToStartRoom()
         {
             Map map = new();
 
             Assert.NotNull(map.StartRoom.North);
             Assert.NotSame(map.StartRoom, map.StartRoom.North!.South);
+        }
+
+        // Checks that Maia's Stable can be reached again after the opening.
+        [Fact]
+        public void Constructor_LinksRoadOneWestToStartRoom()
+        {
+            Map map = new();
+
+            Assert.Same(map.StartRoom, map.GetRoom("Road 1").West);
         }
 
         // Checks that each special room property points to the expected named room in the updated map.
@@ -40,11 +49,11 @@ namespace UnitTest
         {
             Map map = new();
 
-            Assert.Equal("Oak Pass", map.GymLeader1Room.Name);
-            Assert.Equal("New Nucleon", map.GymLeader2Room.Name);
-            Assert.Equal("Ikena", map.GymLeader3Room.Name);
-            Assert.Equal("Wyrmrest", map.GymLeader4Room.Name);
-            Assert.Equal("Guardian's Tower", map.ChampionRoom.Name);
+            Assert.Equal("Oak Pass", map.Guardian1Room.Name);
+            Assert.Equal("New Nucleon", map.Guardian2Room.Name);
+            Assert.Equal("Ikena", map.Guardian3Room.Name);
+            Assert.Equal("Wyrmrest", map.Guardian4Room.Name);
+            Assert.Equal("Guardian Tower", map.ElementalSanctuaryRoom.Name);
         }
 
         // Checks that GetRoom returns the same room instance stored in the map properties.
@@ -55,8 +64,8 @@ namespace UnitTest
 
             Assert.Same(map.StartRoom, map.GetRoom("Maia's Stable"));
             Assert.Same(map.StartRoom, map.GetRoom(RoomId.MaiaStable));
-            Assert.Same(map.GymLeader1Room, map.GetRoom("Oak Pass"));
-            Assert.Same(map.ChampionRoom, map.GetRoom("Guardian's Tower"));
+            Assert.Same(map.Guardian1Room, map.GetRoom("Oak Pass"));
+            Assert.Same(map.ElementalSanctuaryRoom, map.GetRoom("Guardian Tower"));
         }
 
         // Checks that gate requirements are attached to stable room ids instead of display-name string checks.
@@ -75,12 +84,12 @@ namespace UnitTest
                 map.GetRoom(RoomId.Road1),
                 map.GetRoom(RoomId.Road2));
 
-            Assert.Equal(3, roadSixRequirement.RequiredBadges);
+            Assert.Equal(3, roadSixRequirement.RequiredStarFragments);
             Assert.Equal(AnimalElement.Mystic, roadFiveRequirement.RequiredAnimalElement);
             Assert.Equal(MovementRequirement.None, openRequirement);
         }
 
-        // Checks the updated vertical Road 2, Oak Pass, Road 3 chain.
+        // Checks the updated vertical Road 2, Nature Sanctuary, Road 3 chain.
         [Fact]
         public void Constructor_LinksOakPassWithAdjacentRoads()
         {
@@ -126,7 +135,7 @@ namespace UnitTest
 
             Assert.Equal(19, map.Rooms.Count);
             Assert.True(map.Rooms.ContainsKey("Maia's Stable"));
-            Assert.True(map.Rooms.ContainsKey("Guardian's Tower"));
+            Assert.True(map.Rooms.ContainsKey("Guardian Tower"));
             Assert.True(map.Rooms.ContainsKey("The End"));
         }
 

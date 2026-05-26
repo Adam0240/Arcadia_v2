@@ -63,9 +63,10 @@ namespace UnitTest
                 Animal leadAnimal = gameState.MainPlayer.AnimalInventory[0];
                 leadAnimal.Health = 7;
                 gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Road 2"));
-                gameState.MainPlayer.AddBadge("Grass Badge");
+                gameState.MainPlayer.AddStarFragment("Nature Star Fragment");
+                gameState.MainPlayer.AddBond(AnimalElement.Nature, 50);
                 gameState.GameMap.GetRoom("Road 1").RestoreEncounterAnimals(new[] { GameData.CreateAnimals()[4] });
-                gameState.GymLeader1.Defeated = true;
+                gameState.Guardian1.Defeated = true;
 
                 GameSaveService saveService = new(repository);
 
@@ -78,7 +79,8 @@ namespace UnitTest
                 Assert.Equal(2, persistedState.Version);
                 Assert.Equal("Red", persistedState.Player.Name);
                 Assert.Equal("Road 2", persistedState.Player.CurrentRoomName);
-                Assert.Contains("Grass Badge", persistedState.Player.Badges);
+                Assert.Contains("Nature Star Fragment", persistedState.Player.StarFragments);
+                Assert.Equal(50, persistedState.Player.Bond.Single(bond => bond.Element == AnimalElement.Nature).Percent);
                 Assert.Equal(leadAnimal.Id, persistedState.Player.AnimalInventory[0].Id);
                 Assert.Equal(7, persistedState.Player.AnimalInventory[0].Health);
                 Assert.Equal(leadAnimal.BaseHealth, persistedState.Player.AnimalInventory[0].BaseHealth);
@@ -86,7 +88,7 @@ namespace UnitTest
                 Assert.Equal(leadAnimal.Moves[0].Name, persistedState.Player.AnimalInventory[0].Moves[0].Name);
                 Assert.Equal(leadAnimal.Moves[0].Effect, persistedState.Player.AnimalInventory[0].Moves[0].Effect);
                 Assert.Equal(4, persistedState.Rooms.Single(room => room.Name == "Road 1").EncounterAnimals[0].Id);
-                Assert.True(persistedState.Trainers.Single(trainer => trainer.Name == "Mrs. Mcmann").Defeated);
+                Assert.True(persistedState.Trainers.Single(trainer => trainer.Name == "Nature Guardian").Defeated);
             }
             finally
             {
@@ -128,8 +130,12 @@ namespace UnitTest
                 Player = new PlayerSaveState
                 {
                     Name = "Red",
-                    CurrentRoomName = "Ikena",
-                    Badges = new List<string> { "Grass Badge" },
+                    CurrentRoomName = "Thunder Sanctuary",
+                    StarFragments = new List<string> { "Nature Star Fragment" },
+                    Bond = new List<BondSaveState>
+                    {
+                        new() { Element = AnimalElement.Nature, Percent = 50 }
+                    },
                     AnimalInventory = new List<AnimalSaveState>
                     {
                         new()
@@ -162,10 +168,10 @@ namespace UnitTest
                 {
                     new()
                     {
-                        Name = "Mrs. Mcmann",
-                        CurrentRoomName = "Oak Pass",
+                        Name = "Nature Guardian",
+                        CurrentRoomName = "Nature Sanctuary",
                         Defeated = true,
-                        Badges = new List<string> { "Grass Badge" },
+                        StarFragments = new List<string> { "Nature Star Fragment" },
                         BattleTeamTemplate = new List<AnimalSaveState>
                         {
                             new() { Id = 3, Name = "N_DOG", Health = 20 }
@@ -178,8 +184,9 @@ namespace UnitTest
             GameSaveState restored = GameSaveSerializer.Deserialize(json);
 
             Assert.Equal("Red", restored.Player.Name);
-            Assert.Equal("Ikena", restored.Player.CurrentRoomName);
-            Assert.Single(restored.Player.Badges);
+            Assert.Equal("Thunder Sanctuary", restored.Player.CurrentRoomName);
+            Assert.Single(restored.Player.StarFragments);
+            Assert.Equal(50, restored.Player.Bond[0].Percent);
             Assert.Single(restored.Rooms);
             Assert.True(restored.Trainers[0].Defeated);
             Assert.Equal(5, restored.Player.AnimalInventory[0].Level);
@@ -198,28 +205,31 @@ namespace UnitTest
             playerAnimal.Health = 7;
 
             gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom("Road 2"));
-            gameState.MainPlayer.AddBadge("Grass Badge");
-            gameState.GymLeader1.Defeated = true;
+            gameState.MainPlayer.AddStarFragment("Nature Star Fragment");
+            gameState.MainPlayer.AddBond(AnimalElement.Nature, 50);
+            gameState.Guardian1.Defeated = true;
             gameState.GameMap.GetRoom("Road 1").RestoreEncounterAnimals(new[] { GameData.CreateAnimals()[4] });
 
             GameSaveState captured = GameStateMapper.Capture(gameState);
 
             gameState.MainPlayer.RestoreName("Changed");
             gameState.MainPlayer.MoveTo(gameState.GameMap.StartRoom);
-            gameState.MainPlayer.RestoreBadges(Array.Empty<string>());
+            gameState.MainPlayer.RestoreStarFragments(Array.Empty<string>());
+            gameState.MainPlayer.ResetBond(AnimalElement.Nature);
             gameState.MainPlayer.RestoreAnimalInventory(new[] { GameData.CreateAnimals()[5] });
             gameState.GameMap.GetRoom("Road 1").RestoreEncounterAnimals(Array.Empty<Animal>());
-            gameState.GymLeader1.Defeated = false;
+            gameState.Guardian1.Defeated = false;
 
             GameStateMapper.Apply(gameState, captured);
 
             Assert.Equal("Red", gameState.MainPlayer.Name);
             Assert.Equal("Road 2", gameState.MainPlayer.CurrentRoom.Name);
-            Assert.Equal("Grass Badge", gameState.MainPlayer.Badges[0]);
+            Assert.Equal("Nature Star Fragment", gameState.MainPlayer.StarFragments[0]);
+            Assert.Equal(50, gameState.MainPlayer.GetBond(AnimalElement.Nature));
             Assert.Equal(playerAnimal.Id, gameState.MainPlayer.AnimalInventory[0].Id);
             Assert.Equal(7, gameState.MainPlayer.AnimalInventory[0].Health);
             Assert.Single(gameState.GameMap.GetRoom("Road 1").EncounterAnimals);
-            Assert.True(gameState.GymLeader1.Defeated);
+            Assert.True(gameState.Guardian1.Defeated);
         }
 
         // Checks that saving through the service sends the current animal-based runtime data to the repository JSON payload.
@@ -496,43 +506,43 @@ namespace UnitTest
         private static GameState CreateGameState(string playerName)
         {
             List<Animal> mainAnimals = GameData.CreateAnimals();
-            List<Animal> gymAnimals = GameData.CreateAnimals();
+            List<Animal> guardianAnimals = GameData.CreateAnimals();
             Arcadia_v2.Map.Map gameMap = new();
 
             Player mainPlayer = new(playerName, gameMap.StartRoom);
             mainPlayer.AddAnimal(mainAnimals[1]);
-            mainPlayer.AddAnimal(mainAnimals[2]);
+            mainPlayer.AddAnimal(mainAnimals[3]);
 
-            CompPlayer gymLeader1 = new("Mrs. Mcmann", gameMap.GymLeader1Room);
-            gymLeader1.SetBattleTeam(new[] { gymAnimals[3], gymAnimals[14] });
-            gymLeader1.AddBadge("Grass Badge");
+            CompPlayer guardian1 = new("Nature Guardian", gameMap.Guardian1Room);
+            guardian1.SetBattleTeam(new[] { guardianAnimals[3], guardianAnimals[14] });
+            guardian1.AddStarFragment("Nature Star Fragment");
 
-            CompPlayer gymLeader2 = new("Minofo", gameMap.GymLeader2Room);
-            gymLeader2.SetBattleTeam(new[] { gymAnimals[5], gymAnimals[9] });
-            gymLeader2.AddBadge("Water Badge");
+            CompPlayer guardian2 = new("Mystic Guardian", gameMap.Guardian2Room);
+            guardian2.SetBattleTeam(new[] { guardianAnimals[5], guardianAnimals[9] });
+            guardian2.AddStarFragment("Mystic Star Fragment");
 
-            CompPlayer gymLeader3 = new("Golden", gameMap.GymLeader3Room);
-            gymLeader3.SetBattleTeam(new[] { gymAnimals[10], gymAnimals[16] });
-            gymLeader3.AddBadge("Rock Badge");
+            CompPlayer guardian3 = new("Thunder Guardian", gameMap.Guardian3Room);
+            guardian3.SetBattleTeam(new[] { guardianAnimals[10], guardianAnimals[16] });
+            guardian3.AddStarFragment("Thunder Star Fragment");
 
-            CompPlayer gymLeader4 = new("Wiggins", gameMap.GymLeader4Room);
-            gymLeader4.SetBattleTeam(new[] { gymAnimals[13], gymAnimals[17] });
-            gymLeader4.AddBadge("Dragon Badge");
+            CompPlayer guardian4 = new("Draconic Guardian", gameMap.Guardian4Room);
+            guardian4.SetBattleTeam(new[] { guardianAnimals[13], guardianAnimals[17] });
+            guardian4.AddStarFragment("Draconic Star Fragment");
 
-            CompPlayer arcadiaChampion = new("Adam", gameMap.ChampionRoom);
-            arcadiaChampion.SetBattleTeam(new[] { gymAnimals[4], gymAnimals[8], gymAnimals[6], gymAnimals[18] });
-            arcadiaChampion.AddBadge("Champion Badge");
+            CompPlayer elementalTitan = new("Elemental Titan", gameMap.ElementalSanctuaryRoom);
+            elementalTitan.SetBattleTeam(new[] { guardianAnimals[4], guardianAnimals[8], guardianAnimals[6], guardianAnimals[18] });
+            elementalTitan.AddStarFragment("Cosmic Star Fragment");
 
             return new GameState(
                 gameMap,
                 mainAnimals,
-                gymAnimals,
+                guardianAnimals,
                 mainPlayer,
-                gymLeader1,
-                gymLeader2,
-                gymLeader3,
-                gymLeader4,
-                arcadiaChampion);
+                guardian1,
+                guardian2,
+                guardian3,
+                guardian4,
+                elementalTitan);
         }
 
         private static string CreateTemporaryDatabasePath()

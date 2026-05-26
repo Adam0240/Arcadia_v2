@@ -6,7 +6,7 @@ using CommandReader = Arcadia_v2.Commands.Commands;
 
 namespace Arcadia_v2
 {
-    // Handles menu actions, including healing, badge display, swapping, and gym interaction.
+    // Handles menu actions, including healing, star fragment display, swapping, and sanctuary interaction.
     public static class MenuFlow
     {
         public static void HandleMenu(
@@ -14,8 +14,9 @@ namespace Arcadia_v2
             GameState gameState,
             GameSaveService saveService)
         {
-            MenuCommandType menuCommand = CommandReader.ReadMenuCommand(io);
             Player mainPlayer = gameState.MainPlayer;
+            bool hasGrowthOptions = GrowthFlow.HasGrowthOptions(mainPlayer);
+            MenuCommandType menuCommand = CommandReader.ReadMenuCommand(io, hasGrowthOptions);
 
             switch (menuCommand)
             {
@@ -37,18 +38,32 @@ namespace Arcadia_v2
                     break;
 
                 case MenuCommandType.Bag:
-                    io.WriteLine(mainPlayer.GetBadgeDisplay());
+                    io.WriteLine(mainPlayer.GetStarFragmentDisplay());
                     break;
 
                 case MenuCommandType.Swap:
                     PartyFlow.SwapAnimals(mainPlayer, io);
                     break;
 
-                case MenuCommandType.Gym:
-                    GymFlow.HandleGymInteraction(
+                case MenuCommandType.Sanctuary:
+                    SanctuaryFlow.HandleSanctuaryInteraction(
                         io,
                         gameState);
 
+                    break;
+
+                case MenuCommandType.Bond:
+                    io.WriteLine(mainPlayer.GetBondDisplay());
+                    break;
+
+                case MenuCommandType.Grow:
+                    if (!hasGrowthOptions)
+                    {
+                        io.WriteLine("No animals are ready to grow up.");
+                        break;
+                    }
+
+                    GrowthFlow.HandleGrowth(io, mainPlayer);
                     break;
 
                 case MenuCommandType.Save:

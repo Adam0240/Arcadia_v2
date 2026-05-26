@@ -4,7 +4,7 @@ using System;
 
 namespace Arcadia_v2
 {
-    // Runs the trainer-versus-trainer battle loop used for gyms and the champion.
+    // Runs the trainer-versus-trainer battle loop used for guardians and the Elemental Titan.
     public static class TrainerBattleFlow
     {
         public static void Run(Player main, CompPlayer opponent)
@@ -35,7 +35,7 @@ namespace Arcadia_v2
                 return;
             }
 
-            // Gym leaders rebuild a fresh runtime team here so earlier attempts cannot carry over damaged state.
+            // Guardians rebuild a fresh runtime team here so earlier attempts cannot carry over damaged state.
             opponent.PrepareForBattle();
             BattleState battleState = BattleState.CreateTrainerBattle(main, opponent);
 
@@ -130,10 +130,16 @@ namespace Arcadia_v2
             if (BattleEngine.IsDefeated(battleState.OpponentAnimal))
             {
                 io.WriteLine($"{opponent.Name} defeated.");
-                io.WriteLine("Congratulations! You defeated me. Please take this badge to honor your victory.");
+                io.WriteLine("Congratulations! You defeated me. Please take this star fragment to honor your victory.");
 
                 opponent.Defeated = true;
-                main.AddBadge(opponent.Badges[0]);
+                string rewardFragment = opponent.StarFragments[0];
+                main.AddStarFragment(rewardFragment);
+
+                if (BondProgression.TryGetElementForStarFragment(rewardFragment, out AnimalElement element))
+                {
+                    main.AddBond(element, 100);
+                }
             }
         }
     }

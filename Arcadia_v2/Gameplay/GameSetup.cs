@@ -32,45 +32,45 @@ namespace Arcadia_v2
         private static GameState CreateInitialState(string playerName)
         {
             List<Animal> mainAnimals = GameData.CreateAnimals();
-            List<Animal> gymAnimals = GameData.CreateAnimals();
+            List<Animal> guardianAnimals = GameData.CreateAnimals();
 
             Map.Map gameMap = new Map.Map();
 
             Player mainPlayer = new Player(playerName, gameMap.StartRoom);
 
-            CompPlayer gymLeader1 = new CompPlayer("Mrs. Mcmann", gameMap.GymLeader1Room);
-            gymLeader1.SetBattleTeam(new[] { gymAnimals[3], gymAnimals[14] });
-            gymLeader1.AddBadge("Grass Badge");
+            CompPlayer guardian1 = new CompPlayer("Nature Guardian", gameMap.Guardian1Room);
+            guardian1.SetBattleTeam(new[] { guardianAnimals[3], guardianAnimals[14] });
+            guardian1.AddStarFragment("Nature Star Fragment");
 
-            CompPlayer gymLeader2 = new CompPlayer("Minofo", gameMap.GymLeader2Room);
-            gymLeader2.SetBattleTeam(new[] { gymAnimals[5], gymAnimals[9] });
-            gymLeader2.AddBadge("Water Badge");
+            CompPlayer guardian2 = new CompPlayer("Mystic Guardian", gameMap.Guardian2Room);
+            guardian2.SetBattleTeam(new[] { guardianAnimals[5], guardianAnimals[9] });
+            guardian2.AddStarFragment("Mystic Star Fragment");
 
-            CompPlayer gymLeader3 = new CompPlayer("Golden", gameMap.GymLeader3Room);
-            gymLeader3.SetBattleTeam(new[] { gymAnimals[10], gymAnimals[16] });
-            gymLeader3.AddBadge("Rock Badge");
+            CompPlayer guardian3 = new CompPlayer("Thunder Guardian", gameMap.Guardian3Room);
+            guardian3.SetBattleTeam(new[] { guardianAnimals[10], guardianAnimals[16] });
+            guardian3.AddStarFragment("Thunder Star Fragment");
 
-            CompPlayer gymLeader4 = new CompPlayer("Wiggins", gameMap.GymLeader4Room);
-            gymLeader4.SetBattleTeam(new[] { gymAnimals[13], gymAnimals[17] });
-            gymLeader4.AddBadge("Dragon Badge");
+            CompPlayer guardian4 = new CompPlayer("Draconic Guardian", gameMap.Guardian4Room);
+            guardian4.SetBattleTeam(new[] { guardianAnimals[13], guardianAnimals[17] });
+            guardian4.AddStarFragment("Draconic Star Fragment");
 
-            CompPlayer arcadiaChampion = new CompPlayer("Adam", gameMap.ChampionRoom);
-            arcadiaChampion.SetBattleTeam(new[] { gymAnimals[4], gymAnimals[8], gymAnimals[6], gymAnimals[18] });
-            arcadiaChampion.AddBadge("Champion Badge");
+            CompPlayer elementalTitan = new CompPlayer("Elemental Titan", gameMap.ElementalSanctuaryRoom);
+            elementalTitan.SetBattleTeam(new[] { guardianAnimals[4], guardianAnimals[8], guardianAnimals[6], guardianAnimals[18] });
+            elementalTitan.AddStarFragment("Cosmic Star Fragment");
 
             mainPlayer.AddAnimal(mainAnimals[1]);
-            mainPlayer.AddAnimal(mainAnimals[2]);
+            mainPlayer.AddAnimal(mainAnimals[3]);
 
             return new GameState(
                 gameMap,
                 mainAnimals,
-                gymAnimals,
+                guardianAnimals,
                 mainPlayer,
-                gymLeader1,
-                gymLeader2,
-                gymLeader3,
-                gymLeader4,
-                arcadiaChampion);
+                guardian1,
+                guardian2,
+                guardian3,
+                guardian4,
+                elementalTitan);
         }
 
         private static void PrintGuide(IGameIO io)
@@ -119,9 +119,9 @@ namespace Arcadia_v2
 
             io.WriteLine("You show the professor the note.");
             io.WriteLine(" Professor: To become the very best.. It's quite a mystery how you appeared, but it seems as though someone has a plan for you..");
-            io.WriteLine("To become the very best in this region I suppose could mean becoming the Champion..");
+            io.WriteLine("To become the very best in this region I suppose could mean overcoming the Elemental Titan..");
             io.WriteLine("Its a long road, but rewarding and you are sure to have many different encounters while working towards your goal.");
-            io.WriteLine("You have to defeat the 4 gyms in this region known as 'Arcadia'. Only then can you challenge the region champion.");
+            io.WriteLine("You have to defeat the 4 sanctuaries in this region known as 'Arcadia'. Only then can you challenge the Elemental Titan.");
             io.WriteLine("It seems you already have a good start with those two by your side.");
             io.WriteLine("This region is full of amazing creatures so go explore and get stronger!");
             io.WriteLine("I can't wait to see how your story unfolds!\n");

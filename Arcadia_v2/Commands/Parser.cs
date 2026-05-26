@@ -33,8 +33,10 @@ namespace Arcadia_v2.Commands
         Heal = 1,
         Bag = 2,
         Swap = 3,
-        Gym = 4,
-        Save = 5
+        Sanctuary = 4,
+        Bond = 5,
+        Grow = 6,
+        Save = 7
     }
 
     public static class Parser

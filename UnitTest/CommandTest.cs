@@ -66,6 +66,8 @@ namespace UnitTest
             Assert.Contains("Menu", io.OutputText);
             Assert.Contains("Swap Animals (swap/s)", io.OutputText);
             Assert.DoesNotContain("Swap Animals (swap/b)", io.OutputText);
+            Assert.Contains("Check Bond (bond)", io.OutputText);
+            Assert.DoesNotContain("Grow (grow)", io.OutputText);
             Assert.Contains("Save Game", io.OutputText);
             Assert.DoesNotContain("Load Game", io.OutputText);
             Assert.DoesNotContain("Delete Save", io.OutputText);
@@ -81,6 +83,19 @@ namespace UnitTest
 
             Assert.Equal(MenuCommandType.Swap, result);
             Assert.Contains("Swap Animals (swap/s)", io.OutputText);
+        }
+
+        // Checks that the grow command is displayed only when the caller includes growth options.
+        [Fact]
+        public void ReadMenuCommand_WithGrowthOption_PrintsGrowthPromptAndReturnsGrow()
+        {
+            FakeGameIO io = new("grow");
+
+            MenuCommandType result = Commands.ReadMenuCommand(io, includeGrowthCommand: true);
+
+            Assert.Equal(MenuCommandType.Grow, result);
+            Assert.Contains("An animal is growing up!", io.OutputText);
+            Assert.Contains("Grow (grow)", io.OutputText);
         }
     }
 }

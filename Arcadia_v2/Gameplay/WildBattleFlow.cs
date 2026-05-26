@@ -102,8 +102,19 @@ namespace Arcadia_v2
             if (BattleEngine.IsDefeated(battleState.OpponentAnimal))
             {
                 io.WriteLine($"{battleState.OpponentAnimal.Name} defeated.");
+                AwardWildBattleProgress(mainPlayer, battleState.OpponentAnimal);
                 HandleCatchChoice(io, mainPlayer, battleState.OpponentAnimal);
             }
+        }
+
+        private static void AwardWildBattleProgress(Player mainPlayer, Animal wildAnimal)
+        {
+            if (wildAnimal.Name == "NU_DRAGON")
+            {
+                mainPlayer.AddStarFragment("Nuclear Star Fragment");
+            }
+
+            BondProgression.TryAddBond(mainPlayer, wildAnimal.Element, 50);
         }
 
         // Handles the player's choice to catch or leave the defeated wild animal.

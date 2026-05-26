@@ -34,38 +34,85 @@ namespace UnitTest
             Assert.Equal("room", exception.ParamName);
         }
 
-        // Checks that adding the same badge twice only stores one copy.
+        // Checks that adding the same star fragment twice only stores one copy.
         [Fact]
-        public void AddBadge_AddsUniqueBadgeOnlyOnce()
+        public void AddStarFragment_AddsUniqueStarFragmentOnlyOnce()
         {
             Player player = new("Red", new Room("Professor's Lab", "Starting room"));
 
-            player.AddBadge("Boulder Badge");
-            player.AddBadge("Boulder Badge");
+            player.AddStarFragment("Stone Star Fragment");
+            player.AddStarFragment("Stone Star Fragment");
 
-            Assert.Single(player.Badges);
-            Assert.Equal("Boulder Badge", player.Badges[0]);
+            Assert.Single(player.StarFragments);
+            Assert.Equal("Stone Star Fragment", player.StarFragments[0]);
         }
 
-        // Checks that adding an empty badge name throws an argument exception.
+        // Checks that adding an empty star fragment name throws an argument exception.
         [Fact]
-        public void AddBadge_EmptyBadge_ThrowsArgumentException()
+        public void AddStarFragment_EmptyStarFragment_ThrowsArgumentException()
         {
             Player player = new("Red", new Room("Professor's Lab", "Starting room"));
 
-            ArgumentException exception = Assert.Throws<ArgumentException>(() => player.AddBadge(""));
-            Assert.Equal("badge", exception.ParamName);
+            ArgumentException exception = Assert.Throws<ArgumentException>(() => player.AddStarFragment(""));
+            Assert.Equal("starFragment", exception.ParamName);
         }
 
-        // Checks that the badge display returns all earned badges in the expected format.
+        // Checks that the star fragment display returns all earned star fragments in the expected format.
         [Fact]
-        public void GetBadgeDisplay_WithBadges_ReturnsFormattedBadgeList()
+        public void GetStarFragmentDisplay_WithStarFragments_ReturnsFormattedStarFragmentList()
         {
             Player player = new("Red", new Room("Professor's Lab", "Starting room"));
-            player.AddBadge("Boulder Badge");
-            player.AddBadge("Cascade Badge");
+            player.AddStarFragment("Stone Star Fragment");
+            player.AddStarFragment("Cascade Star Fragment");
 
-            Assert.Equal("Badges:\nBoulder Badge\nCascade Badge", player.GetBadgeDisplay());
+            Assert.Equal("Star Fragments:\nStone Star Fragment\nCascade Star Fragment", player.GetStarFragmentDisplay());
+        }
+
+        // Checks that new players start with zero bond for every element.
+        [Fact]
+        public void BondByElement_NewPlayer_StartsAtZeroForEveryElement()
+        {
+            Player player = new("Red", new Room("Professor's Lab", "Starting room"));
+
+            Assert.All(Enum.GetValues<AnimalElement>(), element => Assert.Equal(0, player.GetBond(element)));
+        }
+
+        // Checks that adding bond clamps the meter at one hundred percent.
+        [Fact]
+        public void AddBond_AboveLimit_ClampsAtOneHundred()
+        {
+            Player player = new("Red", new Room("Professor's Lab", "Starting room"));
+
+            player.AddBond(AnimalElement.Nature, 50);
+            player.AddBond(AnimalElement.Nature, 75);
+
+            Assert.Equal(100, player.GetBond(AnimalElement.Nature));
+        }
+
+        // Checks that the bond display lists each element and its current meter.
+        [Fact]
+        public void GetBondDisplay_ReturnsAllElementMeters()
+        {
+            Player player = new("Red", new Room("Professor's Lab", "Starting room"));
+            player.AddBond(AnimalElement.Nature, 50);
+
+            Assert.Equal(
+                "Bond:\nNature 50%/100%\nMystic 0%/100%\nThunder 0%/100%\nDraconic 0%/100%\nCosmic 0%/100%\nNuclear 0%/100%",
+                player.GetBondDisplay());
+        }
+
+        // Checks that replacing an animal keeps party ownership inside the player model.
+        [Fact]
+        public void ReplaceAnimalAt_ReplacesSelectedPartyAnimal()
+        {
+            Player player = new("Red", new Room("Professor's Lab", "Starting room"));
+            Animal cat = GameData.CreateAnimals().Single(animal => animal.Name == "N_CAT");
+            Animal lion = GameData.CreateAnimals().Single(animal => animal.Name == "N_LION");
+            player.AddAnimal(cat);
+
+            player.ReplaceAnimalAt(0, lion);
+
+            Assert.Equal("N_LION", player.AnimalInventory[0].Name);
         }
 
         // Checks that an empty animal inventory returns the expected empty-state display text.
@@ -110,7 +157,7 @@ namespace UnitTest
         [Fact]
         public void SetBattleTeam_ClonesTemplateAnimals()
         {
-            CompPlayer compPlayer = new("Blue", new Room("Oak Pass", "Battle room"));
+            CompPlayer compPlayer = new("Blue", new Room("Nature Sanctuary", "Battle room"));
             Animal templateAnimal = new(
                 id: 25,
                 name: "T_CAT",
@@ -134,7 +181,7 @@ namespace UnitTest
         [Fact]
         public void PrepareForBattle_RebuildsInventoryFromTemplate()
         {
-            CompPlayer compPlayer = new("Blue", new Room("Oak Pass", "Battle room"));
+            CompPlayer compPlayer = new("Blue", new Room("Nature Sanctuary", "Battle room"));
             Animal templateAnimal = new(
                 id: 25,
                 name: "T_CAT",

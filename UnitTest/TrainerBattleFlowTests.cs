@@ -19,9 +19,9 @@ public class TrainerBattleFlowTests
         Assert.Contains("Rival sent out N_WOLF", io.OutputText);
     }
 
-    // Checks that defeating an entire opponent team marks the trainer defeated and awards the badge.
+    // Checks that defeating an entire opponent team marks the trainer defeated and awards the star fragment.
     [Fact]
-    public void Run_WhenOpponentTeamIsDefeated_CompletesBattleAndAwardsBadge()
+    public void Run_WhenOpponentTeamIsDefeated_CompletesBattleAndAwardsStarFragment()
     {
         Player player = CreatePlayer();
         CompPlayer opponent = CreateOpponent();
@@ -30,8 +30,22 @@ public class TrainerBattleFlowTests
         TrainerBattleFlow.Run(io, player, opponent);
 
         Assert.True(opponent.Defeated);
-        Assert.Contains("Test Badge", player.Badges);
+        Assert.Contains("Test Star Fragment", player.StarFragments);
         Assert.Contains("Rival defeated.", io.OutputText);
+    }
+
+    // Checks that defeating a guardian adds full bond for the awarded fragment's element.
+    [Fact]
+    public void Run_WhenGuardianIsDefeated_AddsFullBondForRewardElement()
+    {
+        Player player = CreatePlayer();
+        CompPlayer opponent = CreateOpponent();
+        opponent.RestoreStarFragments(new[] { "Nature Star Fragment" });
+        FakeGameIO io = new("1", "1");
+
+        TrainerBattleFlow.Run(io, player, opponent);
+
+        Assert.Equal(100, player.GetBond(AnimalElement.Nature));
     }
 
     // Checks that trainer battles rebuild a fresh opponent battle team before the fight begins.
@@ -85,7 +99,7 @@ public class TrainerBattleFlowTests
         Player player = new("Trainer", new Map().StartRoom);
         player.AddAnimal(new Animal(id: 1, name: "N_CAT", element: AnimalElement.Nature, speed: 5, baseHealth: 5, health: 5, level: 1, moves: new[] { new Move("WEAKHIT", ElementType.Base, 1) }));
         CompPlayer opponent = new("Rival", new Map().StartRoom);
-        opponent.AddBadge("Test Badge");
+        opponent.AddStarFragment("Test Star Fragment");
         opponent.SetBattleTeam(new[]
         {
             new Animal(id: 3, name: "N_DOG", element: AnimalElement.Nature, speed: 5, baseHealth: 20, health: 20, level: 1, moves: new[] { new Move("WEAK", ElementType.Base, 1), new Move("STRONG", ElementType.Base, 5) })
@@ -111,7 +125,7 @@ public class TrainerBattleFlowTests
     private static CompPlayer CreateOpponent()
     {
         CompPlayer opponent = new("Rival", new Map().StartRoom);
-        opponent.AddBadge("Test Badge");
+        opponent.AddStarFragment("Test Star Fragment");
         opponent.SetBattleTeam(new[]
         {
             new Animal(id: 3, name: "N_DOG", element: AnimalElement.Nature, speed: 5, baseHealth: 5, health: 5, level: 1, moves: new[] { MoveData.HEAD_BASH }),

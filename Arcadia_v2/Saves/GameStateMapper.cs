@@ -49,7 +49,8 @@ namespace Arcadia_v2.Saves
             {
                 Name = player.Name,
                 CurrentRoomName = player.CurrentRoom.Name,
-                Badges = player.Badges.ToList(),
+                StarFragments = player.StarFragments.ToList(),
+                Bond = CaptureBond(player),
                 AnimalInventory = CaptureAnimalList(player.AnimalInventory)
             };
         }
@@ -61,7 +62,7 @@ namespace Arcadia_v2.Saves
                 Name = trainer.Name,
                 CurrentRoomName = trainer.CurrentRoom.Name,
                 Defeated = trainer.Defeated,
-                Badges = trainer.Badges.ToList(),
+                StarFragments = trainer.StarFragments.ToList(),
                 BattleTeamTemplate = CaptureAnimalList(trainer.BattleTeamTemplate)
             };
         }
@@ -97,7 +98,8 @@ namespace Arcadia_v2.Saves
         {
             gameState.MainPlayer.RestoreName(playerState.Name);
             gameState.MainPlayer.MoveTo(gameState.GameMap.GetRoom(playerState.CurrentRoomName));
-            gameState.MainPlayer.RestoreBadges(playerState.Badges);
+            gameState.MainPlayer.RestoreStarFragments(playerState.StarFragments);
+            gameState.MainPlayer.RestoreBond(CreateBondMap(playerState.Bond));
             gameState.MainPlayer.RestoreAnimalInventory(CreateAnimals(playerState.AnimalInventory, animalsById));
         }
 
@@ -130,7 +132,7 @@ namespace Arcadia_v2.Saves
                 trainer.RestoreName(trainerState.Name);
                 trainer.MoveTo(gameState.GameMap.GetRoom(trainerState.CurrentRoomName));
                 trainer.Defeated = trainerState.Defeated;
-                trainer.RestoreBadges(trainerState.Badges);
+                trainer.RestoreStarFragments(trainerState.StarFragments);
                 trainer.SetBattleTeam(CreateAnimals(trainerState.BattleTeamTemplate, animalsById));
             }
         }
@@ -153,6 +155,22 @@ namespace Arcadia_v2.Saves
             }
 
             return restoredAnimals;
+        }
+
+        private static List<BondSaveState> CaptureBond(Player player)
+        {
+            return player.BondByElement
+                .Select(bond => new BondSaveState
+                {
+                    Element = bond.Key,
+                    Percent = bond.Value
+                })
+                .ToList();
+        }
+
+        private static IReadOnlyDictionary<AnimalElement, int> CreateBondMap(IEnumerable<BondSaveState> savedBond)
+        {
+            return savedBond.ToDictionary(bond => bond.Element, bond => bond.Percent);
         }
 
         private static Animal CreateAnimalFromSaveState(AnimalSaveState animalState, Animal template)
@@ -219,11 +237,11 @@ namespace Arcadia_v2.Saves
         {
             return new[]
             {
-                gameState.GymLeader1,
-                gameState.GymLeader2,
-                gameState.GymLeader3,
-                gameState.GymLeader4,
-                gameState.ArcadiaChampion
+                gameState.Guardian1,
+                gameState.Guardian2,
+                gameState.Guardian3,
+                gameState.Guardian4,
+                gameState.ElementalTitan
             };
         }
     }

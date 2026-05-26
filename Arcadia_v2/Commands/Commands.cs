@@ -23,8 +23,19 @@ namespace Arcadia_v2.Commands
 
         public static MenuCommandType ReadMenuCommand(IGameIO io)
         {
+            return ReadMenuCommand(io, includeGrowthCommand: false);
+        }
+
+        public static MenuCommandType ReadMenuCommand(IGameIO io, bool includeGrowthCommand)
+        {
             io.WriteLine("\nMenu");
-            WriteCommandOptions(io, CommandDefinitions.MenuCommands);
+
+            if (includeGrowthCommand)
+            {
+                io.WriteLine("An animal is growing up!");
+            }
+
+            WriteCommandOptions(io, CommandDefinitions.GetMenuCommands(includeGrowthCommand));
             io.WriteLine("\nWhat would you like to do?");
             return Parser.ParseMenuCommand(io.ReadLine());
         }

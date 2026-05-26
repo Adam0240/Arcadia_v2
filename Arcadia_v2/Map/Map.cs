@@ -6,11 +6,11 @@ namespace Arcadia_v2.Map
     public class Map
     {
         public Room StartRoom { get; }
-        public Room GymLeader1Room { get; }
-        public Room GymLeader2Room { get; }
-        public Room GymLeader3Room { get; }
-        public Room GymLeader4Room { get; }
-        public Room ChampionRoom { get; }
+        public Room Guardian1Room { get; }
+        public Room Guardian2Room { get; }
+        public Room Guardian3Room { get; }
+        public Room Guardian4Room { get; }
+        public Room ElementalSanctuaryRoom { get; }
 
         public IReadOnlyDictionary<string, Room> Rooms => mRoomsByName;
 
@@ -24,11 +24,11 @@ namespace Arcadia_v2.Map
             mRoomsByName = mRoomsById.Values.ToDictionary(room => room.Name, StringComparer.Ordinal);
 
             StartRoom = GetRoom(RoomId.MaiaStable);
-            GymLeader1Room = GetRoom(RoomId.OakPass);
-            GymLeader2Room = GetRoom(RoomId.NewNucleon);
-            GymLeader3Room = GetRoom(RoomId.Ikena);
-            GymLeader4Room = GetRoom(RoomId.Wyrmrest);
-            ChampionRoom = GetRoom(RoomId.GuardiansTower);
+            Guardian1Room = GetRoom(RoomId.OakPass);
+            Guardian2Room = GetRoom(RoomId.NewNucleon);
+            Guardian3Room = GetRoom(RoomId.Ikena);
+            Guardian4Room = GetRoom(RoomId.Wyrmrest);
+            ElementalSanctuaryRoom = GetRoom(RoomId.GuardiansTower);
 
             ConnectRooms();
             AddMovementRequirements();
@@ -55,8 +55,8 @@ namespace Arcadia_v2.Map
                 [RoomId.Mountains] = new Room(RoomId.Mountains, "Mountains", ""),
                 [RoomId.RadioactiveWay] = new Room(RoomId.RadioactiveWay, "Radioactive Way", ""),
                 [RoomId.Nucleon] = new Room(RoomId.Nucleon, "Nucleon", "") { IsTown = true },
-                [RoomId.FinalTrials] = new Room(RoomId.FinalTrials, "Final Trials", "Expert trainers and future champions all travel through here"),
-                [RoomId.GuardiansTower] = new Room(RoomId.GuardiansTower, "Guardian's Tower", "Where you find out if you're the best!"),
+                [RoomId.FinalTrials] = new Room(RoomId.FinalTrials, "Final Trials", "Expert trainers and future titans all travel through here"),
+                [RoomId.GuardiansTower] = new Room(RoomId.GuardiansTower, "Guardian Tower", "Where you find out if you're the best!"),
                 [RoomId.Road8] = new Room(RoomId.Road8, "Road 8", ""),
                 [RoomId.TheEnd] = new Room(RoomId.TheEnd, "The End", "Decide where you wish to stay") { IsFinalRoom = true }
             };
@@ -95,6 +95,7 @@ namespace Arcadia_v2.Map
             road1.North = road8;
             road1.East = ikena;
             road1.South = road2;
+            road1.West = maiaStable;
 
             road2.North = road1;
             road2.South = oakPass;
@@ -149,25 +150,25 @@ namespace Arcadia_v2.Map
 
         private void AddMovementRequirements()
         {
-            AddMovementRequirement(RoomId.Ikena, RoomId.Road6, requiredBadges: 3);
-            AddMovementRequirement(RoomId.Road5, RoomId.Nucleon, requiredBadges: 4);
+            AddMovementRequirement(RoomId.Ikena, RoomId.Road6, requiredStarFragments: 3);
+            AddMovementRequirement(RoomId.Road5, RoomId.Nucleon, requiredStarFragments: 4);
             AddMovementRequirement(RoomId.Ikena, RoomId.Road5, requiredAnimalElement: AnimalElement.Mystic);
             AddMovementRequirement(RoomId.NewNucleon, RoomId.Road5, requiredAnimalElement: AnimalElement.Mystic);
-            AddMovementRequirement(RoomId.Road8, RoomId.GuardiansTower, requiresChampionDefeat: true);
-            AddMovementRequirement(RoomId.Ikena, RoomId.TheEnd, requiresChampionDefeat: true);
+            AddMovementRequirement(RoomId.Road8, RoomId.GuardiansTower, requiresElementalTitanDefeat: true);
+            AddMovementRequirement(RoomId.Ikena, RoomId.TheEnd, requiresElementalTitanDefeat: true);
         }
 
         private void AddMovementRequirement(
             RoomId fromRoomId,
             RoomId toRoomId,
-            int requiredBadges = 0,
+            int requiredStarFragments = 0,
             AnimalElement? requiredAnimalElement = null,
-            bool requiresChampionDefeat = false)
+            bool requiresElementalTitanDefeat = false)
         {
             mMovementRequirements[(fromRoomId, toRoomId)] = new MovementRequirement(
-                requiredBadges,
+                requiredStarFragments,
                 requiredAnimalElement,
-                requiresChampionDefeat);
+                requiresElementalTitanDefeat);
         }
 
         public MovementRequirement GetMovementRequirement(Room currentRoom, Room destination)
@@ -230,9 +231,9 @@ namespace Arcadia_v2.Map
     }
 
     public readonly record struct MovementRequirement(
-        int RequiredBadges,
+        int RequiredStarFragments,
         AnimalElement? RequiredAnimalElement,
-        bool RequiresChampionDefeat)
+        bool RequiresElementalTitanDefeat)
     {
         public static MovementRequirement None { get; } = new(0, null, false);
     }
