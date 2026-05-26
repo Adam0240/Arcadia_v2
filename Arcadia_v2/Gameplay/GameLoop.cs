@@ -130,17 +130,17 @@ namespace Arcadia_v2
 
             if (mainPlayer.CurrentRoom.HasEncounterAnimals())
             {
-                PrintArceusChallenge(io);
+                PrintFinalChallenge(io);
                 return true;
             }
 
             return AskPlayerToStay(io);
         }
 
-        // Prints the final challenge text before the Arceus encounter.
-        private static void PrintArceusChallenge(IGameIO io)
+        // Prints the final challenge text before the last encounter.
+        private static void PrintFinalChallenge(IGameIO io)
         {
-            io.WriteLine("\n\nArceus Voice: I knew you would eventually find your way here.");
+            io.WriteLine("\n\nCosmic Voice: I knew you would eventually find your way here.");
             io.WriteLine("Your potential was clear to me the first time you were in my presence.");
             io.WriteLine("You have proven you're the best trainer in Arcadia. But are you stronger than the god of this region?");
             io.WriteLine("Face me to find out if you truly are the best.\n");

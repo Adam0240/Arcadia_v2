@@ -30,6 +30,7 @@ Examples:
 Impact: this is the clearest remaining direct Pokemon IP issue because it uses a named Pokemon in user-facing production text.
 
 Recommended fix: replace `Arceus` with an original Arcadia-specific final entity name, and rename the method/comment accordingly. For example, use `Arcadia Voice`, `The Origin`, `The First Guardian`, or tie it directly to the final creature with `NU_DRAGON`.
+Solved
 
 ### Medium: Core progression still strongly resembles Pokemon's Gym / Badge / Champion loop
 
