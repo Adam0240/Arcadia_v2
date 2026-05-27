@@ -1,4 +1,7 @@
 <Solution>
+  <Project Path="../Arcadia_Mobile/Arcadia_Mobile.csproj" Id="1e9cc476-3152-4ffa-b5e9-08af6ff22a53">
+    <Deploy Solution="Debug|*" />
+  </Project>
   <Project Path="../UnitTest/UnitTest.csproj" />
   <Project Path="Arcadia_v2.csproj" />
 </Solution>
