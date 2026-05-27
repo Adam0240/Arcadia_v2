@@ -108,7 +108,8 @@ The mobile project lives in `Arcadia_Mobile/`. The existing console game lives i
 - Do not add legacy save migration or backwards-compatibility code for major changes/refactors unless explicitly requested.
 
 # Current Plan
-- Continue integrating gameplay features from the base application `Arcadia_v2` into `Arcadia_Mobile` by creating mobile-side adapted copies, preserving the console project as the reference implementation.
-
+- Continue bringing features from the Arcada_v2 project to the mobile version. 
 
 # Current Task
+- Begin copying over the animals/creature data from Arcadia_v2 into the mobile application, ensuring that the new files work with .Net Maui. Ensure you maintain the file architecture (for example if a Creatures folder does not exist in the mobile project you will create one)
+- Stop and ask questions if needed. 

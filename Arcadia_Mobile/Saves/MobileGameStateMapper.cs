@@ -14,6 +14,7 @@ public static class MobileGameStateMapper
             Version = 1,
             Player = new MobilePlayerSaveState
             {
+                Name = gameSession.PlayerName,
                 CurrentRoomId = gameSession.CurrentRoom.Id.ToString(),
                 VisitedRoomIds = gameSession.VisitedRoomIds
                     .Select(roomId => roomId.ToString())
@@ -27,12 +28,18 @@ public static class MobileGameStateMapper
         ArgumentNullException.ThrowIfNull(gameSession);
         ArgumentNullException.ThrowIfNull(saveState);
 
+        if (saveState.Player == null)
+        {
+            throw new InvalidOperationException("Save data did not contain player state.");
+        }
+
+        string playerName = saveState.Player.Name.Trim();
         RoomId currentRoomId = ParseRoomId(saveState.Player.CurrentRoomId);
         List<RoomId> visitedRoomIds = saveState.Player.VisitedRoomIds
             .Select(ParseRoomId)
             .ToList();
 
-        gameSession.Restore(currentRoomId, visitedRoomIds);
+        gameSession.Restore(playerName, currentRoomId, visitedRoomIds);
     }
 
     private static RoomId ParseRoomId(string roomId)

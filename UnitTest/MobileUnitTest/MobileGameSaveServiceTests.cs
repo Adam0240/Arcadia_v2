@@ -40,6 +40,7 @@ public class MobileGameSaveServiceTests
         {
             MobileGameSaveService saveService = CreateSaveService(saveDirectory);
             MobileGameSession savedSession = new(new GameMap());
+            savedSession.StartNewGame("Nova");
             savedSession.Move(RoomDirection.North);
             savedSession.Move(RoomDirection.West);
             await saveService.SaveAsync(savedSession);
@@ -50,6 +51,7 @@ public class MobileGameSaveServiceTests
             Assert.True(result.Succeeded);
             Assert.Equal("Game loaded.", result.Message);
             Assert.Equal(RoomId.Road1, loadedSession.CurrentRoom.Id);
+            Assert.Equal("Nova", loadedSession.PlayerName);
             Assert.Contains(RoomId.Ikena, loadedSession.VisitedRoomIds);
         }
         finally
@@ -115,6 +117,72 @@ public class MobileGameSaveServiceTests
         }
     }
 
+    // Checks that a malformed save with a missing player state fails without crashing.
+    [Fact]
+    public async Task LoadAsync_WithNullPlayerState_ReturnsFailure()
+    {
+        string saveDirectory = CreateSaveDirectory();
+
+        try
+        {
+            FileMobileGameSaveRepository repository = CreateRepository(saveDirectory);
+            await repository.SaveJsonAsync(
+                """
+                {
+                  "Version": 1,
+                  "Player": null
+                }
+                """);
+            MobileGameSaveService saveService = new(repository);
+            MobileGameSession session = new(new GameMap());
+
+            MobileSaveCommandResult result = await saveService.LoadAsync(session);
+
+            Assert.False(result.Succeeded);
+            Assert.Equal("Save data could not be loaded.", result.Message);
+            Assert.Equal(RoomId.MaiaStable, session.CurrentRoom.Id);
+        }
+        finally
+        {
+            DeleteSaveDirectory(saveDirectory);
+        }
+    }
+
+    // Checks that storage write failures return a save failure instead of escaping as an exception.
+    [Fact]
+    public async Task SaveAsync_WhenRepositoryThrows_ReturnsFailure()
+    {
+        MobileGameSaveService saveService = new(new ThrowingMobileGameSaveRepository());
+
+        MobileSaveCommandResult result = await saveService.SaveAsync(new MobileGameSession(new GameMap()));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("Game could not be saved.", result.Message);
+    }
+
+    // Checks that storage delete failures return a delete failure instead of escaping as an exception.
+    [Fact]
+    public async Task DeleteAsync_WhenRepositoryThrows_ReturnsFailure()
+    {
+        MobileGameSaveService saveService = new(new ThrowingMobileGameSaveRepository());
+
+        MobileSaveCommandResult result = await saveService.DeleteAsync();
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("Save data could not be deleted.", result.Message);
+    }
+
+    // Checks that storage read failures do not crash the save-exists check.
+    [Fact]
+    public async Task HasSaveAsync_WhenRepositoryThrows_ReturnsFalse()
+    {
+        MobileGameSaveService saveService = new(new ThrowingMobileGameSaveRepository());
+
+        bool hasSave = await saveService.HasSaveAsync();
+
+        Assert.False(hasSave);
+    }
+
     private static MobileGameSaveService CreateSaveService(string saveDirectory)
     {
         return new MobileGameSaveService(CreateRepository(saveDirectory));
@@ -135,6 +203,29 @@ public class MobileGameSaveServiceTests
         if (Directory.Exists(saveDirectory))
         {
             Directory.Delete(saveDirectory, recursive: true);
+        }
+    }
+
+    private sealed class ThrowingMobileGameSaveRepository : IMobileGameSaveRepository
+    {
+        public Task InitializeAsync()
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task SaveJsonAsync(string saveJson)
+        {
+            throw new IOException("Storage unavailable.");
+        }
+
+        public Task<string?> LoadJsonAsync()
+        {
+            throw new IOException("Storage unavailable.");
+        }
+
+        public Task<bool> DeleteSaveAsync()
+        {
+            throw new IOException("Storage unavailable.");
         }
     }
 }

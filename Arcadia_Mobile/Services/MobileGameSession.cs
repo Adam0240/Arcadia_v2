@@ -15,19 +15,27 @@ public sealed class MobileGameSession
     }
 
     public Room CurrentRoom { get; private set; }
+    public string PlayerName { get; private set; } = string.Empty;
     public IReadOnlyCollection<RoomId> VisitedRoomIds => visitedRoomIds;
 
-    public void StartNewGame()
+    public void StartNewGame(string playerName)
     {
+        if (string.IsNullOrWhiteSpace(playerName))
+        {
+            throw new ArgumentException("Player name cannot be empty.", nameof(playerName));
+        }
+
+        PlayerName = playerName.Trim();
         visitedRoomIds.Clear();
         CurrentRoom = gameMap.StartRoom;
         visitedRoomIds.Add(CurrentRoom.Id);
     }
 
-    public void Restore(RoomId currentRoomId, IEnumerable<RoomId> visitedRoomIds)
+    public void Restore(string playerName, RoomId currentRoomId, IEnumerable<RoomId> visitedRoomIds)
     {
         ArgumentNullException.ThrowIfNull(visitedRoomIds);
 
+        PlayerName = playerName.Trim();
         CurrentRoom = gameMap.GetRoom(currentRoomId);
         this.visitedRoomIds.Clear();
 

@@ -1,3 +1,4 @@
+using Arcadia_Mobile.Dialogs;
 using Arcadia_Mobile.Map;
 using Arcadia_Mobile.Saves;
 using Arcadia_Mobile.Services;
@@ -24,6 +25,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IMobileGameSaveRepository>(_ =>
             new FileMobileGameSaveRepository(Path.Combine(FileSystem.AppDataDirectory, "savegame.json")));
         builder.Services.AddSingleton<MobileGameSaveService>();
+        builder.Services.AddSingleton<IPlayerNamePromptService, MauiPlayerNamePromptService>();
         builder.Services.AddTransient<StartMenuViewModel>();
         builder.Services.AddTransient<StartMenuPage>();
         builder.Services.AddTransient<MainPageViewModel>();

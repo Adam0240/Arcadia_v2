@@ -59,9 +59,21 @@ public class MobileGameSessionTests
         MobileGameSession session = new(new GameMap());
         session.Move(RoomDirection.North);
 
-        session.StartNewGame();
+        session.StartNewGame("Nova");
 
         Assert.Equal(RoomId.MaiaStable, session.CurrentRoom.Id);
+        Assert.Equal("Nova", session.PlayerName);
+    }
+
+    // Checks that starting a new game rejects empty player names.
+    [Fact]
+    public void StartNewGame_WithEmptyName_ThrowsArgumentException()
+    {
+        MobileGameSession session = new(new GameMap());
+
+        ArgumentException exception = Assert.Throws<ArgumentException>(() => session.StartNewGame("   "));
+
+        Assert.Equal("playerName", exception.ParamName);
     }
 
     // Checks that room interaction text comes from gameplay room data, not page-only hardcoding.

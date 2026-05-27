@@ -8,6 +8,7 @@ public sealed class MobileGameSaveState
 
 public sealed class MobilePlayerSaveState
 {
+    public string Name { get; set; } = string.Empty;
     public string CurrentRoomId { get; set; } = string.Empty;
     public List<string> VisitedRoomIds { get; set; } = new();
 }

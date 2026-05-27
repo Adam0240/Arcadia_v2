@@ -20,30 +20,44 @@ public sealed class MobileGameSaveService
 
     public async Task<MobileSaveCommandResult> SaveAsync(MobileGameSession gameSession)
     {
-        MobileGameSaveState saveState = MobileGameStateMapper.Capture(gameSession);
-        string saveJson = MobileGameSaveSerializer.Serialize(saveState);
+        try
+        {
+            MobileGameSaveState saveState = MobileGameStateMapper.Capture(gameSession);
+            string saveJson = MobileGameSaveSerializer.Serialize(saveState);
 
-        await repository.SaveJsonAsync(saveJson);
+            await repository.SaveJsonAsync(saveJson);
 
-        return MobileSaveCommandResult.Success("Game saved.");
+            return MobileSaveCommandResult.Success("Game saved.");
+        }
+        catch (Exception exception) when (IsStorageException(exception))
+        {
+            return MobileSaveCommandResult.Failure("Game could not be saved.");
+        }
     }
 
     public async Task<bool> HasSaveAsync()
     {
-        return await repository.LoadJsonAsync() != null;
+        try
+        {
+            return await repository.LoadJsonAsync() != null;
+        }
+        catch (Exception exception) when (IsStorageException(exception))
+        {
+            return false;
+        }
     }
 
     public async Task<MobileSaveCommandResult> LoadAsync(MobileGameSession gameSession)
     {
-        string? saveJson = await repository.LoadJsonAsync();
-
-        if (saveJson == null)
-        {
-            return MobileSaveCommandResult.Failure("No save data found.");
-        }
-
         try
         {
+            string? saveJson = await repository.LoadJsonAsync();
+
+            if (saveJson == null)
+            {
+                return MobileSaveCommandResult.Failure("No save data found.");
+            }
+
             MobileGameSaveState saveState = MobileGameSaveSerializer.Deserialize(saveJson);
             MobileGameStateMapper.Apply(gameSession, saveState);
             return MobileSaveCommandResult.Success("Game loaded.");
@@ -52,15 +66,31 @@ public sealed class MobileGameSaveService
         {
             return MobileSaveCommandResult.Failure("Save data could not be loaded.");
         }
+        catch (Exception exception) when (IsStorageException(exception))
+        {
+            return MobileSaveCommandResult.Failure("Save data could not be loaded.");
+        }
     }
 
     public async Task<MobileSaveCommandResult> DeleteAsync()
     {
-        bool deleted = await repository.DeleteSaveAsync();
+        try
+        {
+            bool deleted = await repository.DeleteSaveAsync();
 
-        return deleted
-            ? MobileSaveCommandResult.Success("Save data deleted.")
-            : MobileSaveCommandResult.Failure("No save data found.");
+            return deleted
+                ? MobileSaveCommandResult.Success("Save data deleted.")
+                : MobileSaveCommandResult.Failure("No save data found.");
+        }
+        catch (Exception exception) when (IsStorageException(exception))
+        {
+            return MobileSaveCommandResult.Failure("Save data could not be deleted.");
+        }
+    }
+
+    private static bool IsStorageException(Exception exception)
+    {
+        return exception is IOException or UnauthorizedAccessException or System.Security.SecurityException;
     }
 }
 

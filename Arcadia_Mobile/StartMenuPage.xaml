@@ -15,6 +15,11 @@
                    HorizontalTextAlignment="Center"
                    SemanticProperties.HeadingLevel="Level1" />
 
+            <Label Text="Checking save data..."
+                   FontSize="15"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding IsCheckingSaveState}" />
+
             <Button Text="New Game"
                     FontSize="18"
                     Command="{Binding NewGameCommand}"
