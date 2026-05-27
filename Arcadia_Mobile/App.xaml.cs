@@ -1,17 +1,17 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+namespace Arcadia_Mobile;
 
-namespace Arcadia_Mobile
+public partial class App : Application
 {
-    public partial class App : Application
-    {
-        public App()
-        {
-            InitializeComponent();
-        }
+    private readonly AppShell appShell;
 
-        protected override Window CreateWindow(IActivationState? activationState)
-        {
-            return new Window(new AppShell());
-        }
+    public App(AppShell appShell)
+    {
+        this.appShell = appShell;
+        InitializeComponent();
+    }
+
+    protected override Window CreateWindow(IActivationState? activationState)
+    {
+        return new Window(appShell);
     }
 }

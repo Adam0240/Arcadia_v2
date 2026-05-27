@@ -1,10 +1,15 @@
-﻿namespace Arcadia_Mobile
+namespace Arcadia_Mobile;
+
+public partial class AppShell : Shell
 {
-    public partial class AppShell : Shell
+    public AppShell(MainPage mainPage)
     {
-        public AppShell()
+        InitializeComponent();
+        Items.Add(new ShellContent
         {
-            InitializeComponent();
-        }
+            Title = "Explore",
+            Content = mainPage,
+            Route = "MainPage"
+        });
     }
 }
