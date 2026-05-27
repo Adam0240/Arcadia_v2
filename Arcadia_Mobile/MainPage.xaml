@@ -38,35 +38,52 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <Grid Grid.Row="1"
-              RowDefinitions="Auto,Auto,Auto"
-              ColumnDefinitions="*,*,*"
-              RowSpacing="8"
-              ColumnSpacing="8">
-            <Button Grid.Row="0"
-                    Grid.Column="1"
-                    Text="North"
-                    Command="{Binding MoveNorthCommand}"
-                    IsEnabled="{Binding CanMoveNorth}" />
-            <Button Grid.Row="1"
-                    Grid.Column="0"
-                    Text="West"
-                    Command="{Binding MoveWestCommand}"
-                    IsEnabled="{Binding CanMoveWest}" />
-            <Button Grid.Row="1"
-                    Grid.Column="1"
-                    Text="Inspect"
-                    Command="{Binding InteractCommand}" />
-            <Button Grid.Row="1"
-                    Grid.Column="2"
-                    Text="East"
-                    Command="{Binding MoveEastCommand}"
-                    IsEnabled="{Binding CanMoveEast}" />
-            <Button Grid.Row="2"
-                    Grid.Column="1"
-                    Text="South"
-                    Command="{Binding MoveSouthCommand}"
-                    IsEnabled="{Binding CanMoveSouth}" />
+        <Grid Grid.Row="1">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+                  ColumnDefinitions="*,*,*"
+                  RowSpacing="8"
+                  ColumnSpacing="8"
+                  IsVisible="{Binding IsDirectionControlsVisible}">
+                <Button Grid.Row="0"
+                        Grid.Column="1"
+                        Text="North"
+                        Command="{Binding MoveNorthCommand}"
+                        IsEnabled="{Binding CanMoveNorth}" />
+                <Button Grid.Row="1"
+                        Grid.Column="0"
+                        Text="West"
+                        Command="{Binding MoveWestCommand}"
+                        IsEnabled="{Binding CanMoveWest}" />
+                <Button Grid.Row="1"
+                        Grid.Column="1"
+                        Text="Inspect"
+                        Command="{Binding InteractCommand}" />
+                <Button Grid.Row="1"
+                        Grid.Column="2"
+                        Text="East"
+                        Command="{Binding MoveEastCommand}"
+                        IsEnabled="{Binding CanMoveEast}" />
+                <Button Grid.Row="2"
+                        Grid.Column="1"
+                        Text="South"
+                        Command="{Binding MoveSouthCommand}"
+                        IsEnabled="{Binding CanMoveSouth}" />
+                <Button Grid.Row="3"
+                        Grid.Column="1"
+                        Text="Menu"
+                        Command="{Binding OpenMenuCommand}" />
+            </Grid>
+
+            <Grid RowDefinitions="Auto,Auto"
+                  RowSpacing="8"
+                  IsVisible="{Binding IsMenuOpen}">
+                <Button Grid.Row="0"
+                        Text="Save"
+                        Command="{Binding SaveCommand}" />
+                <Button Grid.Row="1"
+                        Text="Return"
+                        Command="{Binding ReturnCommand}" />
+            </Grid>
         </Grid>
     </Grid>
 </ContentPage>

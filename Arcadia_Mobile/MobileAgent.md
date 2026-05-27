@@ -22,7 +22,10 @@ The mobile project lives in `Arcadia_Mobile/`. The existing console game lives i
 - `Arcadia_Mobile/MauiProgram.cs` - app builder, DI registration, fonts, logging, and MAUI startup configuration.
 - `Arcadia_Mobile/App.xaml` and `App.xaml.cs` - app-level resources and application startup.
 - `Arcadia_Mobile/AppShell.xaml` and `AppShell.xaml.cs` - Shell routes and navigation structure.
-- `Arcadia_Mobile/MainPage.xaml` and `MainPage.xaml.cs` - current starter page; replace with real Arcadia UI as mobile screens are built.
+- `Arcadia_Mobile/MainPage.xaml` and `MainPage.xaml.cs` - current playable exploration page; keep page code-behind limited to view setup and binding context assignment.
+- `Arcadia_Mobile/ViewModels/` - view models for MAUI binding, commands, screen state, and UI-facing state transitions.
+- `Arcadia_Mobile/Services/` - mobile gameplay/session services such as current room state, touch-driven movement, interaction handling, navigation helpers, and future persistence/platform abstractions.
+- `Arcadia_Mobile/Map/` - mobile-adapted room, direction, and map logic copied/refactored from the console reference as needed.
 - `Arcadia_Mobile/Resources/` - app icons, splash screen, images, fonts, raw assets, and shared styles.
 - `Arcadia_Mobile/Platforms/` - Android, iOS, MacCatalyst, and Windows platform-specific entry points, manifests, and configuration.
 - `Arcadia_Mobile/Properties/launchSettings.json` - local launch profiles.
@@ -34,6 +37,8 @@ The mobile project lives in `Arcadia_Mobile/`. The existing console game lives i
 - When mobile needs logic from the console project, create an adapted copy in the appropriate `Arcadia_Mobile/` folder. For example, copy/refactor `AnimalFactory.cs` into a matching mobile-side folder instead of editing the original file in `Arcadia_v2/`.
 - Keep duplicated mobile logic organized by responsibility so it can evolve separately from console-specific flow.
 - Keep MAUI pages focused on UI composition, navigation, and binding. Put gameplay decisions, battle rules, save mapping, and state transitions outside page code-behind.
+- Keep screen state and commands in `ViewModels/`; keep reusable game/session behavior in `Services/`; keep mobile-adapted domain models in responsibility-based folders such as `Map/`, `Creatures/`, `Battles/`, `Player/`, and `Saves/`.
+- Expand the existing playable exploration flow incrementally. Add rooms, interactions, inventory, dialogue, saves, and battles as separate focused steps instead of folding them all into one page or service.
 - Do not copy console-specific flow into the mobile app. Adapt the same domain concepts to screens, commands, buttons, menus, and modal flows.
 - Do not call `Console.ReadLine`, `Console.WriteLine`, or console-specific `IGameIO` implementations from the mobile project.
 - Prefer constructor-injected services registered in `MauiProgram.CreateMauiApp()` for navigation, game state, persistence, and platform services.
@@ -47,6 +52,7 @@ The mobile project lives in `Arcadia_Mobile/`. The existing console game lives i
 
 - Build for touch first: large enough tap targets, simple navigation paths, readable text, and clear feedback for actions.
 - Use XAML resources and styles for repeated colors, typography, spacing, and controls instead of hard-coding values across pages.
+- If a `StaticResource` works in build but crashes on Android at runtime, prefer a direct value or verify the merged resource dictionary is available before startup.
 - Keep layout responsive across phone, tablet, desktop, and emulator windows. Avoid fixed dimensions unless the element must keep a stable size.
 - Use MAUI controls, Shell navigation, data binding, and commands before adding custom platform code.
 - Keep code-behind limited to view-specific event handling. Move stateful behavior into view models or services once a screen has meaningful logic.
@@ -61,7 +67,7 @@ The mobile project lives in `Arcadia_Mobile/`. The existing console game lives i
 - Keep methods focused and move repeated UI/game orchestration into helpers or services.
 - Add comments only when they clarify non-obvious MAUI lifecycle behavior, platform differences, game rules, or persistence behavior.
 - Do not introduce new external packages unless the mobile feature clearly needs them.
-- If at any point you have a question or need a decison about a design choice ask directly
+- If at any point you have a question or need a decision about a design choice, ask directly.
 
 # Testing and Verification Rules
 
@@ -102,6 +108,7 @@ The mobile project lives in `Arcadia_Mobile/`. The existing console game lives i
 - Do not add legacy save migration or backwards-compatibility code for major changes/refactors unless explicitly requested.
 
 # Current Plan
-- I want to begin integrating gameplay features from the base application Arcaida_v2 to Arcaida_Mobile. 
+- Continue integrating gameplay features from the base application `Arcadia_v2` into `Arcadia_Mobile` by creating mobile-side adapted copies, preserving the console project as the reference implementation.
+
 
 # Current Task

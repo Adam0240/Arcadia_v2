@@ -4,12 +4,40 @@ namespace Arcadia_Mobile.Services;
 
 public sealed class MobileGameSession
 {
+    private readonly GameMap gameMap;
+    private readonly HashSet<RoomId> visitedRoomIds = new();
+
     public MobileGameSession(GameMap gameMap)
     {
+        this.gameMap = gameMap;
         CurrentRoom = gameMap.StartRoom;
+        visitedRoomIds.Add(CurrentRoom.Id);
     }
 
     public Room CurrentRoom { get; private set; }
+    public IReadOnlyCollection<RoomId> VisitedRoomIds => visitedRoomIds;
+
+    public void StartNewGame()
+    {
+        visitedRoomIds.Clear();
+        CurrentRoom = gameMap.StartRoom;
+        visitedRoomIds.Add(CurrentRoom.Id);
+    }
+
+    public void Restore(RoomId currentRoomId, IEnumerable<RoomId> visitedRoomIds)
+    {
+        ArgumentNullException.ThrowIfNull(visitedRoomIds);
+
+        CurrentRoom = gameMap.GetRoom(currentRoomId);
+        this.visitedRoomIds.Clear();
+
+        foreach (RoomId visitedRoomId in visitedRoomIds)
+        {
+            this.visitedRoomIds.Add(visitedRoomId);
+        }
+
+        this.visitedRoomIds.Add(CurrentRoom.Id);
+    }
 
     public bool CanMove(RoomDirection direction)
     {
@@ -26,6 +54,7 @@ public sealed class MobileGameSession
         }
 
         CurrentRoom = destination;
+        visitedRoomIds.Add(CurrentRoom.Id);
         return new MoveResult(true, $"Moved to {CurrentRoom.Name}.");
     }
 

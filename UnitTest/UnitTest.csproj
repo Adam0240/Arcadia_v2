@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <Compile Include="..\Arcadia_Mobile\Map\*.cs" Link="MobileSource\Map\%(Filename)%(Extension)" />
+    <Compile Include="..\Arcadia_Mobile\Saves\*.cs" Link="MobileSource\Saves\%(Filename)%(Extension)" />
     <Compile Include="..\Arcadia_Mobile\Services\*.cs" Link="MobileSource\Services\%(Filename)%(Extension)" />
   </ItemGroup>
 

@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Arcadia_Mobile.Map;
+using Arcadia_Mobile.Saves;
 using Arcadia_Mobile.Services;
 
 namespace Arcadia_Mobile.ViewModels;
@@ -9,17 +10,23 @@ namespace Arcadia_Mobile.ViewModels;
 public sealed class MainPageViewModel : INotifyPropertyChanged
 {
     private readonly MobileGameSession gameSession;
+    private readonly MobileGameSaveService saveService;
+    private bool isMenuOpen;
     private string statusMessage = "The journey begins.";
 
-    public MainPageViewModel(MobileGameSession gameSession)
+    public MainPageViewModel(MobileGameSession gameSession, MobileGameSaveService saveService)
     {
         this.gameSession = gameSession;
+        this.saveService = saveService;
 
         MoveNorthCommand = new Command(() => Move(RoomDirection.North));
         MoveEastCommand = new Command(() => Move(RoomDirection.East));
         MoveSouthCommand = new Command(() => Move(RoomDirection.South));
         MoveWestCommand = new Command(() => Move(RoomDirection.West));
         InteractCommand = new Command(Interact);
+        OpenMenuCommand = new Command(OpenMenu);
+        SaveCommand = new Command(async () => await SaveAsync());
+        ReturnCommand = new Command(CloseMenu);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -31,6 +38,8 @@ public sealed class MainPageViewModel : INotifyPropertyChanged
     public bool CanMoveEast => gameSession.CanMove(RoomDirection.East);
     public bool CanMoveSouth => gameSession.CanMove(RoomDirection.South);
     public bool CanMoveWest => gameSession.CanMove(RoomDirection.West);
+    public bool IsMenuOpen => isMenuOpen;
+    public bool IsDirectionControlsVisible => !isMenuOpen;
 
     public string StatusMessage
     {
@@ -52,6 +61,14 @@ public sealed class MainPageViewModel : INotifyPropertyChanged
     public ICommand MoveSouthCommand { get; }
     public ICommand MoveWestCommand { get; }
     public ICommand InteractCommand { get; }
+    public ICommand OpenMenuCommand { get; }
+    public ICommand SaveCommand { get; }
+    public ICommand ReturnCommand { get; }
+
+    public void Refresh()
+    {
+        RefreshRoomState();
+    }
 
     private void Move(RoomDirection direction)
     {
@@ -63,6 +80,26 @@ public sealed class MainPageViewModel : INotifyPropertyChanged
     private void Interact()
     {
         StatusMessage = gameSession.Interact();
+    }
+
+    private async Task SaveAsync()
+    {
+        MobileSaveCommandResult result = await saveService.SaveAsync(gameSession);
+        StatusMessage = result.Message;
+    }
+
+    private void OpenMenu()
+    {
+        isMenuOpen = true;
+        OnPropertyChanged(nameof(IsMenuOpen));
+        OnPropertyChanged(nameof(IsDirectionControlsVisible));
+    }
+
+    private void CloseMenu()
+    {
+        isMenuOpen = false;
+        OnPropertyChanged(nameof(IsMenuOpen));
+        OnPropertyChanged(nameof(IsDirectionControlsVisible));
     }
 
     private void RefreshRoomState()
