@@ -36,6 +36,7 @@ class MobileGameSession {
       throw ArgumentError('Player name cannot be empty.');
     }
 
+    _gameMap.resetEncounterAnimals();
     player = _createPlayer(playerName.trim(), _gameMap.startRoom);
     _visitedRoomIds.clear();
     _visitedRoomIds.add(currentRoom.id);
@@ -102,11 +103,16 @@ class MobileGameSession {
     return saveRepository.exists();
   }
 
+  Future<bool> deleteSave() {
+    return saveRepository.delete();
+  }
+
   GameSaveState createSaveState() {
     return GameSaveMapper.capture(this);
   }
 
   void restoreSaveState(GameSaveState saveState) {
+    GameSaveMapper.validateVersion(saveState);
     GameSaveMapper.restoreRooms(saveState.rooms, _gameMap);
     player = GameSaveMapper.restorePlayer(saveState.player, _gameMap);
     _visitedRoomIds

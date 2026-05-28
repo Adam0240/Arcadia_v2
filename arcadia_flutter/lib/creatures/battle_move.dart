@@ -2,13 +2,20 @@ import 'element_type.dart';
 import 'move_effect.dart';
 
 class BattleMove {
-  const BattleMove({
+  BattleMove({
     required this.name,
     required this.type,
     required this.power,
     this.effect = MoveEffect.damage,
-  }) : assert(name.length > 0, 'Move name cannot be empty.'),
-       assert(power >= 0, 'Move power cannot be negative.');
+  }) {
+    if (name.trim().isEmpty) {
+      throw ArgumentError.value(name, 'name', 'Move name cannot be empty.');
+    }
+
+    if (power < 0) {
+      throw RangeError.range(power, 0, null, 'power');
+    }
+  }
 
   final String name;
   final ElementType type;

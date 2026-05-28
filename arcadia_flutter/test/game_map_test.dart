@@ -37,6 +37,28 @@ void main() {
     expect(session.visitedRoomIds, {RoomId.maiaStable});
   });
 
+  // Verifies starting a new game restores canonical room encounter placement.
+  test('startNewGame resets room encounter animals', () {
+    final session = MobileGameSession(GameMap());
+
+    session.move(RoomDirection.north);
+    session.move(RoomDirection.west);
+    session.currentRoom.removeEncounterAnimal(
+      session.currentRoom.encounterAnimals.single,
+    );
+    expect(session.currentRoom.encounterAnimals, isEmpty);
+
+    session.startNewGame('Nova');
+
+    expect(
+      session.rooms
+          .singleWhere((room) => room.id == RoomId.road1)
+          .encounterAnimals
+          .map((animal) => animal.name),
+      ['N_DOG'],
+    );
+  });
+
   // Verifies valid movement updates the current room and status message.
   test('moving north from Maia Stable enters Ikena', () {
     final session = MobileGameSession(GameMap());

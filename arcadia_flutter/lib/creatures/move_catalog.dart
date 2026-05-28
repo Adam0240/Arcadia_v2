@@ -5,216 +5,216 @@ import 'move_effect.dart';
 class MoveCatalog {
   const MoveCatalog._();
 
-  static const BattleMove pounce = BattleMove(
+  static final BattleMove pounce = BattleMove(
     name: 'Pounce',
     type: ElementType.base,
     power: 5,
   );
-  static const BattleMove felineReflex = BattleMove(
+  static final BattleMove felineReflex = BattleMove(
     name: 'Feline Reflex',
     type: ElementType.base,
     power: 3,
   );
 
-  static const BattleMove loyalRush = BattleMove(
+  static final BattleMove loyalRush = BattleMove(
     name: 'Loyal Rush',
     type: ElementType.base,
     power: 5,
   );
-  static const BattleMove wildChase = BattleMove(
+  static final BattleMove wildChase = BattleMove(
     name: 'Wild Chase',
     type: ElementType.base,
     power: 3,
   );
 
-  static const BattleMove hoofKick = BattleMove(
+  static final BattleMove hoofKick = BattleMove(
     name: 'Hoof Kick',
     type: ElementType.base,
     power: 5,
   );
-  static const BattleMove stampede = BattleMove(
+  static final BattleMove stampede = BattleMove(
     name: 'Stampede',
     type: ElementType.base,
     power: 4,
   );
 
-  static const BattleMove headBash = BattleMove(
+  static final BattleMove headBash = BattleMove(
     name: 'Head Bash',
     type: ElementType.base,
     power: 0,
   );
-  static const BattleMove deepRetreat = BattleMove(
+  static final BattleMove deepRetreat = BattleMove(
     name: 'Deep Retreat',
     type: ElementType.base,
     power: 0,
   );
 
-  static const BattleMove beakStrike = BattleMove(
+  static final BattleMove beakStrike = BattleMove(
     name: 'Beak Strike',
     type: ElementType.base,
     power: 0,
   );
-  static const BattleMove quickTalon = BattleMove(
+  static final BattleMove quickTalon = BattleMove(
     name: 'Quick Talon',
     type: ElementType.base,
     power: 0,
   );
 
-  static const BattleMove mandibleBite = BattleMove(
+  static final BattleMove mandibleBite = BattleMove(
     name: 'Mandible Bite',
     type: ElementType.base,
     power: 0,
   );
-  static const BattleMove colonyRush = BattleMove(
+  static final BattleMove colonyRush = BattleMove(
     name: 'Colony Rush',
     type: ElementType.base,
     power: 0,
   );
 
-  static const BattleMove playSwipe = BattleMove(
+  static final BattleMove playSwipe = BattleMove(
     name: 'Play Swipe',
     type: ElementType.base,
     power: 0,
   );
-  static const BattleMove tumbleRush = BattleMove(
+  static final BattleMove tumbleRush = BattleMove(
     name: 'Tumble Rush',
     type: ElementType.base,
     power: 0,
   );
 
-  static const BattleMove venomFang = BattleMove(
+  static final BattleMove venomFang = BattleMove(
     name: 'Venom Fang',
     type: ElementType.base,
     power: 0,
   );
-  static const BattleMove shadowFang = BattleMove(
+  static final BattleMove shadowFang = BattleMove(
     name: 'Shadow Fang',
     type: ElementType.base,
     power: 0,
   );
 
-  static const BattleMove thornWrap = BattleMove(
+  static final BattleMove thornWrap = BattleMove(
     name: 'Thorn Wrap',
     type: ElementType.nature,
     power: 7,
   );
-  static const BattleMove verdantSurge = BattleMove(
+  static final BattleMove verdantSurge = BattleMove(
     name: 'Verdant Surge',
     type: ElementType.nature,
     power: 8,
   );
-  static const BattleMove bloom = BattleMove(
+  static final BattleMove bloom = BattleMove(
     name: 'Bloom',
     type: ElementType.nature,
     power: 10,
     effect: MoveEffect.heal,
   );
-  static const BattleMove naturesWrath = BattleMove(
+  static final BattleMove naturesWrath = BattleMove(
     name: "Nature's Wrath",
     type: ElementType.nature,
     power: 12,
   );
 
-  static const BattleMove currentRush = BattleMove(
+  static final BattleMove currentRush = BattleMove(
     name: 'Current Rush',
     type: ElementType.mystic,
     power: 6,
   );
-  static const BattleMove oceanPulse = BattleMove(
+  static final BattleMove oceanPulse = BattleMove(
     name: 'Ocean Pulse',
     type: ElementType.mystic,
     power: 7,
   );
-  static const BattleMove deepseaRupture = BattleMove(
+  static final BattleMove deepseaRupture = BattleMove(
     name: 'Deepsea Rupture',
     type: ElementType.mystic,
     power: 8,
   );
-  static const BattleMove tidalBreak = BattleMove(
+  static final BattleMove tidalBreak = BattleMove(
     name: 'Tidal Break',
     type: ElementType.mystic,
     power: 12,
   );
 
-  static const BattleMove staticClaw = BattleMove(
+  static final BattleMove staticClaw = BattleMove(
     name: 'Static Claw',
     type: ElementType.thunder,
     power: 7,
   );
-  static const BattleMove voltJab = BattleMove(
+  static final BattleMove voltJab = BattleMove(
     name: 'Volt Jab',
     type: ElementType.thunder,
     power: 10,
   );
-  static const BattleMove arcPulse = BattleMove(
+  static final BattleMove arcPulse = BattleMove(
     name: 'Arc Pulse',
     type: ElementType.thunder,
     power: 12,
   );
-  static const BattleMove thunderRift = BattleMove(
+  static final BattleMove thunderRift = BattleMove(
     name: 'Thunder Rift',
     type: ElementType.thunder,
     power: 14,
   );
 
-  static const BattleMove emberBite = BattleMove(
+  static final BattleMove emberBite = BattleMove(
     name: 'Ember Bite',
     type: ElementType.draconic,
     power: 2,
   );
-  static const BattleMove infernoRoar = BattleMove(
+  static final BattleMove infernoRoar = BattleMove(
     name: 'Inferno Roar',
     type: ElementType.draconic,
     power: 2,
   );
-  static const BattleMove ragePulse = BattleMove(
+  static final BattleMove ragePulse = BattleMove(
     name: 'Rage Pulse',
     type: ElementType.draconic,
     power: 7,
   );
-  static const BattleMove dragonFall = BattleMove(
+  static final BattleMove dragonFall = BattleMove(
     name: "Dragon's Fall",
     type: ElementType.draconic,
     power: 2,
   );
 
-  static const BattleMove starFlick = BattleMove(
+  static final BattleMove starFlick = BattleMove(
     name: 'Star Flick',
     type: ElementType.cosmic,
     power: 7,
   );
-  static const BattleMove lunarPulse = BattleMove(
+  static final BattleMove lunarPulse = BattleMove(
     name: 'Lunar Pulse',
     type: ElementType.cosmic,
     power: 7,
   );
-  static const BattleMove cometStrike = BattleMove(
+  static final BattleMove cometStrike = BattleMove(
     name: 'Comet Strike',
     type: ElementType.cosmic,
     power: 12,
   );
-  static const BattleMove supernova = BattleMove(
+  static final BattleMove supernova = BattleMove(
     name: 'Supernova',
     type: ElementType.cosmic,
     power: 12,
   );
 
-  static const BattleMove radBurst = BattleMove(
+  static final BattleMove radBurst = BattleMove(
     name: 'Rad Burst',
     type: ElementType.nuclear,
     power: 5,
   );
-  static const BattleMove falloutBite = BattleMove(
+  static final BattleMove falloutBite = BattleMove(
     name: 'Fallout Bite',
     type: ElementType.nuclear,
     power: 7,
   );
-  static const BattleMove contaminate = BattleMove(
+  static final BattleMove contaminate = BattleMove(
     name: 'Contaminate',
     type: ElementType.nuclear,
     power: 7,
   );
-  static const BattleMove coreDetonation = BattleMove(
+  static final BattleMove coreDetonation = BattleMove(
     name: 'Core Detonation',
     type: ElementType.nuclear,
     power: 10,

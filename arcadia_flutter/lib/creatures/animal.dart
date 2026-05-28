@@ -11,11 +11,23 @@ class Animal {
     required int health,
     required this.level,
     required Iterable<BattleMove> moves,
-  }) : assert(name.trim().isNotEmpty, 'Animal name cannot be empty.'),
-       assert(speed >= 0, 'Speed cannot be negative.'),
-       assert(baseHealth >= 0, 'Base health cannot be negative.'),
-       assert(level >= 0, 'Level cannot be negative.'),
-       _moves = List.unmodifiable(moves) {
+  }) : _moves = List.unmodifiable(moves) {
+    if (name.trim().isEmpty) {
+      throw ArgumentError.value(name, 'name', 'Animal name cannot be empty.');
+    }
+
+    if (speed < 0) {
+      throw RangeError.range(speed, 0, null, 'speed');
+    }
+
+    if (baseHealth < 0) {
+      throw RangeError.range(baseHealth, 0, null, 'baseHealth');
+    }
+
+    if (level < 0) {
+      throw RangeError.range(level, 0, null, 'level');
+    }
+
     if (_moves.isEmpty || _moves.length > 4) {
       throw ArgumentError.value(
         moves,

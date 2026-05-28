@@ -37,4 +37,14 @@ class JsonGameSaveRepository implements GameSaveRepository {
     const encoder = JsonEncoder.withIndent('  ');
     await file.writeAsString(encoder.convert(saveState.toJson()));
   }
+
+  @override
+  Future<bool> delete() async {
+    if (!await file.exists()) {
+      return false;
+    }
+
+    await file.delete();
+    return true;
+  }
 }

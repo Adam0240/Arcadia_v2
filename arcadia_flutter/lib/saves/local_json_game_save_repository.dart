@@ -26,6 +26,11 @@ class LocalJsonGameSaveRepository implements GameSaveRepository {
     await (await _repository()).save(saveState);
   }
 
+  @override
+  Future<bool> delete() async {
+    return (await _repository()).delete();
+  }
+
   Future<JsonGameSaveRepository> _repository() async {
     final directory = await getApplicationDocumentsDirectory();
     final separator = Platform.pathSeparator;

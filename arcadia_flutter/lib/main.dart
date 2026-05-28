@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 
-import 'screens/arcadia_map_screen.dart';
+import 'saves/game_save_repository.dart';
+import 'saves/local_json_game_save_repository.dart';
+import 'screens/start_menu_screen.dart';
 
 void main() {
   runApp(const ArcadiaApp());
 }
 
 class ArcadiaApp extends StatelessWidget {
-  const ArcadiaApp({super.key});
+  const ArcadiaApp({super.key, this.saveRepository});
+
+  final GameSaveRepository? saveRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +21,9 @@ class ArcadiaApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: const ArcadiaMapScreen(),
+      home: StartMenuScreen(
+        saveRepository: saveRepository ?? const LocalJsonGameSaveRepository(),
+      ),
     );
   }
 }

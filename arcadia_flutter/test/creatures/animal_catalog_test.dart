@@ -1,4 +1,6 @@
+import 'package:arcadia_flutter/creatures/animal.dart';
 import 'package:arcadia_flutter/creatures/animal_element.dart';
+import 'package:arcadia_flutter/creatures/battle_move.dart';
 import 'package:arcadia_flutter/creatures/element_type.dart';
 import 'package:arcadia_flutter/creatures/game_creature_data.dart';
 import 'package:arcadia_flutter/creatures/move_catalog.dart';
@@ -156,5 +158,43 @@ void main() {
 
     expect(clone.health, 10);
     expect(original.health, 75);
+  });
+
+  // Verifies creature constructors enforce invalid data in release builds too.
+  test('animal and move constructors validate runtime data', () {
+    expect(
+      () => BattleMove(name: ' ', type: ElementType.base, power: 1),
+      throwsArgumentError,
+    );
+    expect(
+      () => BattleMove(name: 'Scratch', type: ElementType.base, power: -1),
+      throwsRangeError,
+    );
+    expect(
+      () => Animal(
+        id: 1,
+        name: ' ',
+        element: AnimalElement.nature,
+        speed: 1,
+        baseHealth: 10,
+        health: 10,
+        level: 1,
+        moves: [MoveCatalog.pounce],
+      ),
+      throwsArgumentError,
+    );
+    expect(
+      () => Animal(
+        id: 1,
+        name: 'TEST',
+        element: AnimalElement.nature,
+        speed: -1,
+        baseHealth: 10,
+        health: 10,
+        level: 1,
+        moves: [MoveCatalog.pounce],
+      ),
+      throwsRangeError,
+    );
   });
 }

@@ -17,6 +17,14 @@ class GameMap {
 
   Iterable<Room> get rooms => _roomsById.values;
 
+  void resetEncounterAnimals() {
+    for (final room in rooms) {
+      room.restoreEncounterAnimals(const []);
+    }
+
+    _populateWildAnimals();
+  }
+
   Room getRoom(RoomId roomId) {
     final room = _roomsById[roomId];
 

@@ -4,6 +4,7 @@ import 'package:arcadia_flutter/creatures/animal_element.dart';
 import 'package:arcadia_flutter/map/game_map.dart';
 import 'package:arcadia_flutter/map/room_direction.dart';
 import 'package:arcadia_flutter/map/room_id.dart';
+import 'package:arcadia_flutter/saves/game_save_state.dart';
 import 'package:arcadia_flutter/saves/json_game_save_repository.dart';
 import 'package:arcadia_flutter/services/mobile_game_session.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -77,5 +78,22 @@ void main() {
 
     expect(await session.hasSave(), isFalse);
     expect(await session.loadGame(), isFalse);
+  });
+
+  // Verifies unsupported current-build save versions fail deliberately.
+  test('restoreSaveState rejects unsupported save version', () {
+    final session = MobileGameSession(GameMap());
+    final saveState = session.createSaveState();
+    final unsupportedSaveState = GameSaveState(
+      version: saveState.version + 1,
+      player: saveState.player,
+      rooms: saveState.rooms,
+      visitedRoomIds: saveState.visitedRoomIds,
+    );
+
+    expect(
+      () => session.restoreSaveState(unsupportedSaveState),
+      throwsFormatException,
+    );
   });
 }

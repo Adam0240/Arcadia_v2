@@ -20,6 +20,14 @@ class GameSaveMapper {
     );
   }
 
+  static void validateVersion(GameSaveState saveState) {
+    if (saveState.version != currentVersion) {
+      throw FormatException(
+        'Unsupported save version ${saveState.version}. Expected $currentVersion.',
+      );
+    }
+  }
+
   static Player restorePlayer(PlayerSaveState saveState, GameMap gameMap) {
     final player = Player(
       name: saveState.name,

@@ -9,7 +9,7 @@ class AnimalCatalog {
   static const int _defaultSpeed = 7;
   static const int _defaultLevel = 0;
 
-  static const List<_SpeciesTemplate> _species = [
+  static final List<_SpeciesTemplate> _species = [
     _SpeciesTemplate(
       name: 'CAT',
       baseHealth: 75,
@@ -126,7 +126,7 @@ class AnimalCatalog {
     ),
   ];
 
-  static const List<_ElementTemplate> _elements = [
+  static final List<_ElementTemplate> _elements = [
     _ElementTemplate(
       prefix: 'N',
       element: AnimalElement.nature,
@@ -197,7 +197,7 @@ class AnimalCatalog {
         speed: 0,
         baseHealth: 0,
         level: 0,
-        moves: const [
+        moves: [
           MoveCatalog.pounce,
           MoveCatalog.felineReflex,
           MoveCatalog.thornWrap,

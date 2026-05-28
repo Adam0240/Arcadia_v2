@@ -45,37 +45,53 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Arcadia')),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      RoomArtwork(roomId: room.id, label: room.name),
-                      const SizedBox(height: 16),
-                      Text(
-                        room.name,
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final maxControlsHeight = (constraints.maxHeight * 0.75).clamp(
+              0.0,
+              360.0,
+            );
+
+            return Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          RoomArtwork(roomId: room.id, label: room.name),
+                          const SizedBox(height: 16),
+                          Text(
+                            room.name,
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            room.description,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                          const SizedBox(height: 16),
+                          _StatusPanel(message: _statusMessage),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        room.description,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                      const SizedBox(height: 16),
-                      _StatusPanel(message: _statusMessage),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: maxControlsHeight),
+                    child: SingleChildScrollView(
+                      child: _isMenuOpen
+                          ? _buildMenuControls()
+                          : _buildDirectionControls(),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              _isMenuOpen ? _buildMenuControls() : _buildDirectionControls(),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -148,13 +164,6 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
           label: 'Save',
           onPressed: () {
             _save();
-          },
-        ),
-        const SizedBox(height: 8),
-        _ControlButton(
-          label: 'Load',
-          onPressed: () {
-            _load();
           },
         ),
         const SizedBox(height: 8),
@@ -232,19 +241,6 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
 
     setState(() {
       _statusMessage = 'Game saved.';
-    });
-  }
-
-  Future<void> _load() async {
-    final loaded = await _gameSession.loadGame();
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _isMenuOpen = false;
-      _statusMessage = loaded ? 'Game loaded.' : 'No saved game found.';
     });
   }
 }
