@@ -15,7 +15,7 @@ class ArcadiaMapScreen extends StatefulWidget {
 }
 
 class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
-  late final MobileGameSession _gameSession;
+  late MobileGameSession _gameSession;
   bool _isMenuOpen = false;
   String _statusMessage = 'The journey begins.';
 
@@ -23,6 +23,19 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
   void initState() {
     super.initState();
     _gameSession = widget.gameSession ?? MobileGameSession(GameMap());
+  }
+
+  @override
+  void didUpdateWidget(covariant ArcadiaMapScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.gameSession == oldWidget.gameSession) {
+      return;
+    }
+
+    _gameSession = widget.gameSession ?? MobileGameSession(GameMap());
+    _isMenuOpen = false;
+    _statusMessage = 'The journey begins.';
   }
 
   @override
@@ -75,55 +88,27 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
         Row(
           children: [
             const Expanded(child: SizedBox()),
-            Expanded(
-              child: _ControlButton(
-                label: 'North',
-                onPressed: _canMove(RoomDirection.north)
-                    ? () => _move(RoomDirection.north)
-                    : null,
-              ),
-            ),
+            Expanded(child: _buildDirectionButton(RoomDirection.north)),
             const Expanded(child: SizedBox()),
           ],
         ),
         const SizedBox(height: 8),
         Row(
           children: [
-            Expanded(
-              child: _ControlButton(
-                label: 'West',
-                onPressed: _canMove(RoomDirection.west)
-                    ? () => _move(RoomDirection.west)
-                    : null,
-              ),
-            ),
+            Expanded(child: _buildDirectionButton(RoomDirection.west)),
             const SizedBox(width: 8),
             Expanded(
               child: _ControlButton(label: 'Inspect', onPressed: _inspect),
             ),
             const SizedBox(width: 8),
-            Expanded(
-              child: _ControlButton(
-                label: 'East',
-                onPressed: _canMove(RoomDirection.east)
-                    ? () => _move(RoomDirection.east)
-                    : null,
-              ),
-            ),
+            Expanded(child: _buildDirectionButton(RoomDirection.east)),
           ],
         ),
         const SizedBox(height: 8),
         Row(
           children: [
             const Expanded(child: SizedBox()),
-            Expanded(
-              child: _ControlButton(
-                label: 'South',
-                onPressed: _canMove(RoomDirection.south)
-                    ? () => _move(RoomDirection.south)
-                    : null,
-              ),
-            ),
+            Expanded(child: _buildDirectionButton(RoomDirection.south)),
             const Expanded(child: SizedBox()),
           ],
         ),
@@ -141,12 +126,37 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
     );
   }
 
+  Widget _buildDirectionButton(RoomDirection direction) {
+    return _ControlButton(
+      label: direction.label,
+      onPressed: _canMove(direction) ? () => _move(direction) : null,
+    );
+  }
+
   Widget _buildMenuControls() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _ControlButton(label: 'Save', onPressed: _save),
+        _ControlButton(label: 'Inventory', onPressed: _showInventory),
+        const SizedBox(height: 8),
+        _ControlButton(label: 'Bond', onPressed: _showBond),
+        const SizedBox(height: 8),
+        _ControlButton(label: 'Star Fragments', onPressed: _showStarFragments),
+        const SizedBox(height: 8),
+        _ControlButton(
+          label: 'Save',
+          onPressed: () {
+            _save();
+          },
+        ),
+        const SizedBox(height: 8),
+        _ControlButton(
+          label: 'Load',
+          onPressed: () {
+            _load();
+          },
+        ),
         const SizedBox(height: 8),
         _ControlButton(label: 'Return', onPressed: _closeMenu),
       ],
@@ -183,9 +193,58 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
     });
   }
 
-  void _save() {
+  void _showInventory() {
+    setState(() {
+      _statusMessage = _gameSession.player.getAnimalInventoryDisplay();
+    });
+  }
+
+  void _showBond() {
+    setState(() {
+      _statusMessage = _gameSession.player.getBondDisplay();
+    });
+  }
+
+  void _showStarFragments() {
+    setState(() {
+      _statusMessage = _gameSession.player.getStarFragmentDisplay();
+    });
+  }
+
+  Future<void> _save() async {
+    try {
+      await _gameSession.saveGame();
+    } on Object catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _statusMessage = 'Save failed: $error';
+      });
+
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
     setState(() {
       _statusMessage = 'Game saved.';
+    });
+  }
+
+  Future<void> _load() async {
+    final loaded = await _gameSession.loadGame();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isMenuOpen = false;
+      _statusMessage = loaded ? 'Game loaded.' : 'No saved game found.';
     });
   }
 }

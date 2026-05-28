@@ -1,0 +1,1 @@
+enum MoveEffect { damage, heal }

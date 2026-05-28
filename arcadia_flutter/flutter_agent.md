@@ -19,6 +19,9 @@ The Flutter project lives in `arcadia_flutter/`. The existing console game lives
 - `arcadia_flutter/pubspec.yaml` - Flutter package metadata, dependencies, assets, and project configuration.
 - `arcadia_flutter/lib/main.dart` - app entry point and root widget.
 - `arcadia_flutter/lib/map/` - mobile-adapted room ids, room directions, room models, and the connected `GameMap`.
+- `arcadia_flutter/lib/creatures/` - mobile-adapted creature domain models, element enums, move catalog, animal catalog, and creature data facade.
+- `arcadia_flutter/lib/player/` - mobile-adapted player models for human players, computer players, inventory, star fragments, bond, and battle team templates.
+- `arcadia_flutter/lib/saves/` - Flutter JSON save state models, save/load mapper, and repository implementations.
 - `arcadia_flutter/lib/services/` - gameplay/session state such as the current room, visited rooms, movement results, and interaction text.
 - `arcadia_flutter/lib/screens/` - Flutter screens, including the playable map screen and its movement/menu controls.
 - `arcadia_flutter/lib/widgets/` - reusable UI widgets such as custom room artwork.
@@ -49,17 +52,23 @@ The Flutter project lives in `arcadia_flutter/`. The existing console game lives
 - `main.dart` starts `ArcadiaApp`, applies the app theme, and routes directly to `ArcadiaMapScreen`.
 - `ArcadiaMapScreen` is the first playable screen. It displays the current room artwork, room name, description, status message, directional controls, Inspect, and Menu.
 - Direction buttons are enabled only when the current room has an exit in that direction. Movement calls `MobileGameSession.move`, updates the current room, records the visit, and refreshes the status message.
-- The Menu button swaps the movement controls for Save and Return controls. Save currently updates the status message only; persistent storage is not wired in yet.
+- The Menu button swaps the movement controls for Inventory, Bond, Star Fragments, Save, Load, and Return controls. Inventory/Bond/Star Fragments are read-only status panel views backed by the active player. Save/Load use the Flutter JSON save repository.
 - `GameMap` creates the full current room list and connects rooms with directional exits. The map starts at `RoomId.maiaStable`.
-- `Room`, `RoomId`, and `RoomDirection` are the mobile map domain model. Keep new room metadata and exits in `GameMap` unless the map grows enough to justify splitting data from construction.
-- `MobileGameSession` owns current-room state, player name, visited room ids, restore/start-new-game helpers, movement validation, and room interactions. Keep deterministic gameplay state here or in adjacent services instead of inside widgets.
+- `GameMap` also populates room encounter animals from `GameCreatureData` using the console reference assignments. Encounter animals are visible through Inspect only; battle and catch behavior are not wired yet.
+- `Room`, `RoomId`, and `RoomDirection` are the mobile map domain model. `Room` owns local encounter animal state as cloned animals. Keep new room metadata, exits, and initial encounter assignments in `GameMap` unless the map grows enough to justify splitting data from construction.
+- `MobileGameSession` owns the active `Player`, visited room ids, restore/start-new-game helpers, movement validation, and room interactions. Current-room state should flow through `player.currentRoom`; the session keeps a compatibility getter for UI code.
+- New sessions create the main player with the console reference starter animals from `GameCreatureData.createAnimals()`: `N_CAT` and `N_DOG`.
+- `saves/` contains the Flutter save/load layer. `GameSaveMapper` captures/restores session state, player state, visited rooms, and room encounter animals. `LocalJsonGameSaveRepository` stores `arcadia_save.json` in the app documents directory through `path_provider`; tests can use `JsonGameSaveRepository` with a temp file or an in-memory repository.
 - `RoomArtwork` uses Flutter canvas painting for room visuals. Maia's Stable, Ikena, and Road 1 have specific art; the other rooms currently use the shared placeholder scene.
+- `creatures/` contains the Flutter-side creature data layer. `AnimalCatalog` builds the generated animal roster from Dart species/element templates, `MoveCatalog` owns static battle moves, and `GameCreatureData` is the public facade for creating animal lists.
+- `player/` contains the Flutter-side player state layer. `GenericPlayer` owns room position, star fragments, creature inventory, bond, display helpers, and restore helpers. `Player` is the human player type, and `CompPlayer` adds defeated state plus cloned battle team templates.
 
 # Current Map Coverage
 
 - Implemented rooms: Maia's Stable, Ikena, Road 1, Road 2, Oak Pass, Road 3, Road 4, New Nucleon, Road 5, Road 6, Road 7, Wyrmrest, Mountains, Radioactive Way, Nucleon, Final Trials, Guardian Tower, Road 8, and The End.
 - Implemented traversal uses north/east/south/west exits from `GameMap._connectRooms()`. Add or change routes there so UI controls, session movement, and tests stay aligned.
 - Placeholder rooms have descriptions and interaction text so the full map can be explored before every location has final art or full encounter logic.
+- Wild animals have been assigned to route rooms from the console reference map and are displayed by Inspect as `Animals Nearby`.
 
 # UI Rules
 
@@ -123,11 +132,7 @@ The Flutter project lives in `arcadia_flutter/`. The existing console game lives
 
 # Current Plan
 
-- Continue expanding `arcadia_flutter/` from the playable map prototype into the full mobile game.
-- Keep using `Arcadia_v2/` only as the source of truth for gameplay rules and domain concepts.
-- Keep using `Arcadia_Mobile/` only as the source of truth for the current mobile app scope and visible behavior.
-- Next likely implementation areas are real save/load persistence, final room art, inventory/dialogue, encounters, battles, and more complete player setup.
+- Continue building on the Flutter creature and player data layers by wiring them into map encounters, battles, and save/load only as those features are implemented.
 
 # Current Task
-
-- Maintain Flutter project guidance in `arcadia_flutter/flutter_agent.md` as the app architecture changes.
+- Creature data has been brought into `arcadia_flutter/lib/creatures/`, player state has been brought into `arcadia_flutter/lib/player/`, `MobileGameSession` now creates/owns the active player, map rooms now expose nearby wild animals through Inspect, the menu can show read-only inventory/bond/star fragment status, and JSON save/load is wired through `arcadia_flutter/lib/saves/`. Next work should integrate those data layers into battles and catching rather than editing the reference projects.

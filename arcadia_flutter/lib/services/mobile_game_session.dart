@@ -1,21 +1,34 @@
+import '../creatures/game_creature_data.dart';
 import '../map/game_map.dart';
 import '../map/room.dart';
 import '../map/room_direction.dart';
 import '../map/room_id.dart';
+import '../player/player.dart';
+import '../saves/game_save_mapper.dart';
+import '../saves/game_save_repository.dart';
+import '../saves/game_save_state.dart';
+import '../saves/local_json_game_save_repository.dart';
 import 'move_result.dart';
 
 class MobileGameSession {
-  MobileGameSession(this._gameMap) {
-    currentRoom = _gameMap.startRoom;
+  MobileGameSession(
+    this._gameMap, {
+    this.saveRepository = const LocalJsonGameSaveRepository(),
+  }) {
+    player = _createPlayer('Player', _gameMap.startRoom);
     _visitedRoomIds.add(currentRoom.id);
   }
 
   final GameMap _gameMap;
+  final GameSaveRepository saveRepository;
   final Set<RoomId> _visitedRoomIds = {};
 
-  late Room currentRoom;
-  String playerName = '';
+  late Player player;
 
+  Room get currentRoom => player.currentRoom;
+  String get playerName => player.name;
+
+  Iterable<Room> get rooms => _gameMap.rooms;
   Set<RoomId> get visitedRoomIds => Set.unmodifiable(_visitedRoomIds);
 
   void startNewGame(String playerName) {
@@ -23,9 +36,8 @@ class MobileGameSession {
       throw ArgumentError('Player name cannot be empty.');
     }
 
-    this.playerName = playerName.trim();
+    player = _createPlayer(playerName.trim(), _gameMap.startRoom);
     _visitedRoomIds.clear();
-    currentRoom = _gameMap.startRoom;
     _visitedRoomIds.add(currentRoom.id);
   }
 
@@ -34,8 +46,8 @@ class MobileGameSession {
     RoomId currentRoomId,
     Iterable<RoomId> visitedRoomIds,
   ) {
-    this.playerName = playerName.trim();
-    currentRoom = _gameMap.getRoom(currentRoomId);
+    final currentRoom = _gameMap.getRoom(currentRoomId);
+    player = _createPlayer(playerName.trim(), currentRoom);
     _visitedRoomIds
       ..clear()
       ..addAll(visitedRoomIds)
@@ -56,13 +68,58 @@ class MobileGameSession {
       );
     }
 
-    currentRoom = destination;
+    player.moveTo(destination);
     _visitedRoomIds.add(currentRoom.id);
 
     return MoveResult(moved: true, message: 'Moved to ${currentRoom.name}.');
   }
 
   String interact() {
-    return currentRoom.interactionText;
+    final nearbyAnimals = currentRoom.hasEncounterAnimals()
+        ? currentRoom.encounterAnimals.map((animal) => animal.name).join(', ')
+        : 'None';
+
+    return '${currentRoom.interactionText}\nAnimals Nearby: $nearbyAnimals';
+  }
+
+  Future<void> saveGame() async {
+    await saveRepository.save(createSaveState());
+  }
+
+  Future<bool> loadGame() async {
+    final saveState = await saveRepository.load();
+
+    if (saveState == null) {
+      return false;
+    }
+
+    restoreSaveState(saveState);
+
+    return true;
+  }
+
+  Future<bool> hasSave() {
+    return saveRepository.exists();
+  }
+
+  GameSaveState createSaveState() {
+    return GameSaveMapper.capture(this);
+  }
+
+  void restoreSaveState(GameSaveState saveState) {
+    GameSaveMapper.restoreRooms(saveState.rooms, _gameMap);
+    player = GameSaveMapper.restorePlayer(saveState.player, _gameMap);
+    _visitedRoomIds
+      ..clear()
+      ..addAll(saveState.visitedRoomIds)
+      ..add(currentRoom.id);
+  }
+
+  static Player _createPlayer(String playerName, Room startingRoom) {
+    final animals = GameCreatureData.createAnimals();
+
+    return Player(name: playerName, startingRoom: startingRoom)
+      ..addAnimal(animals[1].clone())
+      ..addAnimal(animals[3].clone());
   }
 }

@@ -1,3 +1,5 @@
+import '../creatures/animal.dart';
+import '../creatures/game_creature_data.dart';
 import 'room.dart';
 import 'room_direction.dart';
 import 'room_id.dart';
@@ -7,6 +9,7 @@ class GameMap {
     _roomsById = _createRooms();
     startRoom = getRoom(RoomId.maiaStable);
     _connectRooms();
+    _populateWildAnimals();
   }
 
   late final Map<RoomId, Room> _roomsById;
@@ -30,7 +33,6 @@ class GameMap {
         id: RoomId.maiaStable,
         name: "Maia's Stable",
         description: 'Where new trainers obtain their first creature!',
-        imageName: 'maias_stable.svg',
         interactionText:
             'Maia checks the starter pens and says the stable is ready for your journey.',
       ),
@@ -38,7 +40,6 @@ class GameMap {
         id: RoomId.ikena,
         name: 'Ikena',
         description: 'Small peaceful town where heroes are born.',
-        imageName: 'ikena.svg',
         interactionText:
             'A town guide points out the roads leaving Ikena and reminds you to prepare before traveling.',
       ),
@@ -47,7 +48,6 @@ class GameMap {
         name: 'Road 1',
         description:
             'Where you make your first step into your Arcadia journey!',
-        imageName: 'road1.svg',
         interactionText:
             'Tall grass rustles nearby, but this prototype keeps encounters disabled.',
       ),
@@ -160,9 +160,25 @@ class GameMap {
       id: id,
       name: name,
       description: description,
-      imageName: 'room_placeholder.svg',
       interactionText: interactionText,
     );
+  }
+
+  static void _connectBothWays(
+    Room from,
+    RoomDirection direction,
+    Room destination,
+  ) {
+    from.connect(direction, destination);
+    destination.connect(direction.opposite, from);
+  }
+
+  static void _connectOneWay(
+    Room from,
+    RoomDirection direction,
+    Room destination,
+  ) {
+    from.connect(direction, destination);
   }
 
   void _connectRooms() {
@@ -186,66 +202,62 @@ class GameMap {
     final road8 = getRoom(RoomId.road8);
     final theEnd = getRoom(RoomId.theEnd);
 
-    maiaStable.connect(RoomDirection.north, ikena);
+    _connectOneWay(maiaStable, RoomDirection.north, ikena);
+    _connectOneWay(road1, RoomDirection.west, maiaStable);
 
-    ikena.connect(RoomDirection.north, theEnd);
-    ikena.connect(RoomDirection.east, road6);
-    ikena.connect(RoomDirection.south, road5);
-    ikena.connect(RoomDirection.west, road1);
+    _connectBothWays(ikena, RoomDirection.north, theEnd);
+    _connectBothWays(ikena, RoomDirection.east, road6);
+    _connectBothWays(ikena, RoomDirection.south, road5);
+    _connectBothWays(ikena, RoomDirection.west, road1);
 
-    road1.connect(RoomDirection.north, road8);
-    road1.connect(RoomDirection.east, ikena);
-    road1.connect(RoomDirection.south, road2);
-    road1.connect(RoomDirection.west, maiaStable);
+    _connectBothWays(road1, RoomDirection.north, road8);
+    _connectBothWays(road1, RoomDirection.south, road2);
 
-    road2.connect(RoomDirection.north, road1);
-    road2.connect(RoomDirection.south, oakPass);
+    _connectBothWays(road2, RoomDirection.south, oakPass);
+    _connectBothWays(oakPass, RoomDirection.south, road3);
+    _connectBothWays(road3, RoomDirection.south, road4);
+    _connectBothWays(road4, RoomDirection.south, newNucleon);
 
-    oakPass.connect(RoomDirection.north, road2);
-    oakPass.connect(RoomDirection.south, road3);
+    _connectBothWays(newNucleon, RoomDirection.east, road5);
+    _connectBothWays(road5, RoomDirection.east, nucleon);
 
-    road3.connect(RoomDirection.north, oakPass);
-    road3.connect(RoomDirection.south, road4);
+    _connectBothWays(road6, RoomDirection.north, finalTrials);
+    _connectBothWays(road6, RoomDirection.south, road7);
+    _connectBothWays(road7, RoomDirection.south, wyrmrest);
+    _connectBothWays(wyrmrest, RoomDirection.south, mountains);
+    _connectBothWays(mountains, RoomDirection.south, radioactiveWay);
+    _connectBothWays(radioactiveWay, RoomDirection.south, nucleon);
 
-    road4.connect(RoomDirection.north, road3);
-    road4.connect(RoomDirection.south, newNucleon);
+    _connectOneWay(finalTrials, RoomDirection.north, guardiansTower);
+    _connectOneWay(guardiansTower, RoomDirection.east, finalTrials);
+    _connectOneWay(guardiansTower, RoomDirection.south, ikena);
+    _connectOneWay(guardiansTower, RoomDirection.west, road8);
+    _connectOneWay(road8, RoomDirection.north, guardiansTower);
+  }
 
-    newNucleon.connect(RoomDirection.north, road4);
-    newNucleon.connect(RoomDirection.east, road5);
+  void _populateWildAnimals() {
+    final mapAnimals = GameCreatureData.createAnimals();
+    final nuclearDragon = mapAnimals.singleWhere(
+      (animal) => animal.name == 'NU_DRAGON',
+    );
 
-    road5.connect(RoomDirection.north, ikena);
-    road5.connect(RoomDirection.east, nucleon);
-    road5.connect(RoomDirection.west, newNucleon);
+    _addAnimalToRoom(RoomId.road1, mapAnimals[3]);
+    _addAnimalToRoom(RoomId.road2, mapAnimals[15]);
+    _addAnimalToRoom(RoomId.road2, mapAnimals[12]);
+    _addAnimalToRoom(RoomId.road3, mapAnimals[9]);
+    _addAnimalToRoom(RoomId.road3, mapAnimals[11]);
+    _addAnimalToRoom(RoomId.road4, mapAnimals[10]);
+    _addAnimalToRoom(RoomId.road5, mapAnimals[7]);
+    _addAnimalToRoom(RoomId.road6, mapAnimals[14]);
+    _addAnimalToRoom(RoomId.road7, mapAnimals[4]);
+    _addAnimalToRoom(RoomId.road7, mapAnimals[13]);
+    _addAnimalToRoom(RoomId.mountains, mapAnimals[8]);
+    _addAnimalToRoom(RoomId.radioactiveWay, mapAnimals[6]);
+    _addAnimalToRoom(RoomId.finalTrials, mapAnimals[17]);
+    _addAnimalToRoom(RoomId.theEnd, nuclearDragon);
+  }
 
-    road6.connect(RoomDirection.north, finalTrials);
-    road6.connect(RoomDirection.south, road7);
-    road6.connect(RoomDirection.west, ikena);
-
-    road7.connect(RoomDirection.north, road6);
-    road7.connect(RoomDirection.south, wyrmrest);
-
-    wyrmrest.connect(RoomDirection.north, road7);
-    wyrmrest.connect(RoomDirection.south, mountains);
-
-    mountains.connect(RoomDirection.north, wyrmrest);
-    mountains.connect(RoomDirection.south, radioactiveWay);
-
-    radioactiveWay.connect(RoomDirection.north, mountains);
-    radioactiveWay.connect(RoomDirection.south, nucleon);
-
-    nucleon.connect(RoomDirection.north, radioactiveWay);
-    nucleon.connect(RoomDirection.west, road5);
-
-    finalTrials.connect(RoomDirection.north, guardiansTower);
-    finalTrials.connect(RoomDirection.south, road6);
-
-    guardiansTower.connect(RoomDirection.east, finalTrials);
-    guardiansTower.connect(RoomDirection.south, ikena);
-    guardiansTower.connect(RoomDirection.west, road8);
-
-    road8.connect(RoomDirection.north, guardiansTower);
-    road8.connect(RoomDirection.south, road1);
-
-    theEnd.connect(RoomDirection.south, ikena);
+  void _addAnimalToRoom(RoomId roomId, Animal animal) {
+    getRoom(roomId).setRoomAnimal(animal);
   }
 }

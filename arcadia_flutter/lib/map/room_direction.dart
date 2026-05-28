@@ -14,3 +14,18 @@ extension RoomDirectionLabel on RoomDirection {
     }
   }
 }
+
+extension RoomDirectionNavigation on RoomDirection {
+  RoomDirection get opposite {
+    switch (this) {
+      case RoomDirection.north:
+        return RoomDirection.south;
+      case RoomDirection.east:
+        return RoomDirection.west;
+      case RoomDirection.south:
+        return RoomDirection.north;
+      case RoomDirection.west:
+        return RoomDirection.east;
+    }
+  }
+}

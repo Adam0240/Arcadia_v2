@@ -1,3 +1,4 @@
+import '../creatures/animal.dart';
 import 'room_direction.dart';
 import 'room_id.dart';
 
@@ -6,18 +7,18 @@ class Room {
     required this.id,
     required this.name,
     required this.description,
-    required this.imageName,
     required this.interactionText,
   });
 
   final RoomId id;
   final String name;
   final String description;
-  final String imageName;
   final String interactionText;
   final Map<RoomDirection, Room> _exits = {};
+  final List<Animal> _encounterAnimals = [];
 
   Map<RoomDirection, Room> get exits => Map.unmodifiable(_exits);
+  List<Animal> get encounterAnimals => List.unmodifiable(_encounterAnimals);
 
   void connect(RoomDirection direction, Room destination) {
     _exits[direction] = destination;
@@ -29,5 +30,27 @@ class Room {
 
   bool hasExit(RoomDirection direction) {
     return _exits.containsKey(direction);
+  }
+
+  void setRoomAnimal(Animal animal) {
+    _encounterAnimals.add(animal.clone());
+  }
+
+  void addEncounterAnimal(Animal animal) {
+    _encounterAnimals.add(animal);
+  }
+
+  bool removeEncounterAnimal(Animal animal) {
+    return _encounterAnimals.remove(animal);
+  }
+
+  void restoreEncounterAnimals(Iterable<Animal> encounterAnimals) {
+    _encounterAnimals
+      ..clear()
+      ..addAll(encounterAnimals);
+  }
+
+  bool hasEncounterAnimals() {
+    return _encounterAnimals.isNotEmpty;
   }
 }
