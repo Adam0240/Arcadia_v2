@@ -25,6 +25,12 @@ class GameMap {
     _populateWildAnimals();
   }
 
+  void resetStoredAnimals() {
+    for (final room in rooms) {
+      room.restoreStoredAnimals(const []);
+    }
+  }
+
   Room getRoom(RoomId roomId) {
     final room = _roomsById[roomId];
 
@@ -40,7 +46,7 @@ class GameMap {
       RoomId.maiaStable: Room(
         id: RoomId.maiaStable,
         name: "Maia's Stable",
-        description: 'Where new trainers obtain their first creature!',
+        description: 'Where new guardians obtain their first creature!',
         interactionText:
             'Maia checks the starter pens and says the stable is ready for your journey.',
       ),
@@ -134,7 +140,7 @@ class GameMap {
       RoomId.finalTrials: _createPlaceholderRoom(
         RoomId.finalTrials,
         'Final Trials',
-        'Expert trainers and future titans all travel through here.',
+        'Expert guardians and future titans all travel through here.',
         'The air feels heavier here, as if the road expects you to prove yourself.',
       ),
       RoomId.guardiansTower: _createPlaceholderRoom(

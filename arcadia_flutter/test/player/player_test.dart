@@ -154,7 +154,7 @@ void main() {
 
   // Verifies computer players clone battle templates and rebuild active teams.
   test('comp player clones battle team templates and prepares fresh teams', () {
-    final trainer = CompPlayer(
+    final guardian = CompPlayer(
       name: 'Guardian',
       startingRoom: GameMap().startRoom,
     );
@@ -162,36 +162,36 @@ void main() {
     final natureDog = animals.singleWhere((animal) => animal.name == 'N_DOG');
     final mysticLion = animals.singleWhere((animal) => animal.name == 'M_LION');
 
-    trainer.setBattleTeam([natureDog, mysticLion]);
+    guardian.setBattleTeam([natureDog, mysticLion]);
 
-    expect(trainer.battleTeamTemplate, hasLength(2));
-    expect(trainer.animalInventory, hasLength(2));
-    expect(trainer.battleTeamTemplate.first, isNot(same(natureDog)));
+    expect(guardian.battleTeamTemplate, hasLength(2));
+    expect(guardian.animalInventory, hasLength(2));
+    expect(guardian.battleTeamTemplate.first, isNot(same(natureDog)));
     expect(
-      trainer.animalInventory.first,
-      isNot(same(trainer.battleTeamTemplate.first)),
+      guardian.animalInventory.first,
+      isNot(same(guardian.battleTeamTemplate.first)),
     );
-    expect(trainer.battleTeamTemplate.first.name, natureDog.name);
-    expect(trainer.animalInventory.first.name, natureDog.name);
+    expect(guardian.battleTeamTemplate.first.name, natureDog.name);
+    expect(guardian.animalInventory.first.name, natureDog.name);
 
-    trainer.animalInventory.first.health = 1;
-    trainer.prepareForBattle();
+    guardian.animalInventory.first.health = 1;
+    guardian.prepareForBattle();
 
-    expect(trainer.animalInventory.first.health, natureDog.baseHealth);
-    expect(trainer.battleTeamTemplate.first.health, natureDog.baseHealth);
+    expect(guardian.animalInventory.first.health, natureDog.baseHealth);
+    expect(guardian.battleTeamTemplate.first.health, natureDog.baseHealth);
   });
 
   // Verifies computer player defeated state can be toggled.
   test('comp player defeated state can be toggled', () {
-    final trainer = CompPlayer(
+    final guardian = CompPlayer(
       name: 'Guardian',
       startingRoom: GameMap().startRoom,
     );
 
-    expect(trainer.defeated, isFalse);
+    expect(guardian.defeated, isFalse);
 
-    trainer.defeated = true;
+    guardian.defeated = true;
 
-    expect(trainer.defeated, isTrue);
+    expect(guardian.defeated, isTrue);
   });
 }

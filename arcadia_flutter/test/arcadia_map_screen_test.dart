@@ -1,3 +1,4 @@
+import 'package:arcadia_flutter/creatures/game_creature_data.dart';
 import 'package:arcadia_flutter/map/game_map.dart';
 import 'package:arcadia_flutter/map/room_direction.dart';
 import 'package:arcadia_flutter/saves/game_save_repository.dart';
@@ -17,7 +18,7 @@ void main() {
     expect(find.text('Arcadia'), findsOneWidget);
     expect(find.text("Maia's Stable"), findsOneWidget);
     expect(
-      find.text('Where new trainers obtain their first creature!'),
+      find.text('Where new guardians obtain their first creature!'),
       findsOneWidget,
     );
     expect(find.text('The journey begins.'), findsOneWidget);
@@ -85,6 +86,88 @@ void main() {
     );
   });
 
+  // Verifies a route room can enter a wild battle and catch the defeated animal.
+  testWidgets('encounter opens wild battle and catch returns to map', (
+    WidgetTester tester,
+  ) async {
+    final session = MobileGameSession(
+      GameMap(),
+      saveRepository: _MemoryGameSaveRepository(),
+    );
+    session.move(RoomDirection.north);
+    session.move(RoomDirection.west);
+    session.currentRoom.encounterAnimals.single.health = 1;
+
+    await tester.pumpWidget(_buildMapScreen(gameSession: session));
+
+    await tester.tap(find.text('Encounter'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Wild Battle'), findsOneWidget);
+    expect(find.text('Wild Animal'), findsOneWidget);
+    expect(find.text('N_DOG'), findsWidgets);
+
+    await tester.tap(find.text('Pounce'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Catch'));
+    await tester.tap(find.text('Catch'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Road 1'), findsOneWidget);
+    expect(find.text('You caught N_DOG!'), findsOneWidget);
+    expect(session.currentRoom.encounterAnimals, isEmpty);
+  });
+
+  // Verifies guardian rooms expose guardian actions and report unmet requirements.
+  testWidgets('guardian action reports unmet challenge requirements', (
+    WidgetTester tester,
+  ) async {
+    final session = MobileGameSession(
+      GameMap(),
+      saveRepository: _MemoryGameSaveRepository(),
+    )..move(RoomDirection.north);
+
+    await tester.pumpWidget(_buildMapScreen(gameSession: session));
+
+    expect(find.text('Ikena'), findsOneWidget);
+    expect(find.text('Guardian'), findsOneWidget);
+
+    await tester.tap(find.text('Guardian'));
+    await tester.pump();
+
+    expect(
+      find.text('You need to have 2 star fragments to battle this guardian!'),
+      findsOneWidget,
+    );
+  });
+
+  // Verifies guardian action opens a guardian battle when requirements are met.
+  testWidgets('guardian action opens guardian battle', (
+    WidgetTester tester,
+  ) async {
+    final session =
+        MobileGameSession(
+            GameMap(),
+            saveRepository: _MemoryGameSaveRepository(),
+          )
+          ..move(RoomDirection.north)
+          ..move(RoomDirection.west)
+          ..move(RoomDirection.south)
+          ..move(RoomDirection.south);
+
+    await tester.pumpWidget(_buildMapScreen(gameSession: session));
+
+    expect(find.text('Oak Pass'), findsOneWidget);
+    expect(find.text('Guardian'), findsOneWidget);
+
+    await tester.tap(find.text('Guardian'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Guardian Battle'), findsOneWidget);
+    expect(find.text('Nature Guardian'), findsWidgets);
+    expect(find.text('N_DOG'), findsOneWidget);
+  });
+
   // Verifies menu swaps the movement grid for player info and save controls.
   testWidgets('menu toggles between movement and save controls', (
     WidgetTester tester,
@@ -105,6 +188,7 @@ void main() {
     expect(find.text('Star Fragments'), findsOneWidget);
     expect(find.text('Save'), findsOneWidget);
     expect(find.text('Load'), findsNothing);
+    expect(find.text('Swap'), findsNothing);
     expect(find.text('Return'), findsOneWidget);
     expect(find.text('North'), findsNothing);
 
@@ -140,6 +224,57 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Inventory'), findsOneWidget);
     expect(find.text('Return'), findsOneWidget);
+  });
+
+  // Verifies Road 8 shows stored animals and allows swapping from the menu.
+  testWidgets('road 8 swap exchanges stored and inventory animals', (
+    WidgetTester tester,
+  ) async {
+    final session = MobileGameSession(
+      GameMap(),
+      saveRepository: _MemoryGameSaveRepository(),
+    );
+    session.move(RoomDirection.north);
+    session.move(RoomDirection.west);
+    _fillParty(session);
+    final battleState = session.startWildBattle();
+    battleState.wildAnimal.health = 0;
+    session.catchWildAnimal(battleState);
+    session.move(RoomDirection.north);
+
+    await tester.pumpWidget(_buildMapScreen(gameSession: session));
+
+    await tester.tap(find.text('Inspect'));
+    await tester.pump();
+
+    expect(find.textContaining('Stored Animals: N_DOG'), findsOneWidget);
+
+    await tester.tap(find.text('Menu'));
+    await tester.pump();
+
+    expect(find.text('Swap'), findsOneWidget);
+
+    await tester.tap(find.text('Swap'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Swap Animals'), findsOneWidget);
+    expect(find.text('Inventory'), findsOneWidget);
+    expect(find.text('Road 8 Storage'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Swap'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Road 8'), findsOneWidget);
+    expect(find.text('Swapped N_CAT for N_DOG.'), findsOneWidget);
+    expect(session.player.animalInventory.map((animal) => animal.name), [
+      'N_DOG',
+      'N_WOLF',
+      'N_HORSE',
+      'N_STALLION',
+      'N_TURTLE',
+      'N_DOG',
+    ]);
+    expect(session.road8StoredAnimals.map((animal) => animal.name), ['N_CAT']);
   });
 
   // Verifies menu inventory displays the player's starter animals.
@@ -224,6 +359,14 @@ Widget _buildMapScreen({MobileGameSession? gameSession}) {
           ),
     ),
   );
+}
+
+void _fillParty(MobileGameSession session) {
+  final animals = GameCreatureData.createAnimals();
+
+  for (final animal in animals.skip(4).take(4)) {
+    session.player.addAnimal(animal.clone());
+  }
 }
 
 class _MemoryGameSaveRepository implements GameSaveRepository {

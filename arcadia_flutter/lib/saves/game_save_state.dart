@@ -8,12 +8,14 @@ class GameSaveState {
     required this.version,
     required this.player,
     required this.rooms,
+    required this.guardians,
     required this.visitedRoomIds,
   });
 
   final int version;
   final PlayerSaveState player;
   final List<RoomSaveState> rooms;
+  final List<GuardianSaveState> guardians;
   final List<RoomId> visitedRoomIds;
 
   Map<String, Object?> toJson() {
@@ -21,6 +23,7 @@ class GameSaveState {
       'version': version,
       'player': player.toJson(),
       'rooms': rooms.map((room) => room.toJson()).toList(),
+      'guardians': guardians.map((guardian) => guardian.toJson()).toList(),
       'visitedRoomIds': visitedRoomIds.map((roomId) => roomId.name).toList(),
     };
   }
@@ -32,6 +35,9 @@ class GameSaveState {
       rooms: (json['rooms'] as List<Object?>)
           .map((room) => RoomSaveState.fromJson(room as Map<String, Object?>))
           .toList(),
+      guardians: (json['guardians'] as List<Object?>).map((guardian) {
+        return GuardianSaveState.fromJson(guardian as Map<String, Object?>);
+      }).toList(),
       visitedRoomIds: (json['visitedRoomIds'] as List<Object?>)
           .map((roomId) => _parseEnum(RoomId.values, roomId as String))
           .toList(),
@@ -82,10 +88,15 @@ class PlayerSaveState {
 }
 
 class RoomSaveState {
-  const RoomSaveState({required this.roomId, required this.encounterAnimals});
+  const RoomSaveState({
+    required this.roomId,
+    required this.encounterAnimals,
+    required this.storedAnimals,
+  });
 
   final RoomId roomId;
   final List<AnimalSaveState> encounterAnimals;
+  final List<AnimalSaveState> storedAnimals;
 
   Map<String, Object?> toJson() {
     return {
@@ -93,6 +104,7 @@ class RoomSaveState {
       'encounterAnimals': encounterAnimals
           .map((animal) => animal.toJson())
           .toList(),
+      'storedAnimals': storedAnimals.map((animal) => animal.toJson()).toList(),
     };
   }
 
@@ -100,6 +112,51 @@ class RoomSaveState {
     return RoomSaveState(
       roomId: _parseEnum(RoomId.values, json['roomId'] as String),
       encounterAnimals: (json['encounterAnimals'] as List<Object?>).map((
+        animal,
+      ) {
+        return AnimalSaveState.fromJson(animal as Map<String, Object?>);
+      }).toList(),
+      storedAnimals: (json['storedAnimals'] as List<Object?>).map((animal) {
+        return AnimalSaveState.fromJson(animal as Map<String, Object?>);
+      }).toList(),
+    );
+  }
+}
+
+class GuardianSaveState {
+  const GuardianSaveState({
+    required this.name,
+    required this.roomId,
+    required this.defeated,
+    required this.starFragments,
+    required this.battleTeamTemplate,
+  });
+
+  final String name;
+  final RoomId roomId;
+  final bool defeated;
+  final List<String> starFragments;
+  final List<AnimalSaveState> battleTeamTemplate;
+
+  Map<String, Object?> toJson() {
+    return {
+      'name': name,
+      'roomId': roomId.name,
+      'defeated': defeated,
+      'starFragments': starFragments,
+      'battleTeamTemplate': battleTeamTemplate
+          .map((animal) => animal.toJson())
+          .toList(),
+    };
+  }
+
+  factory GuardianSaveState.fromJson(Map<String, Object?> json) {
+    return GuardianSaveState(
+      name: json['name'] as String,
+      roomId: _parseEnum(RoomId.values, json['roomId'] as String),
+      defeated: json['defeated'] as bool,
+      starFragments: (json['starFragments'] as List<Object?>).cast<String>(),
+      battleTeamTemplate: (json['battleTeamTemplate'] as List<Object?>).map((
         animal,
       ) {
         return AnimalSaveState.fromJson(animal as Map<String, Object?>);

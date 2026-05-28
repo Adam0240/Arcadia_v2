@@ -4,6 +4,9 @@ import '../map/game_map.dart';
 import '../map/room_direction.dart';
 import '../services/mobile_game_session.dart';
 import '../widgets/room_artwork.dart';
+import 'guardian_battle_screen.dart';
+import 'swap_animal_screen.dart';
+import 'wild_battle_screen.dart';
 
 class ArcadiaMapScreen extends StatefulWidget {
   const ArcadiaMapScreen({super.key, this.gameSession});
@@ -138,6 +141,36 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
             const Expanded(child: SizedBox()),
           ],
         ),
+        if (_gameSession.hasWildEncounter) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Expanded(child: SizedBox()),
+              Expanded(
+                child: _ControlButton(
+                  label: 'Encounter',
+                  onPressed: _startWildBattle,
+                ),
+              ),
+              const Expanded(child: SizedBox()),
+            ],
+          ),
+        ],
+        if (_gameSession.hasGuardianInCurrentRoom) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Expanded(child: SizedBox()),
+              Expanded(
+                child: _ControlButton(
+                  label: 'Guardian',
+                  onPressed: _startGuardianBattle,
+                ),
+              ),
+              const Expanded(child: SizedBox()),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -156,6 +189,10 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
       children: [
         _ControlButton(label: 'Inventory', onPressed: _showInventory),
         const SizedBox(height: 8),
+        if (_gameSession.canSwapStoredAnimals) ...[
+          _ControlButton(label: 'Swap', onPressed: _openSwap),
+          const SizedBox(height: 8),
+        ],
         _ControlButton(label: 'Bond', onPressed: _showBond),
         const SizedBox(height: 8),
         _ControlButton(label: 'Star Fragments', onPressed: _showStarFragments),
@@ -190,6 +227,67 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
     });
   }
 
+  Future<void> _startWildBattle() async {
+    try {
+      final battleState = _gameSession.startWildBattle();
+      final resultMessage = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          builder: (_) => WildBattleScreen(
+            gameSession: _gameSession,
+            battleState: battleState,
+          ),
+        ),
+      );
+
+      if (!mounted || resultMessage == null) {
+        return;
+      }
+
+      setState(() {
+        _statusMessage = resultMessage;
+      });
+    } on Object catch (error) {
+      setState(() {
+        _statusMessage = error.toString();
+      });
+    }
+  }
+
+  Future<void> _startGuardianBattle() async {
+    final unavailableMessage = _gameSession.getGuardianUnavailableMessage();
+
+    if (unavailableMessage != null) {
+      setState(() {
+        _statusMessage = unavailableMessage;
+      });
+      return;
+    }
+
+    try {
+      final battleState = _gameSession.startGuardianBattle();
+      final resultMessage = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          builder: (_) => GuardianBattleScreen(
+            gameSession: _gameSession,
+            battleState: battleState,
+          ),
+        ),
+      );
+
+      if (!mounted || resultMessage == null) {
+        return;
+      }
+
+      setState(() {
+        _statusMessage = resultMessage;
+      });
+    } on Object catch (error) {
+      setState(() {
+        _statusMessage = error.toString();
+      });
+    }
+  }
+
   void _openMenu() {
     setState(() {
       _isMenuOpen = true;
@@ -205,6 +303,22 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
   void _showInventory() {
     setState(() {
       _statusMessage = _gameSession.player.getAnimalInventoryDisplay();
+    });
+  }
+
+  Future<void> _openSwap() async {
+    final resultMessage = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => SwapAnimalScreen(gameSession: _gameSession),
+      ),
+    );
+
+    if (!mounted || resultMessage == null) {
+      return;
+    }
+
+    setState(() {
+      _statusMessage = resultMessage;
     });
   }
 

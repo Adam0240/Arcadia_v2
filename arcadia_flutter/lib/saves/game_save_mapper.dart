@@ -1,5 +1,6 @@
 import '../creatures/animal.dart';
 import '../creatures/battle_move.dart';
+import '../guardians/guardian_state.dart';
 import '../map/game_map.dart';
 import '../map/room.dart';
 import '../player/player.dart';
@@ -9,13 +10,14 @@ import 'game_save_state.dart';
 class GameSaveMapper {
   const GameSaveMapper._();
 
-  static const int currentVersion = 1;
+  static const int currentVersion = 3;
 
   static GameSaveState capture(MobileGameSession session) {
     return GameSaveState(
       version: currentVersion,
       player: _capturePlayer(session.player),
       rooms: session.rooms.map(_captureRoom).toList(),
+      guardians: session.guardians.map(_captureGuardian).toList(),
       visitedRoomIds: session.visitedRoomIds.toList(),
     );
   }
@@ -47,11 +49,30 @@ class GameSaveMapper {
 
   static void restoreRooms(List<RoomSaveState> roomStates, GameMap gameMap) {
     for (final roomState in roomStates) {
-      gameMap
-          .getRoom(roomState.roomId)
-          .restoreEncounterAnimals(
-            roomState.encounterAnimals.map(_restoreAnimal),
-          );
+      gameMap.getRoom(roomState.roomId)
+        ..restoreEncounterAnimals(
+          roomState.encounterAnimals.map(_restoreAnimal),
+        )
+        ..restoreStoredAnimals(roomState.storedAnimals.map(_restoreAnimal));
+    }
+  }
+
+  static void restoreGuardians(
+    List<GuardianSaveState> guardianStates,
+    Iterable<GuardianState> guardians,
+    GameMap gameMap,
+  ) {
+    for (final guardianState in guardianStates) {
+      final guardian = guardians.singleWhere(
+        (guardian) => guardian.character.name == guardianState.name,
+      );
+
+      guardian.character
+        ..restoreName(guardianState.name)
+        ..moveTo(gameMap.getRoom(guardianState.roomId))
+        ..defeated = guardianState.defeated
+        ..restoreStarFragments(guardianState.starFragments)
+        ..setBattleTeam(guardianState.battleTeamTemplate.map(_restoreAnimal));
     }
   }
 
@@ -71,6 +92,19 @@ class GameSaveMapper {
     return RoomSaveState(
       roomId: room.id,
       encounterAnimals: room.encounterAnimals.map(_captureAnimal).toList(),
+      storedAnimals: room.storedAnimals.map(_captureAnimal).toList(),
+    );
+  }
+
+  static GuardianSaveState _captureGuardian(GuardianState guardian) {
+    return GuardianSaveState(
+      name: guardian.character.name,
+      roomId: guardian.character.currentRoom.id,
+      defeated: guardian.character.defeated,
+      starFragments: guardian.character.starFragments,
+      battleTeamTemplate: guardian.character.battleTeamTemplate
+          .map(_captureAnimal)
+          .toList(),
     );
   }
 

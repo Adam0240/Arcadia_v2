@@ -16,9 +16,11 @@ class Room {
   final String interactionText;
   final Map<RoomDirection, Room> _exits = {};
   final List<Animal> _encounterAnimals = [];
+  final List<Animal> _storedAnimals = [];
 
   Map<RoomDirection, Room> get exits => Map.unmodifiable(_exits);
   List<Animal> get encounterAnimals => List.unmodifiable(_encounterAnimals);
+  List<Animal> get storedAnimals => List.unmodifiable(_storedAnimals);
 
   void connect(RoomDirection direction, Room destination) {
     _exits[direction] = destination;
@@ -52,5 +54,23 @@ class Room {
 
   bool hasEncounterAnimals() {
     return _encounterAnimals.isNotEmpty;
+  }
+
+  void storeCapturedAnimal(Animal animal) {
+    _storedAnimals.add(animal);
+  }
+
+  bool removeStoredAnimal(Animal animal) {
+    return _storedAnimals.remove(animal);
+  }
+
+  void restoreStoredAnimals(Iterable<Animal> storedAnimals) {
+    _storedAnimals
+      ..clear()
+      ..addAll(storedAnimals);
+  }
+
+  bool hasStoredAnimals() {
+    return _storedAnimals.isNotEmpty;
   }
 }
