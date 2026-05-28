@@ -5,7 +5,7 @@ import 'package:arcadia_flutter/services/mobile_game_session.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  // Verifies the Flutter map starts in the same room as the MAUI map.
+  // Verifies the Flutter map starts in the expected opening room.
   test('session starts at Maia Stable', () {
     final session = MobileGameSession(GameMap());
 

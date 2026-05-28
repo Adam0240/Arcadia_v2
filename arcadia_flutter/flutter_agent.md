@@ -2,7 +2,7 @@
 
 arcadia_flutter is the Flutter client for Arcadia. It should provide a touch-friendly mobile UI for the Arcadia adventure/creature-battle game while preserving the main game's domain rules, terminology, and save behavior.
 
-The Flutter project lives in `arcadia_flutter/`. The existing console game lives in `Arcadia_v2/`, the partially built .NET MAUI app lives in `Arcadia_Mobile/`, and unit tests live in `UnitTest/`.
+The Flutter project lives in `arcadia_flutter/`. The existing console game lives in `Arcadia_v2/`, and unit tests live in `UnitTest/`.
 
 # Tech Stack
 
@@ -29,16 +29,14 @@ The Flutter project lives in `arcadia_flutter/`. The existing console game lives
 - `arcadia_flutter/ios/`, `macos/`, `linux/`, `web/`, and `windows/` - generated platform folders. Do not edit platform files unless the feature requires platform-specific configuration.
 - `arcadia_flutter/test/` - Flutter-specific tests for this project. Use this as the default location for new Flutter tests.
 - `Arcadia_v2/` - console reference implementation only.
-- `Arcadia_Mobile/` - .NET MAUI reference implementation only.
 
 # Architecture Rules
 
-- Treat `Arcadia_v2/` as the reference implementation for gameplay logic, not as an edit target for Flutter work.
-- Treat `Arcadia_Mobile/` as a reference for the current mobile feature set and screen behavior, not as an edit target for Flutter work.
-- Do not modify existing files in `Arcadia_v2/` or `Arcadia_Mobile/` unless the user explicitly instructs you to do so.
-- Build the Flutter app to match the current behavior and visible functionality of `Arcadia_Mobile/` first.
+- Treat `Arcadia_v2/` as the reference implementation for game rules, data, and intended behavior, not as an edit target for Flutter work.
+- Do not modify existing files in `Arcadia_v2/` unless the user explicitly instructs you to do so.
+- Build the Flutter app to preserve the console game's domain rules and terminology while using Flutter-specific UI and services.
 - When Flutter needs logic from the console project, create an adapted Dart implementation in the appropriate `arcadia_flutter/lib/` folder instead of editing or directly depending on the C# source.
-- Keep duplicated Flutter logic organized by responsibility so it can evolve separately from console-specific and MAUI-specific flow.
+- Keep duplicated Flutter logic organized by responsibility so it can evolve separately from console-specific flow.
 - Keep Flutter widgets focused on UI composition, navigation, and user interaction. Put gameplay decisions, battle rules, save mapping, and state transitions outside widget build methods.
 - Keep reusable game/session behavior in services or state classes; keep mobile-adapted domain models in responsibility-based folders such as `map/`, `creatures/`, `battles/`, `player/`, and `saves/`.
 - Expand the existing playable exploration flow incrementally. Add rooms, interactions, inventory, dialogue, saves, and battles as separate focused steps instead of folding them all into one widget or service.
@@ -49,10 +47,11 @@ The Flutter project lives in `arcadia_flutter/`. The existing console game lives
 
 # Current Flutter Architecture
 
-- `main.dart` starts `ArcadiaApp`, applies the app theme, and routes directly to `ArcadiaMapScreen`.
-- `ArcadiaMapScreen` is the first playable screen. It displays the current room artwork, room name, description, status message, directional controls, Inspect, and Menu.
+- `main.dart` starts `ArcadiaApp`, applies the app theme, and routes to `StartMenuScreen`.
+- `StartMenuScreen` is the startup screen. It checks whether a save exists, shows `New Game` when no save exists, shows `Load Game` and `Delete Game` when a save exists, prompts for a valid player name before starting a new game, and opens `ArcadiaMapScreen` with the active session.
+- `ArcadiaMapScreen` is the playable exploration screen. It displays the current room artwork, room name, description, status message, directional controls, Inspect, and Menu.
 - Direction buttons are enabled only when the current room has an exit in that direction. Movement calls `MobileGameSession.move`, updates the current room, records the visit, and refreshes the status message.
-- The Menu button swaps the movement controls for Inventory, Bond, Star Fragments, Save, Load, and Return controls. Inventory/Bond/Star Fragments are read-only status panel views backed by the active player. Save/Load use the Flutter JSON save repository.
+- The Menu button swaps the movement controls for Inventory, Bond, Star Fragments, Save, and Return controls. Inventory/Bond/Star Fragments are read-only status panel views backed by the active player. Save uses the Flutter JSON save repository. Loading and deletion happen only from `StartMenuScreen`.
 - `GameMap` creates the full current room list and connects rooms with directional exits. The map starts at `RoomId.maiaStable`.
 - `GameMap` also populates room encounter animals from `GameCreatureData` using the console reference assignments. Encounter animals are visible through Inspect only; battle and catch behavior are not wired yet.
 - `Room`, `RoomId`, and `RoomDirection` are the mobile map domain model. `Room` owns local encounter animal state as cloned animals. Keep new room metadata, exits, and initial encounter assignments in `GameMap` unless the map grows enough to justify splitting data from construction.
@@ -60,7 +59,7 @@ The Flutter project lives in `arcadia_flutter/`. The existing console game lives
 - New sessions create the main player with the console reference starter animals from `GameCreatureData.createAnimals()`: `N_CAT` and `N_DOG`.
 - `saves/` contains the Flutter save/load layer. `GameSaveMapper` captures/restores session state, player state, visited rooms, and room encounter animals. `LocalJsonGameSaveRepository` stores `arcadia_save.json` in the app documents directory through `path_provider`; tests can use `JsonGameSaveRepository` with a temp file or an in-memory repository.
 - `RoomArtwork` uses Flutter canvas painting for room visuals. Maia's Stable, Ikena, and Road 1 have specific art; the other rooms currently use the shared placeholder scene.
-- `creatures/` contains the Flutter-side creature data layer. `AnimalCatalog` builds the generated animal roster from Dart species/element templates, `MoveCatalog` owns static battle moves, and `GameCreatureData` is the public facade for creating animal lists.
+- `creatures/` contains the Flutter-side creature data layer. `AnimalCatalog` builds the generated animal roster from Dart species/element templates, `MoveCatalog` owns shared battle moves, and `GameCreatureData` is the public facade for creating animal lists.
 - `player/` contains the Flutter-side player state layer. `GenericPlayer` owns room position, star fragments, creature inventory, bond, display helpers, and restore helpers. `Player` is the human player type, and `CompPlayer` adds defeated state plus cloned battle team templates.
 
 # Current Map Coverage
@@ -120,14 +119,13 @@ The Flutter project lives in `arcadia_flutter/`. The existing console game lives
 
 - Do not commit generated build output from `build/`, `.dart_tool/`, or platform build directories.
 - Do not modify existing files under `Arcadia_v2/` for Flutter implementation work unless the user explicitly asks for it.
-- Do not modify existing files under `Arcadia_Mobile/` for Flutter implementation work unless the user explicitly asks for it.
-- Do not move files out of `Arcadia_v2/` or `Arcadia_Mobile/` into shared projects or libraries without explicit approval.
+- Do not move files out of `Arcadia_v2/` into shared projects or libraries without explicit approval.
 - Do not reference console-only behavior directly from Flutter UI when the mobile app needs an adapted Dart implementation.
 - Do not put game rules, battle calculations, save conversion, or command parsing directly in widget build methods.
 - Do not duplicate large sections of console gameplay flow in Flutter screens.
 - Do not bypass existing save services or mappers once Flutter persistence is wired in.
 - Do not add platform-specific behavior in shared Dart files without guarding or abstracting it.
-- Do not make broad rewrites to the console or MAUI projects while working on targeted Flutter changes unless explicitly requested.
+- Do not make broad rewrites to the console project while working on targeted Flutter changes unless explicitly requested.
 - Do not add legacy save migration or backwards-compatibility code for major changes/refactors unless explicitly requested.
 
 # Current Plan
