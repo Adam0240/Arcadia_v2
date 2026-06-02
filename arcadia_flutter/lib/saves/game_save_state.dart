@@ -30,17 +30,11 @@ class GameSaveState {
 
   factory GameSaveState.fromJson(Map<String, Object?> json) {
     return GameSaveState(
-      version: json['version'] as int,
-      player: PlayerSaveState.fromJson(json['player'] as Map<String, Object?>),
-      rooms: (json['rooms'] as List<Object?>)
-          .map((room) => RoomSaveState.fromJson(room as Map<String, Object?>))
-          .toList(),
-      guardians: (json['guardians'] as List<Object?>).map((guardian) {
-        return GuardianSaveState.fromJson(guardian as Map<String, Object?>);
-      }).toList(),
-      visitedRoomIds: (json['visitedRoomIds'] as List<Object?>)
-          .map((roomId) => _parseEnum(RoomId.values, roomId as String))
-          .toList(),
+      version: _readInt(json, 'version'),
+      player: PlayerSaveState.fromJson(_readObject(json, 'player')),
+      rooms: _readObjectList(json, 'rooms', RoomSaveState.fromJson),
+      guardians: _readObjectList(json, 'guardians', GuardianSaveState.fromJson),
+      visitedRoomIds: _readEnumList(json, 'visitedRoomIds', RoomId.values),
     );
   }
 }
@@ -74,15 +68,15 @@ class PlayerSaveState {
 
   factory PlayerSaveState.fromJson(Map<String, Object?> json) {
     return PlayerSaveState(
-      name: json['name'] as String,
-      currentRoomId: _parseEnum(RoomId.values, json['currentRoomId'] as String),
-      starFragments: (json['starFragments'] as List<Object?>).cast<String>(),
-      bond: (json['bond'] as List<Object?>).map((bondState) {
-        return BondSaveState.fromJson(bondState as Map<String, Object?>);
-      }).toList(),
-      animalInventory: (json['animalInventory'] as List<Object?>).map((animal) {
-        return AnimalSaveState.fromJson(animal as Map<String, Object?>);
-      }).toList(),
+      name: _readString(json, 'name'),
+      currentRoomId: _readEnum(json, 'currentRoomId', RoomId.values),
+      starFragments: _readStringList(json, 'starFragments'),
+      bond: _readObjectList(json, 'bond', BondSaveState.fromJson),
+      animalInventory: _readObjectList(
+        json,
+        'animalInventory',
+        AnimalSaveState.fromJson,
+      ),
     );
   }
 }
@@ -110,15 +104,17 @@ class RoomSaveState {
 
   factory RoomSaveState.fromJson(Map<String, Object?> json) {
     return RoomSaveState(
-      roomId: _parseEnum(RoomId.values, json['roomId'] as String),
-      encounterAnimals: (json['encounterAnimals'] as List<Object?>).map((
-        animal,
-      ) {
-        return AnimalSaveState.fromJson(animal as Map<String, Object?>);
-      }).toList(),
-      storedAnimals: (json['storedAnimals'] as List<Object?>).map((animal) {
-        return AnimalSaveState.fromJson(animal as Map<String, Object?>);
-      }).toList(),
+      roomId: _readEnum(json, 'roomId', RoomId.values),
+      encounterAnimals: _readObjectList(
+        json,
+        'encounterAnimals',
+        AnimalSaveState.fromJson,
+      ),
+      storedAnimals: _readObjectList(
+        json,
+        'storedAnimals',
+        AnimalSaveState.fromJson,
+      ),
     );
   }
 }
@@ -152,15 +148,15 @@ class GuardianSaveState {
 
   factory GuardianSaveState.fromJson(Map<String, Object?> json) {
     return GuardianSaveState(
-      name: json['name'] as String,
-      roomId: _parseEnum(RoomId.values, json['roomId'] as String),
-      defeated: json['defeated'] as bool,
-      starFragments: (json['starFragments'] as List<Object?>).cast<String>(),
-      battleTeamTemplate: (json['battleTeamTemplate'] as List<Object?>).map((
-        animal,
-      ) {
-        return AnimalSaveState.fromJson(animal as Map<String, Object?>);
-      }).toList(),
+      name: _readString(json, 'name'),
+      roomId: _readEnum(json, 'roomId', RoomId.values),
+      defeated: _readBool(json, 'defeated'),
+      starFragments: _readStringList(json, 'starFragments'),
+      battleTeamTemplate: _readObjectList(
+        json,
+        'battleTeamTemplate',
+        AnimalSaveState.fromJson,
+      ),
     );
   }
 }
@@ -201,16 +197,14 @@ class AnimalSaveState {
 
   factory AnimalSaveState.fromJson(Map<String, Object?> json) {
     return AnimalSaveState(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      element: _parseEnum(AnimalElement.values, json['element'] as String),
-      level: json['level'] as int,
-      health: json['health'] as int,
-      baseHealth: json['baseHealth'] as int,
-      speed: json['speed'] as int,
-      moves: (json['moves'] as List<Object?>)
-          .map((move) => MoveSaveState.fromJson(move as Map<String, Object?>))
-          .toList(),
+      id: _readInt(json, 'id'),
+      name: _readString(json, 'name'),
+      element: _readEnum(json, 'element', AnimalElement.values),
+      level: _readInt(json, 'level'),
+      health: _readInt(json, 'health'),
+      baseHealth: _readInt(json, 'baseHealth'),
+      speed: _readInt(json, 'speed'),
+      moves: _readObjectList(json, 'moves', MoveSaveState.fromJson),
     );
   }
 }
@@ -227,8 +221,8 @@ class BondSaveState {
 
   factory BondSaveState.fromJson(Map<String, Object?> json) {
     return BondSaveState(
-      element: _parseEnum(AnimalElement.values, json['element'] as String),
-      percent: json['percent'] as int,
+      element: _readEnum(json, 'element', AnimalElement.values),
+      percent: _readInt(json, 'percent'),
     );
   }
 }
@@ -257,14 +251,130 @@ class MoveSaveState {
 
   factory MoveSaveState.fromJson(Map<String, Object?> json) {
     return MoveSaveState(
-      name: json['name'] as String,
-      type: _parseEnum(ElementType.values, json['type'] as String),
-      power: json['power'] as int,
-      effect: _parseEnum(MoveEffect.values, json['effect'] as String),
+      name: _readString(json, 'name'),
+      type: _readEnum(json, 'type', ElementType.values),
+      power: _readInt(json, 'power'),
+      effect: _readEnum(json, 'effect', MoveEffect.values),
     );
   }
 }
 
-T _parseEnum<T extends Enum>(List<T> values, String name) {
-  return values.singleWhere((value) => value.name == name);
+typedef _JsonObject = Map<String, Object?>;
+
+Object? _readRequired(_JsonObject json, String field) {
+  if (!json.containsKey(field)) {
+    throw FormatException('Missing required save field "$field".');
+  }
+
+  return json[field];
+}
+
+String _readString(_JsonObject json, String field) {
+  return _readStringValue(_readRequired(json, field), field);
+}
+
+String _readStringValue(Object? value, String field) {
+  if (value is String) {
+    return value;
+  }
+
+  throw FormatException('Expected save field "$field" to be a string.');
+}
+
+int _readInt(_JsonObject json, String field) {
+  final value = _readRequired(json, field);
+  if (value is int) {
+    return value;
+  }
+
+  throw FormatException('Expected save field "$field" to be an integer.');
+}
+
+bool _readBool(_JsonObject json, String field) {
+  final value = _readRequired(json, field);
+  if (value is bool) {
+    return value;
+  }
+
+  throw FormatException('Expected save field "$field" to be a boolean.');
+}
+
+_JsonObject _readObject(_JsonObject json, String field) {
+  return _readObjectValue(_readRequired(json, field), field);
+}
+
+_JsonObject _readObjectValue(Object? value, String field) {
+  if (value is Map) {
+    final object = <String, Object?>{};
+
+    for (final entry in value.entries) {
+      final key = entry.key;
+      if (key is! String) {
+        throw FormatException(
+          'Expected save field "$field" object keys to be strings.',
+        );
+      }
+
+      object[key] = entry.value;
+    }
+
+    return object;
+  }
+
+  throw FormatException('Expected save field "$field" to be an object.');
+}
+
+List<Object?> _readList(_JsonObject json, String field) {
+  final value = _readRequired(json, field);
+  if (value is List) {
+    return value;
+  }
+
+  throw FormatException('Expected save field "$field" to be a list.');
+}
+
+List<String> _readStringList(_JsonObject json, String field) {
+  final values = _readList(json, field);
+  return [
+    for (var index = 0; index < values.length; index++)
+      _readStringValue(values[index], '$field[$index]'),
+  ];
+}
+
+List<T> _readObjectList<T>(
+  _JsonObject json,
+  String field,
+  T Function(_JsonObject json) parse,
+) {
+  final values = _readList(json, field);
+  return [
+    for (var index = 0; index < values.length; index++)
+      parse(_readObjectValue(values[index], '$field[$index]')),
+  ];
+}
+
+T _readEnum<T extends Enum>(_JsonObject json, String field, List<T> values) {
+  return _parseEnum(values, _readString(json, field), field);
+}
+
+List<T> _readEnumList<T extends Enum>(
+  _JsonObject json,
+  String field,
+  List<T> values,
+) {
+  final names = _readStringList(json, field);
+  return [
+    for (var index = 0; index < names.length; index++)
+      _parseEnum(values, names[index], '$field[$index]'),
+  ];
+}
+
+T _parseEnum<T extends Enum>(List<T> values, String name, String field) {
+  for (final value in values) {
+    if (value.name == name) {
+      return value;
+    }
+  }
+
+  throw FormatException('Unknown save field "$field" value "$name".');
 }

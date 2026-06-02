@@ -78,6 +78,29 @@ void main() {
     expect(session.player.getBond(AnimalElement.nature), 50);
   });
 
+  // Verifies a defeated active animal prompts manual switch instead of auto-switching.
+  test('player chooses next animal after active animal is defeated', () {
+    final session = _createRoadOneSession();
+    final battleState = session.startWildBattle();
+    battleState.playerAnimal.health = 1;
+
+    final result = session.useWildBattleMove(
+      battleState,
+      battleState.playerAnimal.moves.first,
+    );
+
+    expect(result.needsPlayerSwitch, isTrue);
+    expect(result.message, contains('N_CAT defeated.'));
+    expect(battleState.playerAnimal.name, 'N_CAT');
+    expect(battleState.healthyPlayerSwitchIndexes, [1]);
+
+    final switchResult = session.switchWildBattleAnimal(battleState, 1);
+
+    expect(switchResult.needsPlayerSwitch, isFalse);
+    expect(switchResult.message, 'N_DOG steps in.');
+    expect(battleState.playerAnimal.name, 'N_DOG');
+  });
+
   // Verifies catching with a full inventory stores the animal at Road 8.
   test('full inventory catch sends wild animal to Road 8 storage', () {
     final session = _createRoadOneSession();

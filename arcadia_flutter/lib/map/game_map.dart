@@ -1,5 +1,7 @@
 import '../creatures/animal.dart';
+import '../creatures/animal_element.dart';
 import '../creatures/game_creature_data.dart';
+import 'movement_requirement.dart';
 import 'room.dart';
 import 'room_direction.dart';
 import 'room_id.dart';
@@ -9,10 +11,13 @@ class GameMap {
     _roomsById = _createRooms();
     startRoom = getRoom(RoomId.maiaStable);
     _connectRooms();
+    _addMovementRequirements();
     _populateWildAnimals();
   }
 
   late final Map<RoomId, Room> _roomsById;
+  final Map<({RoomId from, RoomId to}), MovementRequirement>
+  _movementRequirements = {};
   late final Room startRoom;
 
   Iterable<Room> get rooms => _roomsById.values;
@@ -41,6 +46,14 @@ class GameMap {
     return room;
   }
 
+  MovementRequirement getMovementRequirement(
+    Room currentRoom,
+    Room destination,
+  ) {
+    return _movementRequirements[(from: currentRoom.id, to: destination.id)] ??
+        MovementRequirement.none;
+  }
+
   static Map<RoomId, Room> _createRooms() {
     return {
       RoomId.maiaStable: Room(
@@ -56,6 +69,7 @@ class GameMap {
         description: 'Small peaceful town where heroes are born.',
         interactionText:
             'A town guide points out the roads leaving Ikena and reminds you to prepare before traveling.',
+        isTown: true,
       ),
       RoomId.road1: Room(
         id: RoomId.road1,
@@ -76,6 +90,7 @@ class GameMap {
         'Oak Pass',
         'Town surrounded by trees and forest creatures.',
         'The old trees sway above the pass while travelers rest beneath them.',
+        isTown: true,
       ),
       RoomId.road3: _createPlaceholderRoom(
         RoomId.road3,
@@ -94,6 +109,7 @@ class GameMap {
         'New Nucleon',
         'Founded after Nucleon incident.',
         'Residents keep rebuilding, determined to make the town safer than before.',
+        isTown: true,
       ),
       RoomId.road5: _createPlaceholderRoom(
         RoomId.road5,
@@ -118,6 +134,7 @@ class GameMap {
         'Wyrmrest',
         'Home of Dragons and Dragon Masters.',
         'Dragon banners hang over stone paths throughout Wyrmrest.',
+        isTown: true,
       ),
       RoomId.mountains: _createPlaceholderRoom(
         RoomId.mountains,
@@ -136,6 +153,7 @@ class GameMap {
         'Nucleon',
         'The town at the center of the old incident.',
         'The streets are quiet, but the place still feels important.',
+        isTown: true,
       ),
       RoomId.finalTrials: _createPlaceholderRoom(
         RoomId.finalTrials,
@@ -160,6 +178,7 @@ class GameMap {
         'The End',
         'Decide where you wish to stay.',
         'Everything grows still here, leaving only the weight of your final choice.',
+        isFinalRoom: true,
       ),
     };
   }
@@ -168,13 +187,17 @@ class GameMap {
     RoomId id,
     String name,
     String description,
-    String interactionText,
-  ) {
+    String interactionText, {
+    bool isTown = false,
+    bool isFinalRoom = false,
+  }) {
     return Room(
       id: id,
       name: name,
       description: description,
       interactionText: interactionText,
+      isTown: isTown,
+      isFinalRoom: isFinalRoom,
     );
   }
 
@@ -247,6 +270,53 @@ class GameMap {
     _connectOneWay(guardiansTower, RoomDirection.south, ikena);
     _connectOneWay(guardiansTower, RoomDirection.west, road8);
     _connectOneWay(road8, RoomDirection.north, guardiansTower);
+  }
+
+  void _addMovementRequirements() {
+    _addMovementRequirement(
+      RoomId.ikena,
+      RoomId.road6,
+      requiredStarFragments: 3,
+    );
+    _addMovementRequirement(
+      RoomId.road5,
+      RoomId.nucleon,
+      requiredStarFragments: 4,
+    );
+    _addMovementRequirement(
+      RoomId.ikena,
+      RoomId.road5,
+      requiredAnimalElement: AnimalElement.mystic,
+    );
+    _addMovementRequirement(
+      RoomId.newNucleon,
+      RoomId.road5,
+      requiredAnimalElement: AnimalElement.mystic,
+    );
+    _addMovementRequirement(
+      RoomId.road8,
+      RoomId.guardiansTower,
+      requiresElementalTitanDefeat: true,
+    );
+    _addMovementRequirement(
+      RoomId.ikena,
+      RoomId.theEnd,
+      requiresElementalTitanDefeat: true,
+    );
+  }
+
+  void _addMovementRequirement(
+    RoomId from,
+    RoomId to, {
+    int requiredStarFragments = 0,
+    AnimalElement? requiredAnimalElement,
+    bool requiresElementalTitanDefeat = false,
+  }) {
+    _movementRequirements[(from: from, to: to)] = MovementRequirement(
+      requiredStarFragments: requiredStarFragments,
+      requiredAnimalElement: requiredAnimalElement,
+      requiresElementalTitanDefeat: requiresElementalTitanDefeat,
+    );
   }
 
   void _populateWildAnimals() {

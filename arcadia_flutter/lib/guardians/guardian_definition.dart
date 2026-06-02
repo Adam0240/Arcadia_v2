@@ -11,6 +11,7 @@ class GuardianDefinition {
     required this.requiredStarFragments,
     required this.introLines,
     this.notEnoughStarFragmentsMessage,
+    this.isElementalTitan = false,
   });
 
   final String name;
@@ -21,4 +22,5 @@ class GuardianDefinition {
   final int requiredStarFragments;
   final List<String> introLines;
   final String? notEnoughStarFragmentsMessage;
+  final bool isElementalTitan;
 }

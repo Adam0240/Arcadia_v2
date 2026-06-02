@@ -1,10 +1,13 @@
 import 'package:arcadia_flutter/creatures/animal.dart';
 import 'package:arcadia_flutter/creatures/animal_element.dart';
+import 'package:arcadia_flutter/creatures/animal_growth_catalog.dart';
 import 'package:arcadia_flutter/creatures/battle_move.dart';
 import 'package:arcadia_flutter/creatures/element_type.dart';
 import 'package:arcadia_flutter/creatures/game_creature_data.dart';
 import 'package:arcadia_flutter/creatures/move_catalog.dart';
 import 'package:arcadia_flutter/creatures/move_effect.dart';
+import 'package:arcadia_flutter/map/game_map.dart';
+import 'package:arcadia_flutter/player/player.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -135,6 +138,60 @@ void main() {
       'N_BEAR',
       'N_DRAGON',
     ]);
+  });
+
+  // Verifies growth options map base species to the matching adult species.
+  test('growth catalog maps base forms to adult forms', () {
+    final animals = GameCreatureData.createAnimals();
+    final expectedAdultByBase = {
+      'N_CAT': 'N_LION',
+      'N_DOG': 'N_WOLF',
+      'N_HORSE': 'N_STALLION',
+      'N_TURTLE': 'N_TORTOISE',
+      'N_BIRD': 'N_EAGLE',
+      'N_ANT': 'N_BEE',
+      'N_CUB': 'N_BEAR',
+      'N_SERPENT': 'N_DRAGON',
+    };
+
+    for (final entry in expectedAdultByBase.entries) {
+      final adultAnimal = AnimalGrowthCatalog.tryCreateAdultForm(
+        animals.singleWhere((animal) => animal.name == entry.key),
+      );
+
+      expect(adultAnimal?.name, entry.value);
+    }
+  });
+
+  // Verifies growth options require full matching element bond.
+  test('growth options require full element bond', () {
+    final player = Player(name: 'Ari', startingRoom: GameMap().startRoom);
+    final natureCat = GameCreatureData.createAnimals().singleWhere(
+      (animal) => animal.name == 'N_CAT',
+    );
+    player.addAnimal(natureCat);
+
+    expect(AnimalGrowthCatalog.getGrowthOptions(player), isEmpty);
+
+    player.addBond(AnimalElement.nature, 100);
+
+    final options = AnimalGrowthCatalog.getGrowthOptions(player);
+    expect(options, hasLength(1));
+    expect(options.single.currentAnimal.name, 'N_CAT');
+    expect(options.single.adultAnimal.name, 'N_LION');
+  });
+
+  // Verifies adult animals are not eligible to grow again.
+  test('growth catalog does not return options for adult forms', () {
+    final player = Player(name: 'Ari', startingRoom: GameMap().startRoom);
+    final natureLion = GameCreatureData.createAnimals().singleWhere(
+      (animal) => animal.name == 'N_LION',
+    );
+    player
+      ..addAnimal(natureLion)
+      ..addBond(AnimalElement.nature, 100);
+
+    expect(AnimalGrowthCatalog.getGrowthOptions(player), isEmpty);
   });
 
   // Verifies cloned animals preserve values while allowing separate health changes.

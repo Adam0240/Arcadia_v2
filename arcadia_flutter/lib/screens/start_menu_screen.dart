@@ -5,6 +5,7 @@ import '../saves/game_save_repository.dart';
 import '../saves/local_json_game_save_repository.dart';
 import '../services/mobile_game_session.dart';
 import 'arcadia_map_screen.dart';
+import 'intro_story_screen.dart';
 
 class StartMenuScreen extends StatefulWidget {
   const StartMenuScreen({
@@ -74,7 +75,7 @@ class _StartMenuScreenState extends State<StartMenuScreen> {
     );
 
     gameSession.startNewGame(playerName);
-    _openGame(gameSession);
+    _openIntro(gameSession);
   }
 
   Future<String?> _promptForPlayerName() {
@@ -136,6 +137,14 @@ class _StartMenuScreenState extends State<StartMenuScreen> {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (_) => ArcadiaMapScreen(gameSession: gameSession),
+      ),
+    );
+  }
+
+  void _openIntro(MobileGameSession gameSession) {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(
+        builder: (_) => IntroStoryScreen(gameSession: gameSession),
       ),
     );
   }

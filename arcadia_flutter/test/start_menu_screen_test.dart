@@ -28,6 +28,12 @@ void main() {
     await tester.tap(find.text('Start'));
     await tester.pumpAndSettle();
 
+    expect(find.text('Welcome to Arcadia'), findsOneWidget);
+    expect(find.text('Begin Journey'), findsOneWidget);
+
+    await tester.tap(find.text('Begin Journey'));
+    await tester.pumpAndSettle();
+
     expect(find.text("Maia's Stable"), findsOneWidget);
     expect(find.text('Menu'), findsOneWidget);
   });
@@ -102,6 +108,12 @@ void main() {
     await tester.enterText(find.byType(TextField), ' Nova ');
     await tester.tap(find.text('Start'));
     await tester.pumpAndSettle();
+
+    expect(find.text('Welcome to Arcadia'), findsOneWidget);
+
+    await tester.tap(find.text('Begin Journey'));
+    await tester.pumpAndSettle();
+
     await tester.tap(find.text('Menu'));
     await tester.pump();
     await tester.tap(find.text('Save'));

@@ -4,6 +4,7 @@ import '../battles/guardian_battle_result.dart';
 import '../battles/guardian_battle_state.dart';
 import '../creatures/battle_move.dart';
 import '../services/mobile_game_session.dart';
+import '../widgets/battle_widgets.dart';
 
 class GuardianBattleScreen extends StatefulWidget {
   const GuardianBattleScreen({
@@ -21,6 +22,7 @@ class GuardianBattleScreen extends StatefulWidget {
 
 class _GuardianBattleScreenState extends State<GuardianBattleScreen> {
   late String _battleMessage;
+  bool _needsPlayerSwitch = false;
 
   @override
   void initState() {
@@ -32,46 +34,44 @@ class _GuardianBattleScreenState extends State<GuardianBattleScreen> {
   Widget build(BuildContext context) {
     final playerAnimal = widget.battleState.playerAnimal;
     final guardianAnimal = widget.battleState.guardianAnimal;
+    final canUseMove = !widget.battleState.isComplete && !_needsPlayerSwitch;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Guardian Battle')),
+      appBar: AppBar(
+        title: Text(
+          widget.gameSession.getGuardianBattleTitle(widget.battleState),
+        ),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _AnimalBattlePanel(
+              BattleAnimalPanel(
                 label: 'Your Animal',
                 animalName: playerAnimal.name,
                 health: playerAnimal.health,
                 baseHealth: playerAnimal.baseHealth,
               ),
               const SizedBox(height: 12),
-              _AnimalBattlePanel(
+              BattleAnimalPanel(
                 label: widget.battleState.guardian.name,
                 animalName: guardianAnimal.name,
                 health: guardianAnimal.health,
                 baseHealth: guardianAnimal.baseHealth,
               ),
               const SizedBox(height: 16),
-              _BattleMessage(message: _battleMessage),
+              BattleMessage(message: _battleMessage),
               const SizedBox(height: 16),
               Expanded(
                 child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final move in playerAnimal.moves) ...[
-                        _BattleButton(
-                          label: move.name,
-                          onPressed: widget.battleState.isComplete
-                              ? null
-                              : () => _useMove(move),
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                    ],
+                  child: BattleActionList(
+                    moves: playerAnimal.moves,
+                    canUseMoves: canUseMove,
+                    onMove: _useMove,
+                    switchOptions: _buildSwitchOptions(),
+                    onSwitch: _switchAnimal,
                   ),
                 ),
               ),
@@ -90,6 +90,29 @@ class _GuardianBattleScreenState extends State<GuardianBattleScreen> {
     _applyResult(result);
   }
 
+  void _switchAnimal(int animalIndex) {
+    final result = widget.gameSession.switchGuardianBattleAnimal(
+      widget.battleState,
+      animalIndex,
+    );
+    _applyResult(result);
+  }
+
+  List<BattleSwitchOption> _buildSwitchOptions() {
+    if (!_needsPlayerSwitch) {
+      return const [];
+    }
+
+    return [
+      for (final animalIndex in widget.battleState.healthyPlayerSwitchIndexes)
+        BattleSwitchOption(
+          index: animalIndex,
+          label:
+              'Send ${widget.battleState.player.animalInventory[animalIndex].name}',
+        ),
+    ];
+  }
+
   void _applyResult(GuardianBattleResult result) {
     if (result.returnToMap) {
       Navigator.of(context).pop(result.message);
@@ -98,78 +121,7 @@ class _GuardianBattleScreenState extends State<GuardianBattleScreen> {
 
     setState(() {
       _battleMessage = result.message;
+      _needsPlayerSwitch = result.needsPlayerSwitch;
     });
-  }
-}
-
-class _AnimalBattlePanel extends StatelessWidget {
-  const _AnimalBattlePanel({
-    required this.label,
-    required this.animalName,
-    required this.health,
-    required this.baseHealth,
-  });
-
-  final String label;
-  final String animalName;
-  final int health;
-  final int baseHealth;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).colorScheme.outline),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: 4),
-            Text(animalName, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text('Health: $health/$baseHealth'),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BattleMessage extends StatelessWidget {
-  const _BattleMessage({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(padding: const EdgeInsets.all(12), child: Text(message)),
-    );
-  }
-}
-
-class _BattleButton extends StatelessWidget {
-  const _BattleButton({required this.label, required this.onPressed});
-
-  final String label;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        child: Text(label, textAlign: TextAlign.center),
-      ),
-    );
   }
 }

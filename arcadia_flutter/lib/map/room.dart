@@ -8,12 +8,16 @@ class Room {
     required this.name,
     required this.description,
     required this.interactionText,
+    this.isTown = false,
+    this.isFinalRoom = false,
   });
 
   final RoomId id;
   final String name;
   final String description;
   final String interactionText;
+  final bool isTown;
+  final bool isFinalRoom;
   final Map<RoomDirection, Room> _exits = {};
   final List<Animal> _encounterAnimals = [];
   final List<Animal> _storedAnimals = [];

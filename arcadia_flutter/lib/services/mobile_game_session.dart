@@ -6,36 +6,38 @@ import '../battles/wild_battle_result.dart';
 import '../battles/wild_battle_state.dart';
 import '../creatures/animal.dart';
 import '../creatures/animal_element.dart';
+import '../creatures/animal_growth_catalog.dart';
 import '../creatures/battle_move.dart';
 import '../creatures/game_creature_data.dart';
-import '../guardians/guardian_catalog.dart';
 import '../guardians/guardian_state.dart';
 import '../map/game_map.dart';
 import '../map/room.dart';
 import '../map/room_direction.dart';
 import '../map/room_id.dart';
-import '../player/comp_player.dart';
 import '../player/player.dart';
 import '../saves/game_save_mapper.dart';
 import '../saves/game_save_repository.dart';
 import '../saves/game_save_state.dart';
 import '../saves/local_json_game_save_repository.dart';
+import 'game_session_persistence.dart';
+import 'guardian_progression.dart';
 import 'move_result.dart';
 
 class MobileGameSession {
   MobileGameSession(
     this._gameMap, {
     this.saveRepository = const LocalJsonGameSaveRepository(),
-  }) {
+  }) : _persistence = GameSessionPersistence(saveRepository) {
     player = _createPlayer('Player', _gameMap.startRoom);
-    _guardians = _createGuardians(_gameMap);
+    _guardianProgression = GuardianProgression(_gameMap);
     _visitedRoomIds.add(currentRoom.id);
   }
 
   final GameMap _gameMap;
   final GameSaveRepository saveRepository;
+  final GameSessionPersistence _persistence;
   final Set<RoomId> _visitedRoomIds = {};
-  late final List<GuardianState> _guardians;
+  late final GuardianProgression _guardianProgression;
 
   late Player player;
 
@@ -43,18 +45,16 @@ class MobileGameSession {
   String get playerName => player.name;
 
   Iterable<Room> get rooms => _gameMap.rooms;
-  Iterable<GuardianState> get guardians => List.unmodifiable(_guardians);
+  Iterable<GuardianState> get guardians => _guardianProgression.guardians;
   Set<RoomId> get visitedRoomIds => Set.unmodifiable(_visitedRoomIds);
   bool get hasWildEncounter => currentRoom.hasEncounterAnimals();
   bool get hasGuardianInCurrentRoom => currentGuardian != null;
   GuardianState? get currentGuardian {
-    for (final guardian in _guardians) {
-      if (guardian.character.currentRoom.id == currentRoom.id) {
-        return guardian;
-      }
-    }
+    return _guardianProgression.guardianInRoom(currentRoom);
+  }
 
-    return null;
+  GuardianState get elementalTitan {
+    return _guardianProgression.elementalTitan;
   }
 
   List<Animal> get currentEncounterAnimals => currentRoom.encounterAnimals;
@@ -66,6 +66,14 @@ class MobileGameSession {
         player.animalInventory.isNotEmpty;
   }
 
+  List<AnimalGrowthOption> get growthOptions {
+    return AnimalGrowthCatalog.getGrowthOptions(player);
+  }
+
+  bool get hasGrowthOptions {
+    return AnimalGrowthCatalog.hasGrowthOptions(player);
+  }
+
   void startNewGame(String playerName) {
     if (playerName.trim().isEmpty) {
       throw ArgumentError('Player name cannot be empty.');
@@ -73,7 +81,7 @@ class MobileGameSession {
 
     _gameMap.resetEncounterAnimals();
     _gameMap.resetStoredAnimals();
-    _resetGuardians();
+    _guardianProgression.reset();
     player = _createPlayer(playerName.trim(), _gameMap.startRoom);
     _visitedRoomIds.clear();
     _visitedRoomIds.add(currentRoom.id);
@@ -106,10 +114,20 @@ class MobileGameSession {
       );
     }
 
+    final blockedMessage = _getMovementBlockedMessage(destination);
+    if (blockedMessage != null) {
+      return MoveResult(moved: false, message: blockedMessage);
+    }
+
     player.moveTo(destination);
     _visitedRoomIds.add(currentRoom.id);
 
-    return MoveResult(moved: true, message: 'Moved to ${currentRoom.name}.');
+    final elementalStarMessage = _tryAwardElementalStar();
+    final message = elementalStarMessage == null
+        ? 'Moved to ${currentRoom.name}.'
+        : 'Moved to ${currentRoom.name}.\n$elementalStarMessage';
+
+    return MoveResult(moved: true, message: message);
   }
 
   String interact() {
@@ -125,6 +143,21 @@ class MobileGameSession {
     }
 
     return '${currentRoom.interactionText}\nAnimals Nearby: $nearbyAnimals';
+  }
+
+  String? getFinalRoomMessage() {
+    if (!currentRoom.isFinalRoom) {
+      return null;
+    }
+
+    if (currentRoom.hasEncounterAnimals()) {
+      return 'Cosmic Voice: I knew you would eventually find your way here.\n'
+          'Your potential was clear to me the first time you were in my presence.\n'
+          'You have proven you are the best trainer in Arcadia. But are you stronger than the god of this region?\n'
+          'Face me to find out if you truly are the best.';
+    }
+
+    return 'You have defeated all the strongest trainers in this region.';
   }
 
   WildBattleState startWildBattle() {
@@ -181,11 +214,7 @@ class MobileGameSession {
     if (BattleEngine.isDefeated(battleState.playerAnimal)) {
       final defeatedAnimalName = battleState.playerAnimal.name;
 
-      if (battleState.useFirstHealthyPlayerAnimal()) {
-        messages.add(
-          '$defeatedAnimalName defeated. ${battleState.playerAnimal.name} steps in.',
-        );
-      } else {
+      if (!BattleEngine.hasUsableAnimals(player)) {
         battleState.isComplete = true;
         messages.add('$defeatedAnimalName defeated.');
         messages.add('Battle lost, all animals in your party are defeated.');
@@ -195,9 +224,28 @@ class MobileGameSession {
           battleEnded: true,
         );
       }
+
+      messages.add('$defeatedAnimalName defeated.');
+      messages.add('Choose another animal.');
+
+      return WildBattleResult(
+        message: messages.join('\n'),
+        needsPlayerSwitch: true,
+      );
     }
 
     return WildBattleResult(message: messages.join('\n'));
+  }
+
+  WildBattleResult switchWildBattleAnimal(
+    WildBattleState battleState,
+    int animalIndex,
+  ) {
+    battleState.switchPlayerAnimal(animalIndex);
+
+    return WildBattleResult(
+      message: '${battleState.playerAnimal.name} steps in.',
+    );
   }
 
   WildBattleResult catchWildAnimal(WildBattleState battleState) {
@@ -208,6 +256,7 @@ class MobileGameSession {
     }
 
     if (player.animalInventory.length >= BattleEngine.maxPartySize) {
+      battleState.wildAnimal.health = battleState.wildAnimal.baseHealth;
       currentRoom.removeEncounterAnimal(battleState.wildAnimal);
       storeCapturedAnimalAtRoad8(battleState.wildAnimal);
       battleState.isComplete = true;
@@ -257,50 +306,65 @@ class MobileGameSession {
     );
   }
 
+  String healParty() {
+    if (!currentRoom.isTown) {
+      return "Can only heal if you're in a town!";
+    }
+
+    for (final partyAnimal in player.animalInventory) {
+      partyAnimal.health = partyAnimal.baseHealth;
+    }
+
+    return 'All your animals have been fully restored!';
+  }
+
+  String growAnimal(AnimalGrowthOption growthOption) {
+    final partyIndex = player.animalInventory.indexOf(
+      growthOption.currentAnimal,
+    );
+
+    if (partyIndex < 0) {
+      throw ArgumentError.value(
+        growthOption,
+        'growthOption',
+        'Animal is not in the player inventory.',
+      );
+    }
+
+    if (player.getBond(growthOption.currentAnimal.element) < 100) {
+      throw StateError('This animal is not ready to grow up.');
+    }
+
+    player.replaceAnimalAt(partyIndex, growthOption.adultAnimal);
+    player.resetBond(growthOption.currentAnimal.element);
+
+    return '${growthOption.currentAnimal.name} grew into ${growthOption.adultAnimal.name}!';
+  }
+
   String? getGuardianUnavailableMessage() {
-    final guardian = currentGuardian;
-
-    if (guardian == null) {
-      return 'No guardian in area.';
-    }
-
-    if (guardian.defeated) {
-      return "You already defeated this sanctuary's guardian.";
-    }
-
-    final requiredStarFragments = guardian.definition.requiredStarFragments;
-    if (player.starFragments.length < requiredStarFragments) {
-      return guardian.definition.notEnoughStarFragmentsMessage ??
-          'You need to have $requiredStarFragments star fragments to battle this guardian!';
-    }
-
-    if (!BattleEngine.hasUsableAnimals(player)) {
-      return 'All animals in your party are defeated.';
-    }
-
-    return null;
+    return _guardianProgression.getUnavailableMessage(
+      guardian: currentGuardian,
+      player: player,
+    );
   }
 
   GuardianBattleState startGuardianBattle() {
-    final unavailableMessage = getGuardianUnavailableMessage();
-    if (unavailableMessage != null) {
-      throw StateError(unavailableMessage);
-    }
-
-    return GuardianBattleState.create(
+    return _guardianProgression.startBattle(
       player: player,
-      guardian: currentGuardian!.character,
+      guardian: currentGuardian,
     );
   }
 
   String getGuardianIntro(GuardianBattleState battleState) {
-    final guardian = _getGuardianStateForCharacter(battleState.guardian);
-    return [
-      ...guardian.definition.introLines,
-      '${player.name} vs ${battleState.guardian.name}',
-      'You sent out ${battleState.playerAnimal.name}.',
-      '${battleState.guardian.name} sent out ${battleState.guardianAnimal.name}.',
-    ].join('\n');
+    return _guardianProgression.getIntro(battleState, player);
+  }
+
+  String getCurrentChallengeActionLabel() {
+    return _guardianProgression.getCurrentChallengeActionLabel(currentGuardian);
+  }
+
+  String getGuardianBattleTitle(GuardianBattleState battleState) {
+    return _guardianProgression.getBattleTitle(battleState);
   }
 
   GuardianBattleResult useGuardianBattleMove(
@@ -346,11 +410,7 @@ class MobileGameSession {
     if (BattleEngine.isDefeated(battleState.playerAnimal)) {
       final defeatedAnimalName = battleState.playerAnimal.name;
 
-      if (battleState.useFirstHealthyPlayerAnimal()) {
-        messages.add(
-          '$defeatedAnimalName defeated. ${battleState.playerAnimal.name} steps in.',
-        );
-      } else {
+      if (!BattleEngine.hasUsableAnimals(player)) {
         battleState.isComplete = true;
         messages.add('$defeatedAnimalName defeated.');
         messages.add('Battle lost, all animals in your party are defeated.');
@@ -361,9 +421,28 @@ class MobileGameSession {
           returnToMap: true,
         );
       }
+
+      messages.add('$defeatedAnimalName defeated.');
+      messages.add('Choose another animal.');
+
+      return GuardianBattleResult(
+        message: messages.join('\n'),
+        needsPlayerSwitch: true,
+      );
     }
 
     return GuardianBattleResult(message: messages.join('\n'));
+  }
+
+  GuardianBattleResult switchGuardianBattleAnimal(
+    GuardianBattleState battleState,
+    int animalIndex,
+  ) {
+    battleState.switchPlayerAnimal(animalIndex);
+
+    return GuardianBattleResult(
+      message: '${battleState.playerAnimal.name} steps in.',
+    );
   }
 
   void storeCapturedAnimalAtRoad8(Animal animal) {
@@ -401,11 +480,11 @@ class MobileGameSession {
   }
 
   Future<void> saveGame() async {
-    await saveRepository.save(createSaveState());
+    await _persistence.save(createSaveState());
   }
 
   Future<bool> loadGame() async {
-    final saveState = await saveRepository.load();
+    final saveState = await _persistence.load();
 
     if (saveState == null) {
       return false;
@@ -417,11 +496,11 @@ class MobileGameSession {
   }
 
   Future<bool> hasSave() {
-    return saveRepository.exists();
+    return _persistence.exists();
   }
 
   Future<bool> deleteSave() {
-    return saveRepository.delete();
+    return _persistence.delete();
   }
 
   GameSaveState createSaveState() {
@@ -431,7 +510,7 @@ class MobileGameSession {
   void restoreSaveState(GameSaveState saveState) {
     GameSaveMapper.validateVersion(saveState);
     GameSaveMapper.restoreRooms(saveState.rooms, _gameMap);
-    GameSaveMapper.restoreGuardians(saveState.guardians, _guardians, _gameMap);
+    GameSaveMapper.restoreGuardians(saveState.guardians, guardians, _gameMap);
     player = GameSaveMapper.restorePlayer(saveState.player, _gameMap);
     _visitedRoomIds
       ..clear()
@@ -445,42 +524,6 @@ class MobileGameSession {
     return Player(name: playerName, startingRoom: startingRoom)
       ..addAnimal(animals[1].clone())
       ..addAnimal(animals[3].clone());
-  }
-
-  static List<GuardianState> _createGuardians(GameMap gameMap) {
-    final guardianAnimals = GameCreatureData.createAnimals();
-
-    return GuardianCatalog.definitions.map((definition) {
-      final guardian =
-          CompPlayer(
-              name: definition.name,
-              startingRoom: gameMap.getRoom(definition.roomId),
-            )
-            ..setBattleTeam(
-              definition.teamAnimalIndexes.map(
-                (animalIndex) => guardianAnimals[animalIndex],
-              ),
-            )
-            ..addStarFragment(definition.rewardStarFragment);
-
-      return GuardianState(definition: definition, character: guardian);
-    }).toList();
-  }
-
-  void _resetGuardians() {
-    final guardianAnimals = GameCreatureData.createAnimals();
-
-    for (final guardian in _guardians) {
-      guardian.character
-        ..defeated = false
-        ..moveTo(_gameMap.getRoom(guardian.definition.roomId))
-        ..restoreStarFragments([guardian.definition.rewardStarFragment])
-        ..setBattleTeam(
-          guardian.definition.teamAnimalIndexes.map(
-            (animalIndex) => guardianAnimals[animalIndex],
-          ),
-        );
-    }
   }
 
   static BattleMove _selectComputerMove(Animal animal) {
@@ -517,32 +560,53 @@ class MobileGameSession {
     }
   }
 
-  GuardianState _getGuardianStateForCharacter(CompPlayer character) {
-    return _guardians.singleWhere(
-      (guardian) => guardian.character == character,
+  String? _getMovementBlockedMessage(Room destination) {
+    final requirement = _gameMap.getMovementRequirement(
+      currentRoom,
+      destination,
     );
+
+    if (requirement.requiredStarFragments > 0 &&
+        player.starFragments.length < requirement.requiredStarFragments) {
+      return 'You need to obtain ${requirement.requiredStarFragments} star fragment(s) before this way unlocks!\n'
+          'You currently have ${player.starFragments.length} total star fragments.';
+    }
+
+    final requiredElement = requirement.requiredAnimalElement;
+    if (requiredElement != null &&
+        !player.animalInventory.any(
+          (animal) => animal.element == requiredElement,
+        )) {
+      return 'You need a ${requiredElement.label} animal on your team before this way unlocks!';
+    }
+
+    if (requirement.requiresElementalTitanDefeat && !elementalTitan.defeated) {
+      return 'You are not ready to go here yet. You must defeat the Elemental Titan to proceed.';
+    }
+
+    return null;
+  }
+
+  String? _tryAwardElementalStar() {
+    if (currentRoom.id != RoomId.maiaStable ||
+        !elementalTitan.defeated ||
+        !player.starFragments.contains('Cosmic Star Fragment') ||
+        player.starFragments.contains('Elemental Star')) {
+      return null;
+    }
+
+    player.addStarFragment('Elemental Star');
+    return 'Returning to the town where your journey began, you check your bag. The star fragments have merged into an Elemental Star.';
   }
 
   GuardianBattleResult _finishGuardianVictory(
     GuardianBattleState battleState,
     List<String> messages,
   ) {
-    final guardian = _getGuardianStateForCharacter(battleState.guardian);
-
-    battleState.isComplete = true;
-    guardian.character.defeated = true;
-    player.addStarFragment(guardian.definition.rewardStarFragment);
-    player.addBond(guardian.definition.rewardElement, 100);
-
-    messages.add('${guardian.character.name} defeated.');
-    messages.add(
-      'Congratulations! You defeated me. Please take this star fragment to honor your victory.',
-    );
-
-    return GuardianBattleResult(
-      message: messages.join('\n'),
-      battleEnded: true,
-      returnToMap: true,
+    return _guardianProgression.finishVictory(
+      battleState: battleState,
+      player: player,
+      messages: messages,
     );
   }
 }

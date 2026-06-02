@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import '../map/game_map.dart';
 import '../map/room_direction.dart';
 import '../services/mobile_game_session.dart';
+import '../widgets/map_controls.dart';
 import '../widgets/room_artwork.dart';
+import 'grow_animal_screen.dart';
 import 'guardian_battle_screen.dart';
+import 'reorder_party_screen.dart';
 import 'swap_animal_screen.dart';
+import 'start_menu_screen.dart';
 import 'wild_battle_screen.dart';
 
 class ArcadiaMapScreen extends StatefulWidget {
@@ -87,8 +91,40 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
                     constraints: BoxConstraints(maxHeight: maxControlsHeight),
                     child: SingleChildScrollView(
                       child: _isMenuOpen
-                          ? _buildMenuControls()
-                          : _buildDirectionControls(),
+                          ? MapMenuControls(
+                              canReorderParty:
+                                  _gameSession.player.animalInventory.length >=
+                                  2,
+                              onInventory: _showInventory,
+                              onHealAnimals: _healAnimals,
+                              onReorderParty: _openReorderParty,
+                              canSwap: _gameSession.canSwapStoredAnimals,
+                              onSwap: _openSwap,
+                              canGrow: _gameSession.hasGrowthOptions,
+                              onGrow: _openGrow,
+                              onBond: _showBond,
+                              onStarFragments: _showStarFragments,
+                              onSave: _save,
+                              onReturn: _closeMenu,
+                            )
+                          : MapDirectionControls(
+                              canMove: _gameSession.canMove,
+                              onMove: _move,
+                              onInspect: _inspect,
+                              onOpenMenu: _openMenu,
+                              showEncounter: _gameSession.hasWildEncounter,
+                              onEncounter: _startWildBattle,
+                              guardianActionLabel:
+                                  _gameSession.hasGuardianInCurrentRoom
+                                  ? _gameSession
+                                        .getCurrentChallengeActionLabel()
+                                  : null,
+                              onGuardian: _startGuardianBattle,
+                              showEnding:
+                                  _gameSession.currentRoom.isFinalRoom &&
+                                  !_gameSession.hasWildEncounter,
+                              onEnding: _showEndingChoice,
+                            ),
                     ),
                   ),
                 ],
@@ -100,156 +136,27 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
     );
   }
 
-  Widget _buildDirectionControls() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            const Expanded(child: SizedBox()),
-            Expanded(child: _buildDirectionButton(RoomDirection.north)),
-            const Expanded(child: SizedBox()),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(child: _buildDirectionButton(RoomDirection.west)),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _ControlButton(label: 'Inspect', onPressed: _inspect),
-            ),
-            const SizedBox(width: 8),
-            Expanded(child: _buildDirectionButton(RoomDirection.east)),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            const Expanded(child: SizedBox()),
-            Expanded(child: _buildDirectionButton(RoomDirection.south)),
-            const Expanded(child: SizedBox()),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            const Expanded(child: SizedBox()),
-            Expanded(
-              child: _ControlButton(label: 'Menu', onPressed: _openMenu),
-            ),
-            const Expanded(child: SizedBox()),
-          ],
-        ),
-        if (_gameSession.hasWildEncounter) ...[
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Expanded(child: SizedBox()),
-              Expanded(
-                child: _ControlButton(
-                  label: 'Encounter',
-                  onPressed: _startWildBattle,
-                ),
-              ),
-              const Expanded(child: SizedBox()),
-            ],
-          ),
-        ],
-        if (_gameSession.hasGuardianInCurrentRoom) ...[
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Expanded(child: SizedBox()),
-              Expanded(
-                child: _ControlButton(
-                  label: 'Guardian',
-                  onPressed: _startGuardianBattle,
-                ),
-              ),
-              const Expanded(child: SizedBox()),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildDirectionButton(RoomDirection direction) {
-    return _ControlButton(
-      label: direction.label,
-      onPressed: _canMove(direction) ? () => _move(direction) : null,
-    );
-  }
-
-  Widget _buildMenuControls() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _ControlButton(label: 'Inventory', onPressed: _showInventory),
-        const SizedBox(height: 8),
-        if (_gameSession.canSwapStoredAnimals) ...[
-          _ControlButton(label: 'Swap', onPressed: _openSwap),
-          const SizedBox(height: 8),
-        ],
-        _ControlButton(label: 'Bond', onPressed: _showBond),
-        const SizedBox(height: 8),
-        _ControlButton(label: 'Star Fragments', onPressed: _showStarFragments),
-        const SizedBox(height: 8),
-        _ControlButton(
-          label: 'Save',
-          onPressed: () {
-            _save();
-          },
-        ),
-        const SizedBox(height: 8),
-        _ControlButton(label: 'Return', onPressed: _closeMenu),
-      ],
-    );
-  }
-
-  bool _canMove(RoomDirection direction) {
-    return _gameSession.canMove(direction);
-  }
-
   void _move(RoomDirection direction) {
     final result = _gameSession.move(direction);
 
-    setState(() {
-      _statusMessage = result.message;
-    });
+    _setStatus(result.message);
   }
 
   void _inspect() {
-    setState(() {
-      _statusMessage = _gameSession.interact();
-    });
+    _setStatus(_gameSession.getFinalRoomMessage() ?? _gameSession.interact());
   }
 
   Future<void> _startWildBattle() async {
     try {
       final battleState = _gameSession.startWildBattle();
-      final resultMessage = await Navigator.of(context).push<String>(
-        MaterialPageRoute(
-          builder: (_) => WildBattleScreen(
-            gameSession: _gameSession,
-            battleState: battleState,
-          ),
+      await _pushStatusScreen(
+        () => WildBattleScreen(
+          gameSession: _gameSession,
+          battleState: battleState,
         ),
       );
-
-      if (!mounted || resultMessage == null) {
-        return;
-      }
-
-      setState(() {
-        _statusMessage = resultMessage;
-      });
     } on Object catch (error) {
-      setState(() {
-        _statusMessage = error.toString();
-      });
+      _setStatusIfMounted(error.toString());
     }
   }
 
@@ -257,34 +164,20 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
     final unavailableMessage = _gameSession.getGuardianUnavailableMessage();
 
     if (unavailableMessage != null) {
-      setState(() {
-        _statusMessage = unavailableMessage;
-      });
+      _setStatus(unavailableMessage);
       return;
     }
 
     try {
       final battleState = _gameSession.startGuardianBattle();
-      final resultMessage = await Navigator.of(context).push<String>(
-        MaterialPageRoute(
-          builder: (_) => GuardianBattleScreen(
-            gameSession: _gameSession,
-            battleState: battleState,
-          ),
+      await _pushStatusScreen(
+        () => GuardianBattleScreen(
+          gameSession: _gameSession,
+          battleState: battleState,
         ),
       );
-
-      if (!mounted || resultMessage == null) {
-        return;
-      }
-
-      setState(() {
-        _statusMessage = resultMessage;
-      });
     } on Object catch (error) {
-      setState(() {
-        _statusMessage = error.toString();
-      });
+      _setStatusIfMounted(error.toString());
     }
   }
 
@@ -301,37 +194,86 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
   }
 
   void _showInventory() {
-    setState(() {
-      _statusMessage = _gameSession.player.getAnimalInventoryDisplay();
-    });
+    _setStatus(_gameSession.player.getAnimalInventoryDisplay());
+  }
+
+  void _healAnimals() {
+    _setStatus(_gameSession.healParty());
+  }
+
+  Future<void> _openGrow() async {
+    await _pushStatusScreen(() => GrowAnimalScreen(gameSession: _gameSession));
   }
 
   Future<void> _openSwap() async {
-    final resultMessage = await Navigator.of(context).push<String>(
-      MaterialPageRoute(
-        builder: (_) => SwapAnimalScreen(gameSession: _gameSession),
-      ),
+    await _pushStatusScreen(() => SwapAnimalScreen(gameSession: _gameSession));
+  }
+
+  Future<void> _openReorderParty() async {
+    await _pushStatusScreen(
+      () => ReorderPartyScreen(gameSession: _gameSession),
     );
-
-    if (!mounted || resultMessage == null) {
-      return;
-    }
-
-    setState(() {
-      _statusMessage = resultMessage;
-    });
   }
 
   void _showBond() {
-    setState(() {
-      _statusMessage = _gameSession.player.getBondDisplay();
-    });
+    _setStatus(_gameSession.player.getBondDisplay());
   }
 
   void _showStarFragments() {
-    setState(() {
-      _statusMessage = _gameSession.player.getStarFragmentDisplay();
-    });
+    _setStatus(_gameSession.player.getStarFragmentDisplay());
+  }
+
+  Future<void> _showEndingChoice() async {
+    try {
+      await _gameSession.saveGame();
+    } on Object catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      _setStatus('Save failed: $error');
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    final shouldStay = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('The End'),
+          content: const Text('Do you wish to stay in this world?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('No'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Yes'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted || shouldStay == null) {
+      return;
+    }
+
+    if (shouldStay) {
+      _setStatus('You are welcome to stay in Arcadia.');
+      return;
+    }
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            StartMenuScreen(saveRepository: _gameSession.saveRepository),
+      ),
+    );
   }
 
   Future<void> _save() async {
@@ -342,9 +284,7 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
         return;
       }
 
-      setState(() {
-        _statusMessage = 'Save failed: $error';
-      });
+      _setStatus('Save failed: $error');
 
       return;
     }
@@ -353,8 +293,32 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
       return;
     }
 
+    _setStatus('Game saved.');
+  }
+
+  Future<void> _pushStatusScreen(Widget Function() buildScreen) async {
+    final resultMessage = await Navigator.of(
+      context,
+    ).push<String>(MaterialPageRoute(builder: (_) => buildScreen()));
+
+    if (!mounted || resultMessage == null) {
+      return;
+    }
+
+    _setStatus(resultMessage);
+  }
+
+  void _setStatusIfMounted(String message) {
+    if (!mounted) {
+      return;
+    }
+
+    _setStatus(message);
+  }
+
+  void _setStatus(String message) {
     setState(() {
-      _statusMessage = 'Game saved.';
+      _statusMessage = message;
     });
   }
 }
@@ -378,24 +342,6 @@ class _StatusPanel extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Text(message, style: Theme.of(context).textTheme.bodyMedium),
-      ),
-    );
-  }
-}
-
-class _ControlButton extends StatelessWidget {
-  const _ControlButton({required this.label, required this.onPressed});
-
-  final String label;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        child: Text(label, textAlign: TextAlign.center),
       ),
     );
   }

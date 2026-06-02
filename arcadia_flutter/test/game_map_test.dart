@@ -1,3 +1,5 @@
+import 'package:arcadia_flutter/creatures/game_creature_data.dart';
+import 'package:arcadia_flutter/creatures/animal_element.dart';
 import 'package:arcadia_flutter/map/game_map.dart';
 import 'package:arcadia_flutter/map/room_direction.dart';
 import 'package:arcadia_flutter/map/room_id.dart';
@@ -132,6 +134,213 @@ void main() {
     }
 
     expect(map.rooms.map((room) => room.id), unorderedEquals(RoomId.values));
+  });
+
+  // Verifies Flutter town metadata matches the console map's heal-eligible rooms.
+  test('map marks console town rooms as towns', () {
+    final map = GameMap();
+    final townRoomIds = map.rooms
+        .where((room) => room.isTown)
+        .map((room) => room.id);
+
+    expect(
+      townRoomIds,
+      unorderedEquals([
+        RoomId.ikena,
+        RoomId.oakPass,
+        RoomId.newNucleon,
+        RoomId.wyrmrest,
+        RoomId.nucleon,
+      ]),
+    );
+  });
+
+  // Verifies the session fully heals party animals only while standing in a town.
+  test('healParty restores animals in town', () {
+    final session = MobileGameSession(GameMap());
+    session.move(RoomDirection.north);
+
+    for (final animal in session.player.animalInventory) {
+      animal.health = 1;
+    }
+
+    final message = session.healParty();
+
+    expect(message, 'All your animals have been fully restored!');
+    for (final animal in session.player.animalInventory) {
+      expect(animal.health, animal.baseHealth);
+    }
+  });
+
+  // Verifies the session rejects healing outside towns and leaves health unchanged.
+  test('healParty does not restore animals outside town', () {
+    final session = MobileGameSession(GameMap());
+
+    for (final animal in session.player.animalInventory) {
+      animal.health = 1;
+    }
+
+    final message = session.healParty();
+
+    expect(message, "Can only heal if you're in a town!");
+    for (final animal in session.player.animalInventory) {
+      expect(animal.health, 1);
+    }
+  });
+
+  // Verifies star fragment route gates block movement until requirements are met.
+  test('move enforces star fragment route gates', () {
+    final session = MobileGameSession(GameMap())..move(RoomDirection.north);
+
+    final blocked = session.move(RoomDirection.east);
+
+    expect(blocked.moved, isFalse);
+    expect(blocked.message, contains('You need to obtain 3 star fragment(s)'));
+    expect(session.currentRoom.id, RoomId.ikena);
+
+    session.player
+      ..addStarFragment('Nature Star Fragment')
+      ..addStarFragment('Mystic Star Fragment')
+      ..addStarFragment('Thunder Star Fragment');
+
+    final moved = session.move(RoomDirection.east);
+
+    expect(moved.moved, isTrue);
+    expect(session.currentRoom.id, RoomId.road6);
+  });
+
+  // Verifies animal-element route gates require a matching party animal.
+  test('move enforces required animal element gates', () {
+    final session = MobileGameSession(GameMap())..move(RoomDirection.north);
+
+    final blocked = session.move(RoomDirection.south);
+
+    expect(blocked.moved, isFalse);
+    expect(blocked.message, contains('You need a Mystic animal'));
+    expect(session.currentRoom.id, RoomId.ikena);
+
+    final mysticLion = GameCreatureData.createAnimals().singleWhere(
+      (animal) => animal.name == 'M_LION',
+    );
+    session.player.addAnimal(mysticLion.clone());
+
+    final moved = session.move(RoomDirection.south);
+
+    expect(moved.moved, isTrue);
+    expect(session.currentRoom.id, RoomId.road5);
+  });
+
+  // Verifies Elemental Titan gates block late-game exits until the Titan is defeated.
+  test('move enforces elemental titan defeat gates', () {
+    final session = MobileGameSession(GameMap())
+      ..move(RoomDirection.north)
+      ..move(RoomDirection.west)
+      ..move(RoomDirection.north);
+
+    final blocked = session.move(RoomDirection.north);
+
+    expect(blocked.moved, isFalse);
+    expect(blocked.message, contains('defeat the Elemental Titan'));
+    expect(session.currentRoom.id, RoomId.road8);
+
+    session.elementalTitan.character.defeated = true;
+
+    final moved = session.move(RoomDirection.north);
+
+    expect(moved.moved, isTrue);
+    expect(session.currentRoom.id, RoomId.guardiansTower);
+  });
+
+  // Verifies returning to Maia's Stable after Titan victory awards the Elemental Star.
+  test(
+    'returning to Maia Stable after titan victory awards elemental star',
+    () {
+      final session = MobileGameSession(GameMap())
+        ..move(RoomDirection.north)
+        ..move(RoomDirection.west);
+      session.elementalTitan.character.defeated = true;
+      session.player.addStarFragment('Cosmic Star Fragment');
+
+      final result = session.move(RoomDirection.west);
+
+      expect(result.moved, isTrue);
+      expect(session.currentRoom.id, RoomId.maiaStable);
+      expect(session.player.starFragments, contains('Elemental Star'));
+      expect(result.message, contains('Elemental Star'));
+    },
+  );
+
+  // Verifies session growth replaces the selected party animal and resets bond.
+  test('growAnimal replaces party animal and resets element bond', () {
+    final session = MobileGameSession(GameMap());
+    session.player.addBond(AnimalElement.nature, 100);
+
+    final options = session.growthOptions;
+    final result = session.growAnimal(
+      options.singleWhere((option) => option.currentAnimal.name == 'N_CAT'),
+    );
+
+    expect(result, 'N_CAT grew into N_LION!');
+    expect(session.player.animalInventory.map((animal) => animal.name), [
+      'N_LION',
+      'N_DOG',
+    ]);
+    expect(session.player.getBond(AnimalElement.nature), 0);
+    expect(session.hasGrowthOptions, isFalse);
+  });
+
+  // Verifies session growth rejects stale options for animals no longer owned.
+  test('growAnimal rejects options for animals outside inventory', () {
+    final session = MobileGameSession(GameMap());
+    session.player.addBond(AnimalElement.nature, 100);
+    final option = session.growthOptions.first;
+
+    session.player.removeAnimal(option.currentAnimal);
+
+    expect(() => session.growAnimal(option), throwsArgumentError);
+  });
+
+  // Verifies the Elemental Titan is available at Guardian Tower with its reward.
+  test('elemental titan challenge is available at guardian tower', () {
+    final session = MobileGameSession(GameMap());
+    session.restore('Nova', RoomId.guardiansTower, [RoomId.maiaStable]);
+
+    expect(session.getCurrentChallengeActionLabel(), 'Elemental Titan');
+    expect(
+      session.getGuardianUnavailableMessage(),
+      contains('defeated all 4 sanctuaries'),
+    );
+
+    session.player
+      ..addStarFragment('Nature Star Fragment')
+      ..addStarFragment('Mystic Star Fragment')
+      ..addStarFragment('Thunder Star Fragment')
+      ..addStarFragment('Draconic Star Fragment');
+
+    final battleState = session.startGuardianBattle();
+
+    expect(battleState.guardian.name, 'Elemental Titan');
+    expect(
+      battleState.guardian.battleTeamTemplate.map((animal) => animal.name),
+      ['N_WOLF', 'N_TORTOISE', 'N_STALLION', 'M_LION'],
+    );
+  });
+
+  // Verifies final room messaging changes after the final encounter is cleared.
+  test('final room message changes after final encounter is cleared', () {
+    final session = MobileGameSession(GameMap());
+    session.restore('Nova', RoomId.theEnd, [RoomId.maiaStable]);
+
+    expect(session.getFinalRoomMessage(), contains('Cosmic Voice'));
+
+    session.currentRoom.removeEncounterAnimal(
+      session.currentRoom.encounterAnimals.single,
+    );
+
+    expect(
+      session.getFinalRoomMessage(),
+      'You have defeated all the strongest trainers in this region.',
+    );
   });
 
   // Verifies every connected destination is also registered in the map.
@@ -315,6 +524,24 @@ void main() {
     expect(freshRoad1Animal.health, freshRoad1Animal.baseHealth);
   });
 
+  // Verifies captured animals sent to Road 8 after a full party are restored first.
+  test('full-party catch stores restored animal at road 8', () {
+    final session = MobileGameSession(GameMap());
+    session.move(RoomDirection.north);
+    session.move(RoomDirection.west);
+    _fillParty(session);
+
+    final battleState = session.startWildBattle();
+    battleState.wildAnimal.health = 0;
+
+    final result = session.catchWildAnimal(battleState);
+    final storedAnimal = session.road8StoredAnimals.single;
+
+    expect(result.message, 'You caught N_DOG! It was sent to Road 8.');
+    expect(storedAnimal.name, 'N_DOG');
+    expect(storedAnimal.health, storedAnimal.baseHealth);
+  });
+
   // Verifies normal map routes are reciprocal through opposite directions.
   test('normal map routes have reciprocal exits', () {
     final map = GameMap();
@@ -462,4 +689,12 @@ void main() {
       expect(to.getExit(route.direction.opposite), isNot(same(from)));
     }
   });
+}
+
+void _fillParty(MobileGameSession session) {
+  final animals = GameCreatureData.createAnimals();
+
+  for (final animal in animals.skip(4).take(4)) {
+    session.player.addAnimal(animal.clone());
+  }
 }

@@ -10,7 +10,7 @@ import 'game_save_state.dart';
 class GameSaveMapper {
   const GameSaveMapper._();
 
-  static const int currentVersion = 3;
+  static const int currentVersion = 4;
 
   static GameSaveState capture(MobileGameSession session) {
     return GameSaveState(

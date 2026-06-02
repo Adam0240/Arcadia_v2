@@ -21,9 +21,12 @@ class JsonGameSaveRepository implements GameSaveRepository {
     }
 
     final content = await file.readAsString();
-    final json = Map<String, Object?>.from(jsonDecode(content) as Map);
+    final decodedJson = jsonDecode(content);
+    if (decodedJson is! Map) {
+      throw const FormatException('Save file root must be a JSON object.');
+    }
 
-    return GameSaveState.fromJson(json);
+    return GameSaveState.fromJson(_toJsonObject(decodedJson));
   }
 
   @override
@@ -47,4 +50,19 @@ class JsonGameSaveRepository implements GameSaveRepository {
     await file.delete();
     return true;
   }
+}
+
+Map<String, Object?> _toJsonObject(Map<dynamic, dynamic> json) {
+  final object = <String, Object?>{};
+
+  for (final entry in json.entries) {
+    final key = entry.key;
+    if (key is! String) {
+      throw const FormatException('Save file object keys must be strings.');
+    }
+
+    object[key] = entry.value;
+  }
+
+  return object;
 }

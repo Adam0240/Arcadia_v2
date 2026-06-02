@@ -3,6 +3,7 @@
 arcadia_flutter is the Flutter client for Arcadia. It should provide a touch-friendly mobile UI for the Arcadia adventure/creature-battle game while preserving the main game's domain rules, terminology, and save behavior.
 
 The Flutter project lives in `arcadia_flutter/`. The existing console game lives in `Arcadia_v2/`, and unit tests live in `UnitTest/`.
+The Flutter app now contains the main Arcadia gameplay feature set. Use `arcadia_flutter/` as the primary implementation source for ordinary Flutter work. Use `Arcadia_v2/` only when a rule, data value, dialogue line, or intended behavior is ambiguous and needs source-of-truth verification.
 
 # Tech Stack
 
@@ -34,7 +35,8 @@ The Flutter project lives in `arcadia_flutter/`. The existing console game lives
 
 # Architecture Rules
 
-- Treat `Arcadia_v2/` as the reference implementation for game rules, data, and intended behavior, not as an edit target for Flutter work.
+- Treat `arcadia_flutter/` as the primary implementation target and source of current mobile behavior.
+- Treat `Arcadia_v2/` as a reference implementation for ambiguous original game rules, data, and intended behavior, not as an edit target for Flutter work.
 - Do not modify existing files in `Arcadia_v2/` unless the user explicitly instructs you to do so.
 - Build the Flutter app to preserve the console game's domain rules and terminology while using Flutter-specific UI and services.
 - When Flutter needs logic from the console project, create an adapted Dart implementation in the appropriate `arcadia_flutter/lib/` folder instead of editing or directly depending on the C# source.
@@ -50,22 +52,23 @@ The Flutter project lives in `arcadia_flutter/`. The existing console game lives
 # Current Flutter Architecture
 
 - `main.dart` starts `ArcadiaApp`, applies the app theme, and routes to `StartMenuScreen`.
-- `StartMenuScreen` is the startup screen. It checks whether a save exists, shows `New Game` when no save exists, shows `Load Game` and `Delete Game` when a save exists, prompts for a valid player name before starting a new game, and opens `ArcadiaMapScreen` with the active session.
+- `StartMenuScreen` is the startup screen. It checks whether a save exists, shows `New Game` when no save exists, shows `Load Game` and `Delete Game` when a save exists, prompts for a valid player name before starting a new game, sends new games through `IntroStoryScreen`, and loads saved games directly into `ArcadiaMapScreen`.
+- `IntroStoryScreen` presents a concise mobile-adapted opening story before entering the map for a new game. Loaded games skip the intro.
 - `ArcadiaMapScreen` is the playable exploration screen. It displays the current room artwork, room name, description, status message, directional controls, Inspect, Encounter when wild animals are present, Guardian when a guardian is in the current room, and Menu.
-- `WildBattleScreen` is the playable wild encounter screen. It shows the active player animal, the wild animal, health totals, move buttons, battle messages, Catch/Leave after defeat, and Run.
-- `GuardianBattleScreen` is the playable guardian battle screen. It shows the active player animal, the active guardian animal, health totals, move buttons, and battle messages. Guardian battles do not expose catch, leave, or run actions.
-- Direction buttons are enabled only when the current room has an exit in that direction. Movement calls `MobileGameSession.move`, updates the current room, records the visit, and refreshes the status message.
-- The Menu button swaps the movement controls for Inventory, Bond, Star Fragments, Save, and Return controls. Inventory/Bond/Star Fragments are read-only status panel views backed by the active player. Save uses the Flutter JSON save repository. Loading and deletion happen only from `StartMenuScreen`. The menu also shows Swap only on Road 8 when Road 8 has stored captured animals available.
-- `GameMap` creates the full current room list and connects rooms with directional exits. The map starts at `RoomId.maiaStable`.
+- `WildBattleScreen` is the playable wild encounter screen. It shows the active player animal, the wild animal, health totals, move buttons, battle messages, Catch/Leave after defeat, and Run. When the active player animal is defeated and healthy party animals remain, the screen asks the player to choose the next animal.
+- `GuardianBattleScreen` is the playable guardian/titan battle screen. It shows the active player animal, the active opponent animal, health totals, move buttons, battle messages, and manual switch choices after active player defeat. Guardian and Titan battles do not expose catch, leave, or run actions.
+- Direction buttons are enabled only when the current room has an exit in that direction. Movement calls `MobileGameSession.move`, checks movement requirements, updates the current room, records the visit, may award the Elemental Star, and refreshes the status message.
+- The Menu button swaps the movement controls for Inventory, Heal Animals, Reorder Party, Road 8 Swap when available, Grow when available, Bond, Star Fragments, Save, and Return controls. Inventory/Bond/Star Fragments are read-only status panel views backed by the active player. Save uses the Flutter JSON save repository. Loading and deletion happen only from `StartMenuScreen`.
+- `GameMap` creates the full current room list, connects rooms with directional exits, and owns movement requirements. The map starts at `RoomId.maiaStable`.
 - `GameMap` also populates room encounter animals from `GameCreatureData` using the console reference assignments. Encounter animals are visible through Inspect and can be fought through the Encounter button.
-- `Room`, `RoomId`, and `RoomDirection` are the mobile map domain model. `Room` owns local encounter animal state as cloned animals and separate Road 8 stored captured animal state. Keep new room metadata, exits, and initial encounter assignments in `GameMap` unless the map grows enough to justify splitting data from construction.
+- `Room`, `RoomId`, `RoomDirection`, and `MovementRequirement` are the mobile map domain model. `Room` owns local encounter animal state as cloned animals, separate Road 8 stored captured animal state, town metadata, and final-room metadata. Keep new room metadata, exits, movement requirements, and initial encounter assignments in `GameMap` unless the map grows enough to justify splitting data from construction.
 - `MobileGameSession` owns the active `Player`, visited room ids, restore/start-new-game helpers, movement validation, and room interactions. Current-room state should flow through `player.currentRoom`; the session keeps a compatibility getter for UI code.
 - New sessions create the main player with the console reference starter animals from `GameCreatureData.createAnimals()`: `N_CAT` and `N_DOG`.
-- `saves/` contains the Flutter save/load layer. `GameSaveMapper` captures/restores session state, player state, visited rooms, room encounter animals, Road 8 stored captured animals, and guardian state. `LocalJsonGameSaveRepository` stores `arcadia_save.json` in the app documents directory through `path_provider`; tests can use `JsonGameSaveRepository` with a temp file or an in-memory repository.
+- `saves/` contains the Flutter save/load layer. `GameSaveMapper` captures/restores session state, player state, visited rooms, room encounter animals, Road 8 stored captured animals, guardian state, and Elemental Titan state. `LocalJsonGameSaveRepository` stores `arcadia_save.json` in the app documents directory through `path_provider`; tests can use `JsonGameSaveRepository` with a temp file or an in-memory repository.
 - `RoomArtwork` uses Flutter canvas painting for room visuals. Maia's Stable, Ikena, and Road 1 have specific art; the other rooms currently use the shared placeholder scene.
 - `creatures/` contains the Flutter-side creature data layer. `AnimalCatalog` builds the generated animal roster from Dart species/element templates, `MoveCatalog` owns shared battle moves, and `GameCreatureData` is the public facade for creating animal lists.
-- `guardians/` contains guardian definitions for the four sanctuary guardians, including location, team animal indexes, reward star fragment, reward element, star fragment gate, and intro text. `GuardianState` pairs each definition with a runtime `CompPlayer`.
-- `battles/` contains low-level battle behavior. `BattleEngine` applies damage/healing, checks defeated animals, finds healthy party members, and catches/removes wild animals. `WildBattleState` tracks one active wild battle without owning UI. `GuardianBattleState` tracks one active guardian battle without owning UI.
+- `guardians/` contains trainer challenge definitions for the four sanctuary guardians and the Elemental Titan, including location, team animal indexes, reward star fragment, reward element, star fragment gate, intro text, and Titan flag. `GuardianState` pairs each definition with a runtime `CompPlayer`.
+- `battles/` contains low-level battle behavior. `BattleEngine` applies damage/healing, checks defeated animals, finds healthy party members, and catches/removes wild animals. `WildBattleState` tracks one active wild battle without owning UI. `GuardianBattleState` tracks one active guardian/titan battle without owning UI.
 - `player/` contains the Flutter-side player state layer. `GenericPlayer` owns room position, star fragments, creature inventory, bond, display helpers, and restore helpers. `Player` is the human player type, and `CompPlayer` adds defeated state plus cloned battle team templates.
 
 # Current Map Coverage
@@ -74,11 +77,18 @@ The Flutter project lives in `arcadia_flutter/`. The existing console game lives
 - Implemented traversal uses north/east/south/west exits from `GameMap._connectRooms()`. Add or change routes there so UI controls, session movement, and tests stay aligned.
 - Placeholder rooms have descriptions and interaction text so the full map can be explored before every location has final art or full encounter logic.
 - Wild animals have been assigned to route rooms from the console reference map and are displayed by Inspect as `Animals Nearby`.
-- Rooms with wild animals expose an Encounter action. A wild battle can damage/heal, let the player run, catch a defeated wild animal into inventory, or leave the defeated animal behind. Catching or leaving removes the room encounter; running keeps it available.
-- If the player's party is full when a defeated wild animal is caught, the caught animal is removed from the encounter room and stored at Road 8 instead of forcing an immediate release. Road 8 stored animals are captured animals, not wild encounters, so they are visible through Inspect as `Stored Animals` and do not trigger battle.
+- Rooms with wild animals expose an Encounter action. A wild battle can damage/heal, ask the player to manually choose the next healthy animal after active animal defeat, let the player run, catch a defeated wild animal into inventory, or leave the defeated animal behind. Catching or leaving removes the room encounter; running keeps it available.
+- If the player's party is full when a defeated wild animal is caught, the caught animal is restored to full health, removed from the encounter room, and stored at Road 8 instead of forcing an immediate release. Road 8 stored animals are captured animals, not wild encounters, so they are visible through Inspect as `Stored Animals` and do not trigger battle. This is an intentional mobile gameplay change from the console release prompt.
 - Road 8 exposes a Swap menu action only when the player is currently at Road 8 and at least one stored animal exists. Swap exchanges one inventory animal with one stored Road 8 animal.
-- Guardian rooms expose a Guardian action. Nature Guardian is at Oak Pass, Mystic Guardian is at New Nucleon, Thunder Guardian is at Ikena, and Draconic Guardian is at Wyrmrest. Thunder Guardian requires 2 star fragments before battle.
-- Defeating a guardian marks that guardian defeated, awards that guardian's star fragment once through normal player fragment uniqueness rules, and adds 100 bond to the matching element. Guardian battle teams are rebuilt from templates before each attempt so damage does not carry across attempts.
+- Reorder Party is available from the menu when the player has at least two party animals and swaps two inventory animal positions.
+- Towns expose Heal Animals through the menu. Healing is only allowed in console-equivalent town rooms and restores every party animal to base health.
+- Grow is available from the menu when a party animal has 100% bond in its element and has an adult form. Growing replaces the selected animal with its adult form and resets that element's bond to 0.
+- Guardian rooms expose a Guardian action. Nature Guardian is at Oak Pass, Mystic Guardian is at Ikena and requires 2 star fragments, Thunder Guardian is at New Nucleon and requires 1 star fragment, and Draconic Guardian is at Wyrmrest.
+- Guardian Tower exposes an Elemental Titan action. Elemental Titan requires 4 star fragments, awards the Cosmic Star Fragment, and gates late-game routes.
+- Defeating a guardian or Titan marks that trainer defeated, awards that trainer's star fragment once through normal player fragment uniqueness rules, and adds 100 bond to the matching element. Guardian/Titan battle teams are rebuilt from templates before each attempt so damage does not carry across attempts.
+- Movement requirements gate selected routes by star fragment count, required Mystic party animal, or Elemental Titan defeat. `MobileGameSession.move` owns requirement checks and blocked messages.
+- Returning to Maia's Stable after Elemental Titan defeat with the Cosmic Star Fragment awards the Elemental Star once.
+- The End is a final room. Before the final encounter is cleared, Inspect shows the final challenge message. After the final encounter is cleared, an Ending action autosaves the game before asking whether the player wants to stay in Arcadia or return to the start menu. Loading after ending returns to The End just before the final choice.
 
 # UI Rules
 
@@ -141,7 +151,7 @@ The Flutter project lives in `arcadia_flutter/`. The existing console game lives
 
 # Current Plan
 
-- Continue building on the Flutter battle layer by adding battle party switching, Elemental Titan flow, map movement gates, and encounter-specific rewards as those features are needed.
+- Perform a full code review of the arcadia_flutter application.
 
 # Current Task
-- Guardian battles have been added using guardian-specific names and files. `MobileGameSession` creates the four guardians from console reference teams, exposes guardian actions in guardian rooms, runs guardian battles through `GuardianBattleState`, awards star fragments and full matching bond on victory, and saves/loads guardian defeated state and battle templates. Next work should expand battle flow toward party switching, Elemental Titan progression, map gates, and encounter-specific rewards.
+- Complete a full code review of only the arcadia_flutter app. Look for design issues, code smells, poor architecture, unnessessary duplication, or areas that can be improved. Put your findings in the file "flutter_code_review.md"

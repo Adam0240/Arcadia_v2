@@ -13,8 +13,16 @@ void main() {
     final natureGuardian = session.guardians.singleWhere(
       (guardian) => guardian.character.name == 'Nature Guardian',
     );
+    final mysticGuardian = session.guardians.singleWhere(
+      (guardian) => guardian.character.name == 'Mystic Guardian',
+    );
+    final thunderGuardian = session.guardians.singleWhere(
+      (guardian) => guardian.character.name == 'Thunder Guardian',
+    );
 
     expect(natureGuardian.character.currentRoom.id, RoomId.oakPass);
+    expect(mysticGuardian.character.currentRoom.id, RoomId.ikena);
+    expect(thunderGuardian.character.currentRoom.id, RoomId.newNucleon);
     expect(natureGuardian.character.starFragments, ['Nature Star Fragment']);
     expect(
       natureGuardian.character.battleTeamTemplate.map((animal) => animal.name),
@@ -22,15 +30,31 @@ void main() {
     );
   });
 
-  // Verifies guardian challenge requirements are enforced before battle starts.
-  test('guardian challenge reports star fragment requirements', () {
+  // Verifies Ikena hosts the Mystic Guardian and enforces requirements.
+  test('ikena mystic guardian reports star fragment requirements', () {
     final session = MobileGameSession(GameMap())..move(RoomDirection.north);
 
     expect(session.currentRoom.id, RoomId.ikena);
     expect(session.hasGuardianInCurrentRoom, isTrue);
+    expect(session.currentGuardian?.character.name, 'Mystic Guardian');
     expect(
       session.getGuardianUnavailableMessage(),
       'You need to have 2 star fragments to battle this guardian!',
+    );
+    expect(session.startGuardianBattle, throwsStateError);
+  });
+
+  // Verifies New Nucleon hosts the Thunder Guardian and enforces requirements.
+  test('new nucleon thunder guardian reports star fragment requirements', () {
+    final session = MobileGameSession(GameMap());
+    session.restore('Nova', RoomId.newNucleon, [RoomId.maiaStable]);
+
+    expect(session.currentRoom.id, RoomId.newNucleon);
+    expect(session.hasGuardianInCurrentRoom, isTrue);
+    expect(session.currentGuardian?.character.name, 'Thunder Guardian');
+    expect(
+      session.getGuardianUnavailableMessage(),
+      'You need to have 1 star fragment to battle this guardian!',
     );
     expect(session.startGuardianBattle, throwsStateError);
   });
