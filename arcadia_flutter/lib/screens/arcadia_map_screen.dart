@@ -11,6 +11,7 @@ import 'reorder_party_screen.dart';
 import 'swap_animal_screen.dart';
 import 'start_menu_screen.dart';
 import 'wild_battle_screen.dart';
+import 'world_screen.dart';
 
 class ArcadiaMapScreen extends StatefulWidget {
   const ArcadiaMapScreen({super.key, this.gameSession});
@@ -111,6 +112,7 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
                               canMove: _gameSession.canMove,
                               onMove: _move,
                               onInspect: _inspect,
+                              onExplore: _openWorld,
                               onOpenMenu: _openMenu,
                               showEncounter: _gameSession.hasWildEncounter,
                               onEncounter: _startWildBattle,
@@ -144,6 +146,12 @@ class _ArcadiaMapScreenState extends State<ArcadiaMapScreen> {
 
   void _inspect() {
     _setStatus(_gameSession.getFinalRoomMessage() ?? _gameSession.interact());
+  }
+
+  Future<void> _openWorld() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => WorldScreen(gameSession: _gameSession)),
+    );
   }
 
   Future<void> _startWildBattle() async {

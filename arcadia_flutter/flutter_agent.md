@@ -151,7 +151,95 @@ The Flutter app now contains the main Arcadia gameplay feature set. Use `arcadia
 
 # Current Plan
 
-- Perform a full code review of the arcadia_flutter application.
+- 
 
 # Current Task
-- Complete a full code review of only the arcadia_flutter app. Look for design issues, code smells, poor architecture, unnessessary duplication, or areas that can be improved. Put your findings in the file "flutter_code_review.md"
+- You are working on my existing Flutter game project, Arcadia.
+
+Milestone 3: Trail-Following With Tiled Polylines
+
+Goal:
+Make the player follow the visible trails/roads on first_town.tmx using the Tiled WalkPaths object layer.
+
+Do not code immediately. First inspect the current Flame/Tiled implementation, then create a short implementation plan and wait for approval.
+
+Current state:
+- Flame exploration screen works.
+- first_town.tmx loads.
+- Background layer loads.
+- Buildings layer exists.
+- Spawn layer exists.
+- Collisions layer exists.
+- Player currently supports tap-to-move.
+- Collision currently blocks invalid destinations.
+- I created a WalkPaths object layer in Tiled.
+
+Tiled setup:
+- WalkPaths is an Object Layer.
+- WalkPaths contains polyline objects.
+- Each polyline follows the center of a visible trail/road.
+- Polylines may branch, touch, or intersect at road junctions.
+
+Requirements:
+
+1. Parse WalkPaths
+- Read the WalkPaths object layer from first_town.tmx.
+- Read polyline objects from that layer.
+- Convert each polyline into world-space waypoint points.
+- Preserve the order of points in each polyline.
+- If WalkPaths is missing or empty, fall back to the current straight-line tap movement.
+
+2. Build a path graph
+- Convert polyline points into navigation nodes.
+- Connect consecutive points in the same polyline.
+- Merge/connect points that are very close to each other at intersections.
+- Use a clear threshold for connecting nearby polyline endpoints/intersections.
+- Do not use automatic connections between unrelated distant nodes.
+- Do not use grid-based pathfinding.
+
+3. Tap behavior
+- When the player taps the map, snap the tap to the nearest point on the WalkPaths graph.
+- Snap the player's current position to the nearest point on the WalkPaths graph.
+- Find a route through the graph from the player node to the target node.
+- Move the player along that route as waypoints.
+
+4. Movement
+- Player should move smoothly from waypoint to waypoint.
+- Player should stop when the final waypoint is reached.
+- Keep current collision support.
+- Do not implement building interiors yet.
+- Do not implement door transitions yet.
+- Do not implement NPC movement yet.
+- Do not implement walking animation yet.
+
+5. Tests
+Add or update focused tests for:
+- WalkPaths polyline parsing
+- graph creation from polyline points
+- connected route generation
+- nearest graph point calculation
+- player follows multiple waypoints
+- missing WalkPaths falls back to current straight-line movement
+- existing collision tests still pass
+
+6. Safety
+- Do not touch battle logic.
+- Do not touch save logic.
+- Do not touch animal capture logic.
+- Do not touch guardian logic.
+- Do not touch story logic.
+- Keep changes isolated to the Flame exploration layer and related tests.
+
+Before coding:
+- List files you plan to change.
+- Explain how WalkPaths will be represented internally.
+- Explain how intersections will be connected.
+- Explain how nearest-path snapping will work.
+- Explain how the player will follow waypoints.
+- Wait for approval.
+
+After coding:
+- List every file changed.
+- Tell me whether flutter analyze passed.
+- Tell me whether flutter test passed.
+- Tell me how to manually test trail-following in the emulator.

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" width="44" height="35" tilewidth="32" tileheight="32" infinite="0" nextlayerid="10" nextobjectid="140">
+ <tileset firstgid="1" source="tilesets/buildings.tsx"/>
+ <imagelayer id="2" name="Background" locked="1">
+  <image source="ikena_bg.png" width="1408" height="1120"/>
+ </imagelayer>
+ <objectgroup id="3" name="Spawn">
+  <object id="1" name="player_spawn" x="760.666" y="1046.66">
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="7" name="Buildings">
+  <object id="23" gid="1" x="442.833" y="648" width="603.333" height="423.667"/>
+ </objectgroup>
+ <objectgroup id="5" name="Collisions"/>
+</map>

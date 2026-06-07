@@ -26,7 +26,41 @@ void main() {
     expect(find.text('The journey begins.'), findsOneWidget);
     expect(find.text('North'), findsOneWidget);
     expect(find.text('Inspect'), findsOneWidget);
+    expect(find.text('Explore'), findsOneWidget);
     expect(find.text('Menu'), findsOneWidget);
+  });
+
+  // Verifies the Flame prototype opens without changing authoritative room state.
+  testWidgets('explore opens Flame world and returns to current room', (
+    WidgetTester tester,
+  ) async {
+    final session = MobileGameSession(
+      GameMap(),
+      saveRepository: _MemoryGameSaveRepository(),
+    );
+
+    await tester.pumpWidget(_buildMapScreen(gameSession: session));
+    await tester.tap(find.text('Explore'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.text('Tap to move. Drag to pan. Pinch to zoom.'),
+      findsOneWidget,
+    );
+    expect(session.currentRoom.id, RoomId.maiaStable);
+
+    await tester.pageBack();
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(
+      find.text('Flame exploration prototype: tap anywhere to move.'),
+      findsNothing,
+    );
+    expect(find.text("Maia's Stable"), findsWidgets);
+    expect(find.text('Explore'), findsOneWidget);
+    expect(session.currentRoom.id, RoomId.maiaStable);
   });
 
   // Verifies movement buttons follow the current room exits.

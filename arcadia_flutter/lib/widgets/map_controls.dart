@@ -8,6 +8,7 @@ class MapDirectionControls extends StatelessWidget {
     required this.canMove,
     required this.onMove,
     required this.onInspect,
+    required this.onExplore,
     required this.onOpenMenu,
     required this.showEncounter,
     required this.onEncounter,
@@ -20,6 +21,7 @@ class MapDirectionControls extends StatelessWidget {
   final bool Function(RoomDirection direction) canMove;
   final ValueChanged<RoomDirection> onMove;
   final VoidCallback onInspect;
+  final VoidCallback onExplore;
   final VoidCallback onOpenMenu;
   final bool showEncounter;
   final VoidCallback onEncounter;
@@ -61,7 +63,17 @@ class MapDirectionControls extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        _CenteredControlButton(label: 'Menu', onPressed: onOpenMenu),
+        Row(
+          children: [
+            Expanded(
+              child: MapControlButton(label: 'Explore', onPressed: onExplore),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: MapControlButton(label: 'Menu', onPressed: onOpenMenu),
+            ),
+          ],
+        ),
         if (showEncounter) ...[
           const SizedBox(height: 8),
           _CenteredControlButton(label: 'Encounter', onPressed: onEncounter),
